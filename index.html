@@ -2043,11 +2043,14 @@ function getNetlifyToken(){return localStorage.getItem('dml_nl_token')||'';}
 async function publicarNetlify(){
   if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
   const ghToken=getGithubToken();
+  console.log('publicarNetlify — token:', ghToken?'presente':'ausente');
   if(!ghToken){configurarTokens();return;}
   mostrarLoad(true);
   try{
+    console.log('Gerando HTML...');
     const html=await gerarHTMLPublico();
-    if(!html){mostrarLoad(false);return;}
+    console.log('HTML gerado:', html?html.length+' chars':'vazio');
+    if(!html){mostrarLoad(false);toast('⚠️ Erro ao gerar HTML');return;}
 
     const owner=GITHUB_USER;
     const repo=GITHUB_REPO;
@@ -2084,28 +2087,29 @@ async function publicarNetlify(){
 }
 
 // Gera o HTML público como string (sem baixar)
+
 function gerarHTMLPublico(){
   return new Promise(resolve=>{
-    // Intercepta criação de URL para download
+    console.log('gerarHTMLPublico iniciado');
     const origCreate=URL.createObjectURL;
     const origClick=HTMLAnchorElement.prototype.click;
 
     URL.createObjectURL=function(blob){
+      console.log('createObjectURL interceptado, size:', blob.size);
       URL.createObjectURL=origCreate;
-      // Lê o conteúdo do blob
       const reader=new FileReader();
       reader.onload=e=>{
-        // Restaura click antes de resolver
         HTMLAnchorElement.prototype.click=origClick;
+        console.log('HTML lido:', e.target.result?.length,'chars');
         resolve(e.target.result);
       };
+      reader.onerror=e=>{console.error('FileReader erro:',e);HTMLAnchorElement.prototype.click=origClick;URL.createObjectURL=origCreate;resolve(null);};
       reader.readAsText(blob);
-      // Retorna URL fake para não disparar download
       return 'blob:fake';
     };
 
-    // Bloqueia o click no <a> de download
     HTMLAnchorElement.prototype.click=function(){
+      console.log('click interceptado href:', this.href?.substring(0,30), 'download:', this.download);
       if(this.href==='blob:fake'||this.download?.endsWith('.html'))return;
       origClick.call(this);
     };
@@ -2114,6 +2118,7 @@ function gerarHTMLPublico(){
   });
 }
 
+// ═══════════════════════════════════════════════
 // ═══════════════════════════════════════════════
 // EXPORTAR PÁGINA PÚBLICA (para Netlify/WhatsApp)
 // ═══════════════════════════════════════════════
