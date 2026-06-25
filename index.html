@@ -12,7 +12,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
- 
+
 const firebaseConfig = {
   apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
   authDomain: "escala-dml.firebaseapp.com",
@@ -588,11 +588,9 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('dash')">📊 Dashboard</button>
       <button class="nav-pill" onclick="irPara('config')">⚙️ Grupos</button>
       <button class="nav-pill" onclick="irPara('tmpl')">📋 Templates</button>
-      <button class="nav-pill" onclick="irPara('qr')">📲 QR Code</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none">📆 Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
-    <button class="btn btn-ghost btn-sm" id="btn-img" onclick="exportarImagem()" style="display:none">🖼 Imagem</button>
     <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none">🌐 Publicar</button>
     <button class="btn btn-outline btn-sm" id="btn-pdf" onclick="exportarPDF()" style="display:none">↓ PDF</button>
     <button class="btn btn-primary btn-sm" id="btn-save" onclick="salvarSessao()" style="display:none">💾 Salvar</button>
@@ -629,6 +627,18 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- UPLOAD -->
 <div id="page-upload" class="page active">
   <div class="upload-center">
+    <!-- Card última escala (aparece quando há sessão salva) -->
+    <div id="card-ultima" style="display:none;width:100%;max-width:700px;margin-bottom:16px">
+      <div class="upload-card ultima-card" onclick="abrirUltimaEscala()" style="flex-direction:row;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:rgba(42,180,130,.06);border-color:var(--teal-dim)">
+        <div style="font-size:36px;flex-shrink:0">📋</div>
+        <div style="flex:1;text-align:left">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:3px">Continuar editando</div>
+          <div id="ultima-label" style="font-size:18px;font-weight:800;color:var(--teal)"></div>
+          <div id="ultima-meta" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
+        </div>
+        <div style="color:var(--teal);font-size:22px">›</div>
+      </div>
+    </div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:700px;width:100%">
       <!-- Opção 1: DOCX -->
       <div class="upload-card" id="drop-zone" style="flex:1;min-width:220px" onclick="document.getElementById('file-input').click()">
@@ -646,7 +656,6 @@ tr.esp-row .td-dia{color:#c03030;}
       </div>
     </div>
     <input type="file" id="file-input" accept=".docx" onchange="lerArquivo(event)">
-    <!-- Botão limpar (só aparece se houver escala ativa) -->
     <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px">🗑 Limpar Escala Atual</button>
   </div>
 </div>
@@ -1088,7 +1097,7 @@ function abrirEditor(){
   ['pill-edit','pill-prev','pill-semana'].forEach(id=>document.getElementById(id).style.display='');
   document.getElementById('hdr-badge').style.display='inline';
   document.getElementById('hdr-badge').textContent=mesLabel;
-  ['btn-img','btn-pdf','btn-save','btn-pagina'].forEach(id=>document.getElementById(id).style.display='inline-block');
+  ['btn-pdf','btn-save','btn-pagina'].forEach(id=>document.getElementById(id).style.display='inline-block');
   document.getElementById('btn-limpar').style.display='inline-block';
   irPara('edit');renderCultos();renderSidebar();
 }
@@ -1506,6 +1515,79 @@ function limparFiltroPrev(){
   if(!tbody)return;
   tbody.querySelectorAll('tr').forEach(tr=>tr.classList.remove('oculto-prev'));
   tbody.querySelectorAll('.gbadge').forEach(b=>b.classList.remove('dimmed-prev','ativo-prev'));
+}
+
+// ── Notepad salvo no Firebase
+let _npSaveTimer=null;
+function salvarNotepad(){
+  const txt=document.getElementById('notepad-area')?.value||'';
+  localStorage.setItem(NP_KEY,txt);
+  atualizarToggleNotepad();
+  const saved=document.getElementById('notepad-saved');
+  if(saved){clearTimeout(_npTimer);saved.textContent='Salvo ✓';_npTimer=setTimeout(()=>{if(saved)saved.textContent='';},1800);}
+  // Salva no Firebase com debounce
+  clearTimeout(_npSaveTimer);
+  _npSaveTimer=setTimeout(()=>{
+    if(window._fbUser&&window._fbFns){
+      const{doc,setDoc}=window._fbFns;
+      setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'notepad'),{texto:txt,updatedAt:Date.now()})
+        .catch(console.error);
+    }
+  },1500);
+}
+
+async function carregarNotepadFirebase(){
+  if(!window._fbUser||!window._fbFns)return;
+  try{
+    const{doc,getDoc}=window._fbFns;
+    const snap=await getDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'notepad'));
+    if(snap.exists()){
+      const txt=snap.data().texto||'';
+      localStorage.setItem(NP_KEY,txt);
+      const area=document.getElementById('notepad-area');
+      if(area)area.value=txt;
+      atualizarToggleNotepad();
+    }
+  }catch(e){console.error(e);}
+}
+
+// ── Card última escala na tela inicial
+async function mostrarCardUltima(){
+  try{
+    let sessions=[];
+    if(window._fbUser) sessions=await getIdxFirebase();
+    else sessions=getIdx();
+    if(!sessions.length)return;
+
+    // Pega a mais recente
+    let ultima=null;
+    for(const id of sessions){
+      let d=null;
+      if(window._fbUser)d=await getSessaoFirebase(id);
+      if(!d){const r=localStorage.getItem(SK(id));if(r)d=JSON.parse(r);}
+      if(d&&(!ultima||(d.savedAt||0)>(ultima.savedAt||0)))ultima=d;
+    }
+    if(!ultima)return;
+
+    // Salva referência
+    window._ultimaSessaoId=ultima.id;
+
+    const card=document.getElementById('card-ultima');
+    const lbl=document.getElementById('ultima-label');
+    const meta=document.getElementById('ultima-meta');
+    if(card&&lbl&&meta){
+      lbl.textContent=ultima.mesLabel||'Escala sem título';
+      const total=(ultima.cultos||[]).filter(c=>!c.oculto).length;
+      const comGrupo=(ultima.cultos||[]).filter(c=>c.grupos?.length).length;
+      const dt=ultima.savedAt?new Date(ultima.savedAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      meta.textContent=`${total} cultos · ${comGrupo} com grupo${dt?' · Salvo '+dt:''}`;
+      card.style.display='block';
+    }
+  }catch(e){console.error(e);}
+}
+
+async function abrirUltimaEscala(){
+  if(window._ultimaSessaoId) await carregarSessao(window._ultimaSessaoId);
 }
 
 // ═══════════════════════════════════════════════
@@ -3478,6 +3560,8 @@ window.onFbAuthReady=function(user){
     if(syncSt)syncSt.style.display='inline';
     // Carrega dados do Firestore
     carregarDadosFirebase();
+    carregarNotepadFirebase();
+    mostrarCardUltima();
   } else {
     // Deslogado — mostra tela de login
     loginScreen?.classList.remove('hidden');
@@ -3600,6 +3684,7 @@ async function salvarSessao(){
   salvarConfigFirebase();
   toast('✅ Escala salva na nuvem!');
   renderHist();
+  mostrarCardUltima();
 }
 
 // ═══════════════════════════════════════════════
