@@ -21,7 +21,7 @@ const firebaseConfig = {
   messagingSenderId: "219409261265",
   appId: "1:219409261265:web:d919096c27487df65bdbf0"
 };
- 
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -471,7 +471,8 @@ tr.esp-row .td-dia{color:#c03030;}
   *{box-sizing:border-box;}
   html,body{height:auto;width:100%;background:white!important;color:#111;margin:0;padding:0;}
   header,.nav-pills,.hdr-right,.edit-toolbar,#page-edit,#page-hist,#page-dash,
-  #page-config,.modal-overlay,#loading-overlay,#toast,.sidebar-panel,.edit-layout{display:none!important;}
+  #page-config,.modal-overlay,#loading-overlay,#toast,.sidebar-panel,.edit-layout,
+  #notepad-toggle,#notepad-panel{display:none!important;}
   main{padding:0!important;margin:0!important;max-width:100%!important;width:100%;}
   #page-preview{display:block!important;width:100%;padding:4mm 5mm;}
   .preview-wrap{border:none!important;border-radius:0;width:100%;overflow:visible;}
