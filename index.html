@@ -2039,88 +2039,11 @@ const GITHUB_USER='krysnamurty3D';
 function getGithubToken(){return localStorage.getItem('dml_gh_token')||'';}
 function getNetlifyToken(){return localStorage.getItem('dml_nl_token')||'';}
 
+
 async function publicarNetlify(){
   if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
   const ghToken=getGithubToken();
   if(!ghToken){configurarTokens();return;}
-  mostrarLoad(true);
-  try{
-    const html=await gerarHTMLPublico();
-    if(!html){mostrarLoad(false);return;}
-
-    const owner=GITHUB_USER;
-    const repo=GITHUB_REPO;
-    const headers={
-      'Authorization':`Bearer ${ghToken}`,
-      'Accept':'application/vnd.github+json',
-      'Content-Type':'application/json'
-    };
-
-    // 1. Pega SHA atual do index.html
-    let sha=null;
-    const getRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{headers});
-    if(getRes.ok){const f=await getRes.json();sha=f.sha;}
-
-    // 2. Envia arquivo
-    const content=btoa(unescape(encodeURIComponent(html)));
-    const putRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{
-      method:'PUT',headers,
-      body:JSON.stringify({
-        message:`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`,
-        content,
-        ...(sha?{sha}:{})
-      })
-    });
-    if(!putRes.ok){
-      const t=await putRes.text();
-      if(putRes.status===401){localStorage.removeItem('dml_gh_token');throw new Error('Token inválido. Reconfigure nas ⚙️ Configurações.');}
-      throw new Error(`GitHub ${putRes.status}: ${t}`);
-    }
-
-    mostrarLoad(false);
-    toast('🌐 Publicado! Site atualiza em instantes...');
-  }catch(e){
-    mostrarLoad(false);
-    console.error('Publish erro:',e);
-    alert('❌ Erro:\n\n'+e.message);
-  }
-}
-
-function configurarTokens(){
-  const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:500;display:flex;align-items:center;justify-content:center';
-  modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:480px;max-width:96vw">
-    <h3 style="color:var(--teal);margin-bottom:16px">🔑 Configurar Publicação</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-      Cole seu <strong style="color:var(--white)">GitHub Personal Access Token</strong> abaixo.<br>
-      Ele fica salvo apenas no seu navegador — nunca no código.
-    </p>
-    <div style="margin-bottom:14px">
-      <label style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px">GitHub Token (permissão: repo)</label>
-      <input type="password" id="cfg-gh-token" placeholder="ghp_..." value="${getGithubToken()}"
-        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font);box-sizing:border-box">
-    </div>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:16px">
-      Para gerar: github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → marque <strong style="color:var(--white)">repo</strong>
-    </p>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="this.closest('div[style]').remove()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarTokens(this)">Salvar e Publicar</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function salvarTokens(btn){
-  const gh=document.getElementById('cfg-gh-token').value.trim();
-  if(!gh){alert('Cole o token do GitHub');return;}
-  localStorage.setItem('dml_gh_token',gh);
-  btn.closest('div[style*="position:fixed"]').remove();
-  await publicarNetlify();
-}
-
-async function publicarNetlify(){
-  if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
   mostrarLoad(true);
   try{
     const html=await gerarHTMLPublico();
