@@ -378,7 +378,44 @@ tr.esp-row .td-dia{color:#c03030;}
   margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--border);}
 .anual-empty{color:var(--muted);font-size:12px;font-style:italic;padding:6px 0;}
 
-/* ── AUTH / LOGIN ── */
+/* ── HISTÓRICO DE VERSÕES ── */
+.versoes-modal{position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:400;display:flex;align-items:center;justify-content:center;}
+.versoes-box{background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;width:520px;max-width:96vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+.versoes-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.versoes-hdr h3{color:var(--teal);font-size:15px;}
+.versoes-lista{overflow-y:auto;padding:12px 16px;flex:1;}
+.versao-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.versao-item:hover{background:var(--navy);}
+.versao-item.atual{background:rgba(42,180,130,.08);border:1px solid var(--teal-dim);}
+.versao-num{font-size:11px;font-weight:700;color:var(--teal);background:rgba(42,180,130,.12);border-radius:10px;padding:2px 8px;flex-shrink:0;}
+.versao-info{flex:1;}
+.versao-data{font-size:12px;font-weight:600;}
+.versao-meta{font-size:11px;color:var(--muted);}
+.versao-btn{font-size:11px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:3px 9px;cursor:pointer;font-family:var(--font);}
+.versao-btn:hover{border-color:var(--teal);color:var(--teal);}
+/* ── OFFLINE ── */
+.offline-banner{position:fixed;top:0;left:0;right:0;z-index:600;background:#7a2020;color:#fff;
+  text-align:center;padding:8px;font-size:12px;font-weight:600;display:none;}
+.offline-banner.show{display:block;}
+.sync-indicator.offline{background:rgba(192,57,43,.15);color:#e06060;border-color:#7a2020;}
+.colab-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.colab-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--teal-dim);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.colab-info{flex:1;}
+.colab-nome{font-size:13px;font-weight:700;}
+.colab-email{font-size:11px;color:var(--muted);}
+.colab-status{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.colab-status.pendente{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.3);}
+.colab-status.ativo{background:rgba(42,180,130,.12);color:var(--teal);border:1px solid var(--teal-dim);}
+.colab-add{display:flex;gap:8px;margin-bottom:16px;}
+.colab-add input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font);}
+/* Badge modo colaborador */
+.modo-colab-badge{background:rgba(212,160,23,.12);border:1px solid rgba(212,160,23,.3);
+  color:#d4a017;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;
+  display:none;align-items:center;gap:5px;}
+.modo-colab-badge.show{display:flex;}
 #login-screen{position:fixed;inset:0;background:var(--bg);z-index:500;
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;}
 #login-screen.hidden{display:none;}
@@ -568,6 +605,8 @@ tr.esp-row .td-dia{color:#c03030;}
   </defs>
 </svg>
 
+<!-- Banner offline -->
+<div class="offline-banner" id="offline-banner">⚠️ Sem conexão — alterações salvas localmente e sincronizadas quando a internet voltar</div>
 <header>
   <div class="logo-wrap">
     <svg viewBox="0 0 82.39 47.38" xmlns="http://www.w3.org/2000/svg">
@@ -588,15 +627,18 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('dash')">📊 Dashboard</button>
       <button class="nav-pill" onclick="irPara('config')">⚙️ Grupos</button>
       <button class="nav-pill" onclick="irPara('tmpl')">📋 Templates</button>
+      <button class="nav-pill" onclick="irPara('colab')">👥 Colaboradores</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none">📆 Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
     <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none">🌐 Publicar</button>
+    <button class="btn btn-ghost btn-sm" id="btn-versoes" onclick="abrirVersoes()" style="display:none" title="Histórico de versões">🕐 Versões</button>
     <button class="btn btn-outline btn-sm" id="btn-pdf" onclick="exportarPDF()" style="display:none">↓ PDF</button>
     <button class="btn btn-primary btn-sm" id="btn-save" onclick="salvarSessao()" style="display:none">💾 Salvar</button>
     <button class="btn btn-ghost btn-sm" onclick="exportarJSON()" title="Backup JSON">⬇ Backup</button>
     <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Restaurar JSON">⬆ Restaurar<input type="file" id="import-json" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
     <span class="sync-indicator sync-ok" id="sync-status" style="display:none">☁️ Salvo</span>
+    <div class="modo-colab-badge" id="modo-colab-badge">👥 <span id="modo-colab-nome"></span></div>
     <div class="user-badge" id="user-badge" onclick="menuUsuario()" style="display:none">
       <img id="user-photo" src="" alt="">
       <span id="user-name"></span>
@@ -816,6 +858,19 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="btn btn-primary btn-sm" onclick="adicionarGrupo()">Adicionar</button>
     </div>
   </div>
+</div>
+<!-- COLABORADORES -->
+<div id="page-colab" class="page">
+  <div class="section-top">
+    <div><h2 style="color:var(--teal);font-size:17px">👥 Colaboradores</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:3px">Pessoas que podem editar a escala com você</p></div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px;margin-bottom:16px">
+    <h3 style="font-size:13px;color:var(--teal);margin-bottom:12px">Convidar colaborador</h3>
+    <div class="colab-add"><input type="email" id="colab-email-input" placeholder="email@gmail.com do colaborador"><button class="btn btn-primary btn-sm" onclick="convidarColaborador()">Convidar</button></div>
+    <p style="font-size:11px;color:var(--muted);line-height:1.6">O colaborador precisa ter uma conta Google. Ao entrar com o email convidado, ele verá e poderá editar suas escalas.</p>
+  </div>
+  <div id="colab-lista"></div>
 </div>
 <!-- TEMPLATES -->
 <div id="page-tmpl" class="page">
@@ -1097,7 +1152,7 @@ function abrirEditor(){
   ['pill-edit','pill-prev','pill-semana'].forEach(id=>document.getElementById(id).style.display='');
   document.getElementById('hdr-badge').style.display='inline';
   document.getElementById('hdr-badge').textContent=mesLabel;
-  ['btn-pdf','btn-save','btn-pagina'].forEach(id=>document.getElementById(id).style.display='inline-block');
+  ['btn-pdf','btn-save','btn-pagina','btn-versoes'].forEach(id=>document.getElementById(id).style.display='inline-block');
   document.getElementById('btn-limpar').style.display='inline-block';
   irPara('edit');renderCultos();renderSidebar();
 }
@@ -1530,7 +1585,7 @@ function salvarNotepad(){
   _npSaveTimer=setTimeout(()=>{
     if(window._fbUser&&window._fbFns){
       const{doc,setDoc}=window._fbFns;
-      setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'notepad'),{texto:txt,updatedAt:Date.now()})
+      setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,'notepad'),{texto:txt,updatedAt:Date.now()})
         .catch(console.error);
     }
   },1500);
@@ -1540,7 +1595,7 @@ async function carregarNotepadFirebase(){
   if(!window._fbUser||!window._fbFns)return;
   try{
     const{doc,getDoc}=window._fbFns;
-    const snap=await getDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'notepad'));
+    const snap=await getDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,'notepad'));
     if(snap.exists()){
       const txt=snap.data().texto||'';
       localStorage.setItem(NP_KEY,txt);
@@ -1588,6 +1643,243 @@ async function mostrarCardUltima(){
 
 async function abrirUltimaEscala(){
   if(window._ultimaSessaoId) await carregarSessao(window._ultimaSessaoId);
+}
+
+// ═══════════════════════════════════════════════
+// COLABORADORES
+// ═══════════════════════════════════════════════
+
+// UID do dono real dos dados (pode ser o próprio ou quem convidou)
+window._donoUid=null;
+
+function getDonoUid(){ return window._donoUid||window._fbUser?.uid; }
+
+// Converte email para chave Firebase (sem pontos e @)
+function emailToKey(email){ return email.toLowerCase().replace(/\./g,'_').replace('@','__at__'); }
+
+async function convidarColaborador(){
+  const email=document.getElementById('colab-email-input').value.trim().toLowerCase();
+  if(!email||!email.includes('@')){toast('⚠️ Digite um email válido');return;}
+  if(email===window._fbUser.email.toLowerCase()){toast('⚠️ Este é seu próprio email');return;}
+  const{doc,setDoc}=window._fbFns;
+  const key=emailToKey(email);
+  const dados={
+    email, status:'pendente', convidadoEm:Date.now(),
+    donoUid:window._fbUser.uid,
+    donoEmail:window._fbUser.email, donoNome:window._fbUser.displayName
+  };
+  // Salva na subcoleção do dono
+  await setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/colaboradores`,key),dados);
+  // Salva na coleção global (para o colaborador encontrar)
+  await setDoc(doc(window._fbDb,'convites',key),dados);
+  document.getElementById('colab-email-input').value='';
+  toast(`✅ Convite enviado para ${email}`);
+  renderColaboradores();
+}
+
+async function renderColaboradores(){
+  const lista=document.getElementById('colab-lista');
+  if(!lista)return;
+  lista.innerHTML=`<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>`;
+  try{
+    const{collection,getDocs}=window._fbFns;
+    const snap=await getDocs(collection(window._fbDb,`usuarios/${getDonoUid()}/colaboradores`));
+    if(snap.empty){
+      lista.innerHTML=`<div class="empty-state"><div class="icon">👥</div><p>Nenhum colaborador ainda.<br>Convide alguém pelo email acima.</p></div>`;
+      return;
+    }
+    lista.innerHTML=snap.docs.map(d=>{
+      const c=d.data();
+      const key=d.id;
+      return`<div class="colab-card">
+        <div class="colab-avatar">👤</div>
+        <div class="colab-info">
+          <div class="colab-nome">${c.email}</div>
+          <div class="colab-email">Convidado em ${new Date(c.convidadoEm||0).toLocaleDateString('pt-BR')}</div>
+        </div>
+        <span class="colab-status ${c.status||'pendente'}">${c.status==='ativo'?'✅ Ativo':'⏳ Pendente'}</span>
+        <button class="btn-danger" onclick="removerColaborador('${key}')" title="Remover">✕</button>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);lista.innerHTML=`<div class="empty-state"><p>Erro ao carregar.</p></div>`;}
+}
+
+async function removerColaborador(key){
+  if(!confirm('Remover este colaborador?'))return;
+  const{doc,deleteDoc}=window._fbFns;
+  await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/colaboradores`,key));
+  toast('🗑 Colaborador removido');
+  renderColaboradores();
+}
+
+// Verifica se o usuário logado é colaborador de alguém
+async function verificarColaboracao(user){
+  if(!window._fbFns)return false;
+  try{
+    const{collection,getDocs,doc,setDoc,query,where}=window._fbFns;
+    const db=window._fbDb;
+    const emailKey=emailToKey(user.email);
+    // Busca em todos os usuários se alguém convidou este email
+    // Usa uma coleção global de convites para facilitar a busca
+    const convSnap=await getDocs(collection(db,'convites'));
+    for(const d of convSnap.docs){
+      const c=d.data();
+      if(c.email===user.email.toLowerCase()&&c.status!=='removido'){
+        // Encontrou! Define o dono
+        window._donoUid=c.donoUid;
+        // Marca como ativo
+        await setDoc(doc(db,`usuarios/${c.donoUid}/colaboradores`,emailKey),
+          {...c,status:'ativo',ativoEm:Date.now()},{merge:true});
+        // Badge de modo colaborador
+        const badge=document.getElementById('modo-colab-badge');
+        const nome=document.getElementById('modo-colab-nome');
+        if(badge){badge.classList.add('show');}
+        if(nome){nome.textContent=`Editando escala de ${c.donoNome?.split(' ')[0]||c.donoEmail}`;}
+        return true;
+      }
+    }
+  }catch(e){console.error(e);}
+  return false;
+}
+
+// Ao convidar, salva também na coleção global
+async function salvarConviteGlobal(email){
+  if(!window._fbFns||!window._fbUser)return;
+  const{doc,setDoc}=window._fbFns;
+  const key=emailToKey(email);
+  await setDoc(doc(window._fbDb,'convites',key),{
+    email:email.toLowerCase(),
+    donoUid:window._fbUser.uid,
+    donoEmail:window._fbUser.email,
+    donoNome:window._fbUser.displayName,
+    status:'pendente',
+    criadoEm:Date.now()
+  });
+}
+
+// Override convidarColaborador para salvar globalmente
+const _origConvidar=convidarColaborador;
+
+// ═══════════════════════════════════════════════
+// MODO OFFLINE — detecção e fila de sync
+// ═══════════════════════════════════════════════
+let _online=navigator.onLine;
+let _filaSyncPendente=JSON.parse(localStorage.getItem('dml_fila_sync')||'[]');
+
+function atualizarStatusOnline(){
+  _online=navigator.onLine;
+  const banner=document.getElementById('offline-banner');
+  const sync=document.getElementById('sync-status');
+  if(banner)banner.classList.toggle('show',!_online);
+  if(sync&&!_online){sync.textContent='📵 Offline';sync.className='sync-indicator offline';}
+}
+
+window.addEventListener('online',async()=>{
+  _online=true;
+  atualizarStatusOnline();
+  toast('✅ Conexão restaurada — sincronizando...');
+  await processarFilaSync();
+});
+window.addEventListener('offline',()=>{
+  _online=false;
+  atualizarStatusOnline();
+  toast('⚠️ Sem conexão — salvando localmente');
+});
+
+async function processarFilaSync(){
+  if(!_online||!window._fbUser||!_filaSyncPendente.length)return;
+  const fila=[..._filaSyncPendente];
+  _filaSyncPendente=[];
+  localStorage.setItem('dml_fila_sync','[]');
+  for(const item of fila){
+    try{
+      if(item.tipo==='sessao') await salvarSessaoFirebase(item.id,item.dados);
+      else if(item.tipo==='config') await salvarConfigFirebase();
+    }catch(e){
+      _filaSyncPendente.push(item);
+      console.error('Sync erro:',e);
+    }
+  }
+  if(_filaSyncPendente.length){
+    localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
+  } else {
+    setSyncStatus('ok');
+    toast('☁️ Tudo sincronizado!');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// HISTÓRICO DE VERSÕES
+// ═══════════════════════════════════════════════
+const VERSOES_MAX=10; // máximo de versões por escala
+
+function getVersoes(sessaoId){
+  return JSON.parse(localStorage.getItem(`dml_ver_${sessaoId}`)||'[]');
+}
+
+function saveVersao(sessaoId,dados){
+  const versoes=getVersoes(sessaoId);
+  // Adiciona nova versão no início
+  versoes.unshift({
+    ts:Date.now(),
+    cultos:JSON.parse(JSON.stringify(dados.cultos)), // deep copy
+    mesLabel:dados.mesLabel,
+    autor:window._fbUser?.displayName||'Você'
+  });
+  // Mantém apenas as últimas N versões
+  if(versoes.length>VERSOES_MAX)versoes.length=VERSOES_MAX;
+  localStorage.setItem(`dml_ver_${sessaoId}`,JSON.stringify(versoes));
+  // Firebase
+  if(window._fbUser&&window._fbFns&&_online){
+    const{doc,setDoc}=window._fbFns;
+    setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/versoes`,sessaoId),{versoes}).catch(console.error);
+  }
+}
+
+function abrirVersoes(){
+  if(!sessaoId){toast('⚠️ Nenhuma escala aberta');return;}
+  const versoes=getVersoes(sessaoId);
+  const modal=document.createElement('div');
+  modal.className='versoes-modal';
+  modal.id='versoes-modal';
+  modal.innerHTML=`
+    <div class="versoes-box">
+      <div class="versoes-hdr">
+        <h3>🕐 Versões — ${mesLabel}</h3>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('versoes-modal').remove()">✕ Fechar</button>
+      </div>
+      <div class="versoes-lista">
+        ${!versoes.length
+          ?'<div class="empty-state"><div class="icon">🕐</div><p>Nenhuma versão salva ainda.<br>As versões são criadas a cada salvamento.</p></div>'
+          :versoes.map((v,i)=>`
+            <div class="versao-item${i===0?' atual':''}" onclick="restaurarVersao(${i})">
+              <span class="versao-num">v${versoes.length-i}</span>
+              <div class="versao-info">
+                <div class="versao-data">${new Date(v.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                <div class="versao-meta">${v.cultos?.length||0} cultos · ${v.autor||'Você'}</div>
+              </div>
+              ${i===0
+                ?'<span style="font-size:11px;color:var(--teal);font-weight:600">atual</span>'
+                :`<button class="versao-btn" onclick="event.stopPropagation();restaurarVersao(${i})">↩ Restaurar</button>`
+              }
+            </div>`).join('')
+        }
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+}
+
+function restaurarVersao(idx){
+  const versoes=getVersoes(sessaoId);
+  const v=versoes[idx];
+  if(!v)return;
+  if(idx===0){toast('ℹ️ Esta já é a versão atual');return;}
+  if(!confirm(`Restaurar versão de ${new Date(v.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}?\n\nAs alterações atuais serão substituídas.`))return;
+  cultos=v.cultos.map(c=>({...c,id:c.id||uid()}));
+  renderCultos();
+  document.getElementById('versoes-modal')?.remove();
+  toast('↩ Versão restaurada! Clique em Salvar para confirmar.');
 }
 
 // ═══════════════════════════════════════════════
@@ -2863,6 +3155,7 @@ function irPara(p){
   if(p==='tmpl')renderTemplates();
   if(p==='qr')iniciarQR();
   if(p==='semana')renderSemana(0);
+  if(p==='colab')renderColaboradores();
 }
 
 // ═══════════════════════════════════════════════
@@ -3545,12 +3838,11 @@ function menuUsuario(){
 }
 
 // Callback quando auth muda
-window.onFbAuthReady=function(user){
+window.onFbAuthReady=async function(user){
   const loginScreen=document.getElementById('login-screen');
   const badge=document.getElementById('user-badge');
   const syncSt=document.getElementById('sync-status');
   if(user){
-    // Logado — esconde tela de login
     loginScreen?.classList.add('hidden');
     if(badge){
       badge.style.display='flex';
@@ -3558,15 +3850,18 @@ window.onFbAuthReady=function(user){
       document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
     }
     if(syncSt)syncSt.style.display='inline';
-    // Carrega dados do Firestore
+    // Verifica se é colaborador de alguém
+    const eColab=await verificarColaboracao(user);
+    if(!eColab) window._donoUid=null; // é o dono
+    // Carrega dados
     carregarDadosFirebase();
     carregarNotepadFirebase();
     mostrarCardUltima();
   } else {
-    // Deslogado — mostra tela de login
     loginScreen?.classList.remove('hidden');
     if(badge)badge.style.display='none';
     if(syncSt)syncSt.style.display='none';
+    window._donoUid=null;
   }
 };
 
@@ -3588,7 +3883,7 @@ async function salvarSessaoFirebase(id, dados){
   setSyncStatus('saving');
   try{
     const {doc,setDoc}=window._fbFns;
-    await setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id), dados);
+    await setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/sessoes`,id), dados);
     setSyncStatus('ok');
   }catch(e){setSyncStatus('err');console.error(e);}
 }
@@ -3598,7 +3893,7 @@ async function getIdxFirebase(){
   if(!fbReady()||!window._fbUser)return[];
   try{
     const {collection,getDocs}=window._fbFns;
-    const snap=await getDocs(collection(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`));
+    const snap=await getDocs(collection(window._fbDb,`usuarios/${getDonoUid()}/sessoes`));
     return snap.docs.map(d=>d.id);
   }catch(e){console.error(e);return[];}
 }
@@ -3608,7 +3903,7 @@ async function getSessaoFirebase(id){
   if(!fbReady()||!window._fbUser)return null;
   try{
     const {doc,getDoc}=window._fbFns;
-    const snap=await getDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id));
+    const snap=await getDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/sessoes`,id));
     return snap.exists()?snap.data():null;
   }catch(e){console.error(e);return null;}
 }
@@ -3618,7 +3913,7 @@ async function excluirSessaoFirebase(id){
   if(!fbReady()||!window._fbUser)return;
   try{
     const {doc,deleteDoc}=window._fbFns;
-    await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id));
+    await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/sessoes`,id));
   }catch(e){console.error(e);}
 }
 
@@ -3627,7 +3922,7 @@ async function salvarConfigFirebase(){
   if(!fbReady()||!window._fbUser)return;
   try{
     const {doc,setDoc}=window._fbFns;
-    await setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'dados'),{
+    await setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,'dados'),{
       grupos: GRUPOS,
       templates: getTmpls(),
       notepad: localStorage.getItem('dml_notepad')||'',
@@ -3644,7 +3939,7 @@ async function carregarDadosFirebase(){
   try{
     const {doc,getDoc}=window._fbFns;
     // Carrega config
-    const cfgSnap=await getDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'dados'));
+    const cfgSnap=await getDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,'dados'));
     if(cfgSnap.exists()){
       const cfg=cfgSnap.data();
       if(cfg.grupos){GRUPOS=cfg.grupos;saveGrupos(GRUPOS);}
@@ -3671,18 +3966,30 @@ async function salvarSessao(){
   if(!sessaoId)sessaoId='s'+Date.now();
   const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now()};
 
-  // Salva localmente (fallback)
+  // Salva versão antes de sobrescrever
+  saveVersao(sessaoId,dados);
+
+  // Salva localmente sempre (funciona offline)
   const localIdx=getIdx();
   if(!localIdx.includes(sessaoId)){localIdx.push(sessaoId);saveIdx(localIdx);}
   localStorage.setItem(SK(sessaoId),JSON.stringify(dados));
 
-  // Salva no Firebase
-  if(window._fbUser) await salvarSessaoFirebase(sessaoId,dados);
-  else setSyncStatus('err');
+  if(_online&&window._fbUser){
+    // Online — salva no Firebase direto
+    await salvarSessaoFirebase(sessaoId,dados);
+    salvarConfigFirebase();
+    toast('✅ Escala salva na nuvem!');
+  } else if(window._fbUser){
+    // Offline — adiciona à fila de sync
+    _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
+    localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
+    setSyncStatus('offline');
+    toast('💾 Salvo localmente — sincronizará quando voltar a conexão');
+  } else {
+    setSyncStatus('err');
+    toast('💾 Salvo localmente');
+  }
 
-  // Salva config também
-  salvarConfigFirebase();
-  toast('✅ Escala salva na nuvem!');
   renderHist();
   mostrarCardUltima();
 }
@@ -3736,7 +4043,7 @@ function moverParaLixeira(id,dados){
   // Salva no Firebase também
   if(window._fbUser&&window._fbFns){
     const{doc,setDoc}=window._fbFns;
-    setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,id),{...dados,deletedAt:Date.now()}).catch(console.error);
+    setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/lixeira`,id),{...dados,deletedAt:Date.now()}).catch(console.error);
     // Remove da coleção principal
     excluirSessaoFirebase(id).catch(console.error);
   }
@@ -3755,8 +4062,8 @@ async function restaurarDaLixeira(id){
   // Firebase
   if(window._fbUser&&window._fbFns){
     const{doc,setDoc,deleteDoc}=window._fbFns;
-    await setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id),item).catch(console.error);
-    await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,id)).catch(console.error);
+    await setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/sessoes`,id),item).catch(console.error);
+    await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/lixeira`,id)).catch(console.error);
   }
   renderHist();renderLixeira();
   toast(`✅ "${item.mesLabel}" restaurada!`);
@@ -3767,7 +4074,7 @@ async function excluirDefinitivo(id){
   saveLixeira(getLixeira().filter(x=>x.id!==id));
   if(window._fbUser&&window._fbFns){
     const{doc,deleteDoc}=window._fbFns;
-    await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,id)).catch(console.error);
+    await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/lixeira`,id)).catch(console.error);
   }
   renderLixeira();toast('🗑 Excluído definitivamente');
 }
@@ -3778,7 +4085,7 @@ async function esvaziarLixeira(){
   if(window._fbUser&&window._fbFns){
     const{doc,deleteDoc}=window._fbFns;
     for(const item of lixeira){
-      await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,item.id)).catch(console.error);
+      await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/lixeira`,item.id)).catch(console.error);
     }
   }
   saveLixeira([]);
@@ -3901,6 +4208,7 @@ async function renderHist(busca=''){
 }
 
 // INIT
+atualizarStatusOnline();
 atualizarStatusPush();
 carregarNotepad();
 // renderHist será chamado pelo onFbAuthReady quando o usuário logar
