@@ -398,6 +398,47 @@ tr.esp-row .td-dia{color:#c03030;}
   text-align:center;padding:8px;font-size:12px;font-weight:600;display:none;}
 .offline-banner.show{display:block;}
 .sync-indicator.offline{background:rgba(192,57,43,.15);color:#e06060;border-color:#7a2020;}
+/* ── ARRASTAR GRUPO ENTRE CULTOS ── */
+.gbadge.draggable-grupo{cursor:grab;}
+.gbadge.draggable-grupo:active{cursor:grabbing;opacity:.5;}
+.gbadge.drag-source{opacity:.3;}
+.culto-card.drop-grupo-over{outline:2px dashed var(--teal);outline-offset:2px;}
+/* ── BUSCA NO EDITOR ── */
+.busca-editor-wrap{position:relative;display:none;}
+.busca-editor-wrap.show{display:flex;}
+.busca-editor-input{background:var(--surface);border:1px solid var(--teal-dim);border-radius:8px;color:var(--white);font-size:13px;padding:6px 32px 6px 12px;font-family:var(--font);width:240px;outline:none;}
+.busca-editor-input:focus{border-color:var(--teal);}
+.busca-editor-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;}
+.culto-card.busca-oculto{display:none;}
+.culto-card.busca-destaque{outline:2px solid var(--teal);outline-offset:1px;}
+/* ── PREVIEW TEMPO REAL ── */
+.preview-rt-wrap{position:fixed;top:72px;right:0;width:380px;height:calc(100vh - 72px);background:var(--surface);border-left:1px solid var(--border);z-index:100;display:none;flex-direction:column;overflow:hidden;box-shadow:-4px 0 20px rgba(0,0,0,.3);}
+.preview-rt-wrap.show{display:flex;}
+.preview-rt-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.preview-rt-header span{font-size:12px;font-weight:700;color:var(--teal);}
+.preview-rt-body{flex:1;overflow-y:auto;padding:12px;}
+.preview-rt-card{background:var(--navy);border-radius:8px;padding:10px 12px;margin-bottom:6px;border-left:3px solid var(--border);}
+.preview-rt-card.dom{border-color:#d4a017;background:rgba(80,45,5,.3);}
+.preview-rt-card.ter{border-color:#2778dc;background:rgba(15,45,100,.2);}
+.preview-rt-card.qui{border-color:#2ab482;background:rgba(10,55,38,.2);}
+.preview-rt-card.sab{border-color:#9050dc;background:rgba(55,20,90,.2);}
+.preview-rt-card.esp{border-color:#c03030;background:rgba(100,20,20,.2);}
+.preview-rt-data{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.preview-rt-nome{font-size:13px;font-weight:700;text-transform:uppercase;margin-bottom:4px;}
+.preview-rt-dir{font-size:11px;color:var(--teal);margin-bottom:4px;}
+.btn-preview-rt{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:5px 10px;font-size:11px;cursor:pointer;font-family:var(--font);}
+.btn-preview-rt.ativo{border-color:var(--teal);color:var(--teal);background:rgba(42,180,130,.08);}
+/* ── ONBOARDING ── */
+.onboard-overlay{position:fixed;inset:0;background:rgba(8,14,20,.85);z-index:450;display:flex;align-items:center;justify-content:center;}
+.onboard-box{background:var(--surface);border:1px solid var(--teal-dim);border-radius:16px;width:480px;max-width:96vw;padding:32px;text-align:center;}
+.onboard-icon{font-size:52px;margin-bottom:16px;}
+.onboard-step{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.onboard-titulo{font-size:20px;font-weight:800;color:var(--white);margin-bottom:10px;}
+.onboard-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px;}
+.onboard-dots{display:flex;justify-content:center;gap:6px;margin-bottom:20px;}
+.onboard-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
+.onboard-dot.ativo{background:var(--teal);}
+.onboard-nav{display:flex;gap:8px;justify-content:center;}
 .colab-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
   padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
 .colab-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--teal-dim);
@@ -706,6 +747,10 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-edit" class="page">
   <div class="edit-toolbar">
     <label class="toggle-label"><input type="checkbox" id="chk-ocultos" checked onchange="renderCultos()"> Mostrar ocultos</label>
+    <div class="busca-editor-wrap" id="busca-editor-wrap">
+      <input class="busca-editor-input" id="busca-editor-input" placeholder="🔍 Buscar culto..." oninput="buscarNaEscala(this.value)">
+      <button class="busca-editor-clear" onclick="limparBuscaEscala()">✕</button>
+    </div>
     <div class="dia-filtros">
       <button class="dia-filtro-btn ativo" data-dia="todos" onclick="filtrarDia('todos')">Todos</button>
       <button class="dia-filtro-btn dom" data-dia="dom" onclick="filtrarDia('dom')">DOM</button>
@@ -715,8 +760,18 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="dia-filtro-btn esp" data-dia="esp" onclick="filtrarDia('esp')">ESP</button>
     </div>
     <span style="flex:1"></span>
+    <button class="btn-preview-rt" id="btn-preview-rt" onclick="togglePreviewRT()">👁 Preview</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleBuscaEscala()">🔍</button>
     <button class="btn btn-danger btn-sm" onclick="limparEscala()">🗑 Limpar</button>
     <button class="btn btn-outline btn-sm" onclick="abrirModalEsp()">+ Culto Especial</button>
+  </div>
+  <!-- Preview tempo real -->
+  <div class="preview-rt-wrap" id="preview-rt-wrap">
+    <div class="preview-rt-header">
+      <span>👁 Preview — ${mesLabel}</span>
+      <button class="btn btn-ghost btn-sm" onclick="togglePreviewRT()">✕</button>
+    </div>
+    <div class="preview-rt-body" id="preview-rt-body"></div>
   </div>
   <div class="edit-layout">
     <div class="cultos-grid" id="cultos-grid"></div>
@@ -826,6 +881,12 @@ tr.esp-row .td-dia{color:#c03030;}
 
   <!-- Detalhes por grupo — limpo e recriado a cada renderDash -->
   <div class="dash-grid" id="dash-grid"></div>
+
+  <!-- Relatório por dirigente -->
+  <div style="margin-top:24px">
+    <h3 style="color:var(--teal);font-size:14px;margin-bottom:12px">🎤 Relatório por Dirigente</h3>
+    <div id="relatorio-dirigentes"></div>
+  </div>
 
   <!-- Relatório anual -->
   <div style="margin-top:24px">
@@ -1243,8 +1304,15 @@ function renderCultos(){
     });
     grid.appendChild(card);
     enableDropOnCard(card, c.id);
+    // Habilita drag dos badges entre cultos
+    card.querySelectorAll('.gbadge').forEach(b=>{
+      const label=b.textContent.trim();
+      const g=label==='S&H'?SH_LABEL:todosGrupos().find(x=>x.replace(/^CORAL\s+/,'C. ')===label||x===label)||label;
+      habilitarDragGrupoNoBadge(b,g,c.id);
+    });
   });
   renderSidebar();
+  renderPreviewRT();
 }
 
 function abrevDia(d){
@@ -1761,6 +1829,86 @@ async function salvarConviteGlobal(email){
 const _origConvidar=convidarColaborador;
 
 // ═══════════════════════════════════════════════
+// BUSCA RÁPIDA NO EDITOR
+// ═══════════════════════════════════════════════
+function toggleBuscaEscala(){const wrap=document.getElementById("busca-editor-wrap");const input=document.getElementById("busca-editor-input");wrap.classList.toggle("show");if(wrap.classList.contains("show"))setTimeout(()=>input?.focus(),80);else{input.value="";buscarNaEscala("");}}
+function buscarNaEscala(termo){const t=termo.trim().toLowerCase();document.querySelectorAll(".culto-card").forEach(card=>{if(!t){card.classList.remove("busca-oculto","busca-destaque");return;}const txt=card.textContent.toLowerCase();const match=txt.includes(t);card.classList.toggle("busca-oculto",!match);card.classList.toggle("busca-destaque",match);});}
+function limparBuscaEscala(){const input=document.getElementById("busca-editor-input");if(input)input.value="";buscarNaEscala("");document.getElementById("busca-editor-wrap")?.classList.remove("show");}
+
+// ═══════════════════════════════════════════════
+// ARRASTAR GRUPO ENTRE CULTOS
+// ═══════════════════════════════════════════════
+let _dragGrupoCulto=null;
+function habilitarDragGrupoNoBadge(badge,grupo,cultoId){badge.draggable=true;badge.classList.add("draggable-grupo");badge.addEventListener("dragstart",e=>{_dragGrupoCulto={grupo,fromId:cultoId};e.dataTransfer.effectAllowed="move";setTimeout(()=>badge.classList.add("drag-source"),0);});badge.addEventListener("dragend",()=>{badge.classList.remove("drag-source");_dragGrupoCulto=null;});}
+
+// ═══════════════════════════════════════════════
+// PREVIEW EM TEMPO REAL
+// ═══════════════════════════════════════════════
+let _previewRTAtivo=false;
+function togglePreviewRT(){_previewRTAtivo=!_previewRTAtivo;const wrap=document.getElementById("preview-rt-wrap");const btn=document.getElementById("btn-preview-rt");wrap?.classList.toggle("show",_previewRTAtivo);btn?.classList.toggle("ativo",_previewRTAtivo);if(_previewRTAtivo)renderPreviewRT();}
+function renderPreviewRT(){
+  if(!_previewRTAtivo)return;
+  const body=document.getElementById("preview-rt-body");
+  if(!body)return;
+  const vis=cultos.filter(c=>!c.oculto&&matchFiltroDia(c));
+  if(!vis.length){body.innerHTML="<div class=\"empty-state\"><p>Nenhum culto visível.</p></div>";return;}
+  const lG=g=>g===SH_LABEL?"S\&H":g.replace(/^CORAL\s+/,"C. ");
+  body.innerHTML=vis.map(c=>{
+    const cls=c.especial?"esp":/domingo/i.test(c.dia)?"dom":/ter[cç]a/i.test(c.dia)?"ter":/quinta/i.test(c.dia)?"qui":/s[aá]b/i.test(c.dia)?"sab":"";
+    const badges=sortGrupos(c.grupos).map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${lG(g)}</span>`).join("");
+    return `<div class="preview-rt-card ${cls}"><div class="preview-rt-data">${c.data} ${abrevDia(c.dia)} · ${c.hora}</div><div class="preview-rt-nome">${c.culto}</div>${c.dirigente?`<div class="preview-rt-dir">🎤 ${c.dirigente}</div>`:""}<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${badges||"<span style=\"font-size:10px;color:var(--muted)\">sem grupo</span>"}</div></div>`;
+  }).join("");
+}
+
+// ═══════════════════════════════════════════════
+// RELATÓRIO POR DIRIGENTE
+// ═══════════════════════════════════════════════
+function renderRelatorioDirigentes(){
+  const el=document.getElementById("relatorio-dirigentes");
+  if(!el)return;
+  const idx=getIdx();const freq={};
+  idx.forEach(id=>{try{const d=JSON.parse(localStorage.getItem(SK(id)));(d.cultos||[]).filter(c=>!c.oculto&&c.dirigente).forEach(c=>{const dir=c.dirigente.trim();if(!freq[dir])freq[dir]={total:0,meses:new Set()};freq[dir].total++;freq[dir].meses.add(d.mesLabel);});}catch{}});
+  const sorted=Object.entries(freq).sort((a,b)=>b[1].total-a[1].total);
+  if(!sorted.length){el.innerHTML=`<div class="empty-state"><p>Nenhum dirigente registrado ainda.</p></div>`;return;}
+  const max=sorted[0][1].total;
+  el.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;">${sorted.map(([dir,info])=>`<div class="rank-item" style="margin-bottom:10px"><span class="rank-name" style="min-width:160px">🎤 ${dir}</span><div class="rank-bar-wrap" style="flex:1"><div class="rank-bar" style="width:${Math.round(info.total/max*100)}%;background:#4a9eff"></div></div><span class="rank-count">${info.total} culto${info.total!==1?"s":""}</span><span style="font-size:10px;color:var(--muted);margin-left:8px">${info.meses.size} mês/meses</span></div>`).join("")}</div>`;
+}
+
+// ═══════════════════════════════════════════════
+// ATALHOS DE TECLADO
+// ═══════════════════════════════════════════════
+document.addEventListener("keydown",e=>{const ctrl=e.ctrlKey||e.metaKey;if(!ctrl)return;if(e.key==="s"&&cultos.length){e.preventDefault();salvarSessao();return;}if(e.key==="p"&&cultos.length){e.preventDefault();publicarNetlify();return;}if(e.key==="f"){const pEdit=document.getElementById("page-edit");if(pEdit?.classList.contains("active")){e.preventDefault();toggleBuscaEscala();return;}}if(e.key==="z"&&e.shiftKey&&sessaoId){e.preventDefault();const versoes=getVersoes(sessaoId);if(versoes.length>1){restaurarVersao(1);return;}toast("⚠️ Nenhuma versão anterior disponível");return;}if(e.key==="Escape"){document.getElementById("versoes-modal")?.remove();document.querySelector(".modal-overlay.show")?.classList.remove("show");if(_previewRTAtivo)togglePreviewRT();}});
+
+// ═══════════════════════════════════════════════
+// ONBOARDING PARA COLABORADORES
+// ═══════════════════════════════════════════════
+const ONBOARD_KEY="dml_onboard_v1";
+const PASSOS=[{icon:"👋",titulo:"Bem-vindo ao Sistema DML!",desc:"Você foi convidado como colaborador para editar a escala do Departamento de Música e Louvor. Vamos te mostrar o essencial em alguns passos."},{icon:"📋",titulo:"Importar ou Criar Escala",desc:"Na tela inicial você pode importar um arquivo .docx da escala geral da igreja, ou criar manualmente pelo calendário."},{icon:"🎵",titulo:"Atribuir Grupos",desc:"No editor, arraste os grupos do painel lateral para cada culto, ou clique no culto para editar nome, horário e dirigente."},{icon:"☁️",titulo:"Salvar na Nuvem",desc:"Clique em 💾 Salvar para guardar a escala. Os dados ficam na nuvem e você pode continuar de qualquer dispositivo."},{icon:"🌐",titulo:"Publicar para os Integrantes",desc:"Quando pronta, clique em 🌐 Publicar. A página dos integrantes atualiza em segundos."}];
+function mostrarOnboarding(){
+  if(localStorage.getItem(ONBOARD_KEY))return;
+  let passo=0;
+  const PASSOS2=[
+    {icon:"👋",titulo:"Bem-vindo ao Sistema DML!",desc:"Você foi convidado como colaborador. Vamos te mostrar o essencial em alguns passos."},
+    {icon:"📋",titulo:"Importar ou Criar Escala",desc:"Na tela inicial importe um .docx ou crie pelo calendário escolhendo o mês e o ano."},
+    {icon:"🎵",titulo:"Atribuir Grupos",desc:"No editor, arraste grupos do painel lateral para cada culto ou clique no culto para editar."},
+    {icon:"☁️",titulo:"Salvar na Nuvem",desc:"Clique em 💾 Salvar. Os dados ficam na nuvem e você continua de qualquer dispositivo."},
+    {icon:"🌐",titulo:"Publicar para os Integrantes",desc:"Quando pronta, clique em 🌐 Publicar. A página dos integrantes atualiza em segundos."}
+  ];
+  function render(){
+    const p=PASSOS2[passo];
+    const isUltimo=passo===PASSOS2.length-1;
+    const overlay=document.getElementById("onboard-overlay");
+    if(!overlay)return;
+    overlay.innerHTML=`<div class="onboard-box"><div class="onboard-icon">${p.icon}</div><div class="onboard-step">Passo ${passo+1} de ${PASSOS2.length}</div><div class="onboard-titulo">${p.titulo}</div><div class="onboard-desc">${p.desc}</div><div class="onboard-dots">${PASSOS2.map((_,i)=>`<div class="onboard-dot${i===passo?" ativo":""}"></div>`).join("")}</div><div class="onboard-nav">${passo>0?`<button class="btn btn-ghost" onclick="window._onboardPrev()">‹ Anterior</button>`:""}<button class="btn btn-primary" onclick="window._onboardNext()">${isUltimo?"Começar! 🚀":"Próximo ›"}</button></div></div>`;
+  }
+  window._onboardNext=()=>{if(passo<PASSOS2.length-1){passo++;render();}else{document.getElementById("onboard-overlay")?.remove();localStorage.setItem(ONBOARD_KEY,"1");}};
+  window._onboardPrev=()=>{if(passo>0){passo--;render();}};
+  const overlay=document.createElement("div");
+  overlay.className="onboard-overlay";overlay.id="onboard-overlay";
+  document.body.appendChild(overlay);
+  render();
+}
+// ═══════════════════════════════════════════════
 // MODO OFFLINE — detecção e fila de sync
 // ═══════════════════════════════════════════════
 let _online=navigator.onLine;
@@ -2053,7 +2201,7 @@ function renderDash(){
   grid.appendChild(cardD);
 
   // Gráficos Chart.js — só atualiza, não recria o DOM
-  if(window.Chart) setTimeout(()=>{renderCharts();renderComparativo();},50);
+  if(window.Chart) setTimeout(()=>{renderCharts();renderComparativo();renderRelatorioDirigentes();},50);
 }
 
 
@@ -3852,7 +4000,8 @@ window.onFbAuthReady=async function(user){
     if(syncSt)syncSt.style.display='inline';
     // Verifica se é colaborador de alguém
     const eColab=await verificarColaboracao(user);
-    if(!eColab) window._donoUid=null; // é o dono
+    if(!eColab) window._donoUid=null;
+    else setTimeout(mostrarOnboarding,800); // onboarding só para colaboradores novos
     // Carrega dados
     carregarDadosFirebase();
     carregarNotepadFirebase();
