@@ -2129,7 +2129,7 @@ async function publicarNetlify(){
     const owner=GITHUB_USER;
     const repo=GITHUB_REPO;
     const headers={
-      'Authorization':`Bearer ${GITHUB_TOKEN}`,
+      'Authorization':`Bearer ${ghToken}`,
       'Accept':'application/vnd.github+json',
       'Content-Type':'application/json'
     };
@@ -2163,17 +2163,30 @@ async function publicarNetlify(){
 // Gera o HTML público como string (sem baixar)
 function gerarHTMLPublico(){
   return new Promise(resolve=>{
-    // Intercepta o Blob criado por exportarPagina
-    const origBlob=window.Blob;
-    window.Blob=function(parts,opts){
-      window.Blob=origBlob;
-      const blob=new origBlob(parts,opts);
-      // Lê o conteúdo e resolve a Promise
+    // Intercepta criação de URL para download
+    const origCreate=URL.createObjectURL;
+    const origClick=HTMLAnchorElement.prototype.click;
+
+    URL.createObjectURL=function(blob){
+      URL.createObjectURL=origCreate;
+      // Lê o conteúdo do blob
       const reader=new FileReader();
-      reader.onload=e=>resolve(e.target.result);
+      reader.onload=e=>{
+        // Restaura click antes de resolver
+        HTMLAnchorElement.prototype.click=origClick;
+        resolve(e.target.result);
+      };
       reader.readAsText(blob);
-      return blob;
+      // Retorna URL fake para não disparar download
+      return 'blob:fake';
     };
+
+    // Bloqueia o click no <a> de download
+    HTMLAnchorElement.prototype.click=function(){
+      if(this.href==='blob:fake'||this.download?.endsWith('.html'))return;
+      origClick.call(this);
+    };
+
     exportarPagina();
   });
 }
