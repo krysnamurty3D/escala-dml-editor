@@ -1,0 +1,3802 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala DML</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
+  authDomain: "escala-dml.firebaseapp.com",
+  projectId: "escala-dml",
+  storageBucket: "escala-dml.firebasestorage.app",
+  messagingSenderId: "219409261265",
+  appId: "1:219409261265:web:d919096c27487df65bdbf0"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Expõe globalmente para o script principal
+window._fbAuth = auth;
+window._fbDb = db;
+window._fbGoogleProvider = new GoogleAuthProvider();
+window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged };
+
+// Monitora estado de autenticação
+onAuthStateChanged(auth, user => {
+  window._fbUser = user || null;
+  if(typeof window.onFbAuthReady === 'function') window.onFbAuthReady(user);
+});
+</script>
+<style>
+:root{
+  --bg:#0f1820;--surface:#1a2535;--surface2:#162030;--border:#243040;
+  --teal:#2ab482;--teal-light:#3dbfb8;--teal-blue:#27aae1;--teal-dim:#1a6a50;
+  --glow:rgba(42,180,130,.10);--navy:#1e2d40;--white:#edf4f4;
+  --muted:#7a9aa8;--accent:#152a20;--ok:#2ab482;--radius:8px;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--white);font-family:var(--font);min-height:100vh;}
+
+/* ── HEADER ── */
+header{background:var(--navy);border-bottom:2px solid var(--teal-dim);padding:9px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.4);}
+.logo-wrap{display:flex;align-items:center;gap:11px;}
+.logo-wrap svg{height:34px;width:auto;}
+.logo-txt .dept{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.logo-txt .name{font-size:14px;font-weight:800;color:var(--teal-light);}
+.logo-txt .church{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.hdr-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+
+/* ── NAV ── */
+.nav-pills{display:flex;gap:2px;background:rgba(0,0,0,.25);border-radius:var(--radius);padding:3px;}
+.nav-pill{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;
+  color:var(--muted);border:none;background:transparent;font-family:var(--font);transition:all .15s;}
+.nav-pill.active{background:var(--teal);color:#061208;}
+.nav-pill:hover:not(.active){color:var(--white);}
+
+/* ── BUTTONS ── */
+.btn{padding:6px 14px;border-radius:var(--radius);border:none;cursor:pointer;
+  font-size:12px;font-weight:600;font-family:var(--font);transition:all .15s;}
+.btn-primary{background:var(--teal);color:#061208;}
+.btn-primary:hover{background:var(--teal-light);}
+.btn-outline{background:transparent;border:1px solid var(--teal-dim);color:var(--teal);}
+.btn-outline:hover{border-color:var(--teal);background:var(--glow);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{color:var(--white);border-color:var(--muted);}
+.btn-danger{background:transparent;border:1px solid #7a2020;color:#e06060;
+  font-size:12px;padding:4px 9px;border-radius:var(--radius);cursor:pointer;font-family:var(--font);}
+.btn-danger:hover{background:rgba(192,57,43,.15);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-icon{background:none;border:none;cursor:pointer;font-size:13px;padding:4px 5px;
+  border-radius:4px;color:var(--muted);transition:all .15s;}
+.btn-icon:hover{color:var(--teal);background:var(--glow);}
+
+/* ── MAIN ── */
+main{padding:22px 26px;max-width:1440px;margin:0 auto;}
+.page{display:none;}.page.active{display:block;}
+
+/* ── UPLOAD ── */
+.upload-center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:22px;}
+.upload-card{background:var(--surface);border:2px dashed var(--teal-dim);border-radius:16px;
+  padding:44px 60px;text-align:center;cursor:pointer;transition:all .2s;max-width:460px;width:100%;}
+.upload-card:hover,.upload-card.drag-over{border-color:var(--teal);background:var(--glow);}
+.upload-card h2{font-size:17px;color:var(--teal);margin:10px 0 5px;}
+.upload-card p{color:var(--muted);font-size:13px;line-height:1.6;}
+.file-tag{background:var(--accent);color:var(--teal-light);padding:2px 9px;border-radius:20px;
+  font-size:11px;font-weight:700;display:inline-block;margin-top:10px;border:1px solid var(--teal-dim);}
+#file-input{display:none;}
+.month-badge{background:rgba(42,180,130,.1);border:1px solid var(--teal-dim);color:var(--teal);
+  border-radius:20px;padding:3px 11px;font-size:11px;font-weight:700;}
+
+/* ── EDITOR ── */
+.edit-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.toggle-label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;}
+.toggle-label input{accent-color:var(--teal);}
+
+/* Layout editor: lista + painel lateral */
+.edit-layout{display:grid;grid-template-columns:1fr 200px;gap:16px;align-items:start;}
+.cultos-grid{display:flex;flex-direction:column;gap:8px;}
+
+/* Painel lateral de badges */
+.sidebar-panel{position:sticky;top:72px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;user-select:none;}
+.sidebar-title{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid var(--border);
+  background:var(--surface2);}
+.sidebar-cat{border-bottom:1px solid var(--border);}
+.sidebar-cat:last-child{border-bottom:none;}
+.sidebar-cat-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;cursor:pointer;font-size:11px;font-weight:700;
+  color:var(--teal-light);transition:background .15s;}
+.sidebar-cat-hdr:hover{background:var(--glow);}
+.sidebar-cat-hdr .cat-arrow{font-size:10px;color:var(--muted);transition:transform .2s;}
+.sidebar-cat.collapsed .cat-arrow{transform:rotate(-90deg);}
+.sidebar-cat-body{padding:6px 10px 8px;}
+.sidebar-cat.collapsed .sidebar-cat-body{display:none;}
+/* Badge arrastável */
+.drag-badge{display:inline-flex;align-items:center;border-radius:12px;padding:3px 10px;
+  font-size:11px;font-weight:600;color:#fff;margin:3px 2px;cursor:grab;
+  border:1px solid transparent;transition:opacity .15s;white-space:nowrap;}
+.drag-badge:hover{opacity:.85;}
+.drag-badge:active{cursor:grabbing;opacity:.7;}
+.drag-badge.dragging{opacity:.4;}
+
+/* Drop target no card */
+.culto-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+.culto-card:hover{border-color:var(--teal-dim);}
+.culto-card.has-grupos{border-left:3px solid var(--teal);border-color:var(--teal-dim);}
+.culto-card.oculto{opacity:.33;filter:grayscale(.7);}
+.culto-card.drop-over{border-color:var(--teal)!important;box-shadow:0 0 0 2px rgba(42,180,130,.35);}
+.c-header{display:grid;grid-template-columns:28px 66px 76px 76px 1fr auto;align-items:center;}
+.c-cell{padding:10px 12px;border-right:1px solid var(--border);}
+.c-cell.flex1{border-right:none;}
+.cell-data{font-size:20px;font-weight:800;color:var(--teal);line-height:1;}
+.cell-abrev{font-size:10px;color:var(--teal-light);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:700;}
+.cell-hora{font-size:13px;font-weight:600;}
+.cell-nome{font-size:12px;font-weight:700;text-transform:uppercase;line-height:1.3;}
+.cell-dir{font-size:11px;color:var(--teal);margin-top:2px;}
+.cell-grupos{font-size:11px;color:var(--muted);margin-top:3px;}
+.c-actions{display:flex;align-items:center;gap:1px;padding:0 6px;}
+.btn-vis{background:none;border:none;cursor:pointer;font-size:13px;padding:5px;color:var(--muted);border-radius:4px;}
+.btn-vis:hover{color:var(--white);}
+.badge{font-size:10px;border-radius:10px;padding:2px 6px;margin-left:4px;}
+.badge-oc{background:rgba(255,255,255,.07);color:var(--muted);}
+.badge-esp{background:var(--glow);color:var(--teal);border:1px solid var(--teal-dim);}
+.sdot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+.sdot-ok{background:var(--ok);}.sdot-no{background:var(--teal-dim);}
+
+/* ── MODAIS ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,14,20,.88);
+  z-index:300;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--teal-dim);border-radius:13px;
+  padding:24px 28px;width:500px;max-width:96vw;max-height:92vh;overflow-y:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,.6);}
+.modal h3{color:var(--teal);font-size:15px;margin-bottom:16px;}
+.form-row{margin-bottom:12px;}
+.form-row label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px;}
+.form-row input,.form-row select{width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;color:var(--white);font-size:13px;padding:7px 10px;font-family:var(--font);}
+.form-row input:focus,.form-row select:focus{outline:1px solid var(--teal-dim);}
+.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:16px;}
+.grupo-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;min-height:22px;}
+/* ── CORREÇÃO: centralizar th DATA ── */
+thead th:first-child{text-align:center;}
+/* Chips do modal com cor da categoria */
+.chip{display:flex;align-items:center;gap:3px;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff;border:1px solid transparent;}
+.chip button{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:13px;line-height:1;padding:0 0 0 2px;}
+.chip button:hover{color:#fff;}
+.chip-sh      {background:#9a7800;border-color:#6a5000;}
+.chip-coral   {background:#1a5fa0;border-color:#0f3d6e;}
+.chip-vocal   {background:#6a3ab8;border-color:#4a2080;}
+.chip-coreo   {background:#c06018;border-color:#8a3e08;}
+.chip-cantor  {background:#c03030;border-color:#8a1a1a;}
+.chip-musical {background:#1a7a40;border-color:#0f5228;}
+optgroup{color:var(--teal);font-weight:700;}option{color:var(--white);}
+
+/* ── PREVIEW / PDF ── */
+#preview-section{overflow-x:auto;}
+#preview-section{max-width:960px;margin:0 auto;}
+.preview-wrap{background:var(--surface);border-radius:11px;overflow:hidden;border:1px solid var(--border);}
+.preview-top{padding:12px 18px;border-bottom:2px solid var(--teal-dim);
+  display:flex;align-items:center;justify-content:space-between;background:var(--navy);}
+.prev-logo{display:flex;align-items:center;gap:9px;}
+.prev-logo svg{height:28px;width:auto;}
+.prev-logo-txt .pd{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.prev-logo-txt .pt{font-size:13px;font-weight:800;color:var(--teal-light);}
+.prev-logo-txt .pc{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.prev-mes{font-size:13px;font-weight:700;color:var(--teal);}
+
+/* TABLE — condensada para A4 */
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:#0d1e2e;color:var(--teal);font-size:9px;text-transform:uppercase;
+  letter-spacing:1.5px;padding:8px 11px;text-align:left;border-bottom:2px solid var(--teal-dim);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:hover{background:var(--glow);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:7px 11px;vertical-align:middle;line-height:1.35;}
+.td-data-wrap{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;}
+.td-data{font-size:18px;font-weight:800;color:var(--teal);line-height:1;}
+.td-dia{font-size:10px;font-weight:700;color:var(--teal-light);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.td-hora{font-weight:600;white-space:nowrap;font-size:12px;}
+/* Culto + Dir na mesma linha */
+.td-culto-wrap{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.td-culto-nome{font-weight:700;text-transform:uppercase;font-size:11px;line-height:1.3;}
+.td-culto-dir{font-size:10px;color:var(--teal);}
+tr.dom-row .td-culto-dir{color:#c8960a;}
+tr.ter-row .td-culto-dir{color:#4a9eff;}
+tr.qui-row .td-culto-dir{color:#2ab482;}
+tr.sab-row .td-culto-dir{color:#b07ae8;}
+tr.esp-row .td-culto-dir{color:#e06060;}
+.gbadge{cursor:pointer;transition:opacity .15s,transform .1s;}
+.gbadge:hover{transform:scale(1.07);}
+.gbadge.dimmed-prev{opacity:.18;}
+.gbadge.ativo-prev{outline:2px solid rgba(255,255,255,.6);outline-offset:1px;}
+tr.oculto-prev{display:none;}
+.prev-filtro-bar{display:none;align-items:center;gap:8px;padding:6px 14px;background:rgba(42,180,130,.07);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);}
+.prev-filtro-bar.show{display:flex;}
+.prev-filtro-btn{margin-left:auto;font-size:11px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:3px 10px;cursor:pointer;font-family:var(--font);}
+.prev-filtro-btn:hover{border-color:var(--teal);color:var(--teal);}
+/* ── CORES POR DIA NO EDITOR ── */
+.culto-card.dom-card{background:rgba(80,45,5,.35);border-color:rgba(180,130,30,.35);border-left:3px solid #d4a017;}
+.culto-card.dom-card.has-grupos{border-left:3px solid #d4a017;}
+.culto-card.dom-card .cell-data{color:#d4a017;}
+.culto-card.dom-card .cell-abrev{color:#b8860b;}
+.culto-card.dom-card .cell-dir{color:#c8960a;}
+
+.culto-card.ter-card{background:rgba(15,45,100,.30);border-color:rgba(39,120,220,.30);border-left:3px solid #2778dc;}
+.culto-card.ter-card.has-grupos{border-left:3px solid #2778dc;}
+.culto-card.ter-card .cell-data{color:#4a9eff;}
+.culto-card.ter-card .cell-abrev{color:#2778dc;}
+.culto-card.ter-card .cell-dir{color:#4a9eff;}
+
+.culto-card.qui-card{background:rgba(10,55,38,.30);border-color:rgba(42,180,130,.30);border-left:3px solid #2ab482;}
+.culto-card.qui-card.has-grupos{border-left:3px solid #2ab482;}
+.culto-card.qui-card .cell-data{color:#2ab482;}
+.culto-card.qui-card .cell-abrev{color:#1a8060;}
+.culto-card.qui-card .cell-dir{color:#2ab482;}
+
+.culto-card.sab-card{background:rgba(55,20,90,.28);border-color:rgba(150,80,220,.30);border-left:3px solid #9050dc;}
+.culto-card.sab-card.has-grupos{border-left:3px solid #9050dc;}
+.culto-card.sab-card .cell-data{color:#b07ae8;}
+.culto-card.sab-card .cell-abrev{color:#9050dc;}
+.culto-card.sab-card .cell-dir{color:#b07ae8;}
+
+.culto-card.esp-card{background:rgba(100,20,20,.28);border-color:rgba(200,60,60,.30);border-left:3px solid #c03030;}
+.culto-card.esp-card.has-grupos{border-left:3px solid #c03030;}
+.culto-card.esp-card .cell-data{color:#e06060;}
+.culto-card.esp-card .cell-abrev{color:#c03030;}
+.culto-card.esp-card .cell-dir{color:#e06060;}
+/* Badges — cores distintas por categoria */
+.gbadge{display:inline-block;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:600;margin:1px 2px 1px 0;white-space:nowrap;border:1px solid transparent;}
+.gbadge-sh     {background:#9a7800;color:#fff;border-color:#6a5000;}
+.gbadge-coral  {background:#1a5fa0;color:#fff;border-color:#0f3d6e;}
+.gbadge-vocal  {background:#6a3ab8;color:#fff;border-color:#4a2080;}
+.gbadge-coreo  {background:#c06018;color:#fff;border-color:#8a3e08;}
+.gbadge-cantor {background:#c03030;color:#fff;border-color:#8a1a1a;}
+.gbadge-musical{background:#1a7a40;color:#fff;border-color:#0f5228;}
+/* ── CORES POR DIA NO PREVIEW ── */
+tr.dom-row{background:rgba(80,45,5,.22);}
+tr.dom-row:hover{background:rgba(80,45,5,.32)!important;}
+tr.dom-row .td-data{color:#d4a017;}
+tr.dom-row .td-dia{color:#b8860b;}
+tr.ter-row{background:rgba(15,45,100,.18);}
+tr.ter-row .td-data{color:#4a9eff;}
+tr.ter-row .td-dia{color:#2778dc;}
+tr.qui-row{background:rgba(10,55,38,.18);}
+tr.qui-row .td-data{color:#2ab482;}
+tr.qui-row .td-dia{color:#1a8060;}
+tr.sab-row{background:rgba(55,20,90,.18);}
+tr.sab-row .td-data{color:#b07ae8;}
+tr.sab-row .td-dia{color:#9050dc;}
+tr.esp-row{background:rgba(100,20,20,.18);}
+tr.esp-row .td-data{color:#e06060;}
+tr.esp-row .td-dia{color:#c03030;}
+/* ── HISTÓRICO ── */
+.hist-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.hist-top h2{color:var(--teal);font-size:17px;}
+.hist-search{background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--white);font-size:12px;padding:6px 11px;font-family:var(--font);min-width:200px;}
+.hist-search:focus{outline:1px solid var(--teal-dim);}
+.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:13px;}
+.hist-tab.active{background:var(--teal)!important;color:#061208!important;border-color:var(--teal)!important;}
+.lixeira-card{opacity:.75;}
+.lixeira-card:hover{opacity:1;}
+.lixeira-expira{font-size:10px;color:#e06060;margin-top:4px;}
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;}
+.hist-card:hover{border-color:var(--teal-dim);}
+.hist-card h3{color:var(--teal);font-size:15px;margin-bottom:5px;}
+.hist-card .meta{font-size:11px;color:var(--muted);}
+.hist-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;}
+.hist-tag{background:var(--accent);border:1px solid var(--teal-dim);color:var(--teal-light);
+  border-radius:12px;padding:2px 8px;font-size:10px;}
+.hist-actions{display:flex;gap:5px;margin-top:12px;flex-wrap:wrap;}
+
+/* ── DASHBOARD ── */
+.dash-hdr{margin-bottom:16px;}
+.dash-hdr h2{color:var(--teal);font-size:17px;}
+.dash-hdr p{color:var(--muted);font-size:12px;margin-top:2px;}
+.dash-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.dash-filters select{background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--white);font-size:12px;padding:5px 10px;font-family:var(--font);}
+.dash-filters label{font-size:11px;color:var(--muted);}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;}
+.dash-card.full{grid-column:1/-1;}
+.dash-charts-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.insight-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;font-size:13px;}
+.insight-up{color:#2ab482;font-weight:700;}
+.insight-down{color:#e06060;font-weight:700;}
+.insight-neu{color:var(--muted);font-weight:700;}
+/* Notificações push */
+.push-section{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px;margin-top:16px;}
+.push-section h3{color:var(--teal);font-size:14px;margin-bottom:10px;}
+.push-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 12px;border-radius:20px;font-weight:600;}
+.push-status.ok{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
+.push-status.off{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);}
+.dash-card h3{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:14px;}
+.rank-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.rank-name{font-size:12px;width:170px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-bar-wrap{flex:1;background:var(--border);border-radius:4px;height:7px;overflow:hidden;}
+.rank-bar{height:7px;border-radius:4px;background:linear-gradient(90deg,var(--teal-blue),var(--teal));}
+.rank-count{font-size:11px;color:var(--teal);font-weight:700;width:22px;text-align:right;}
+.grupo-detail{margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.grupo-detail:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0;}
+.grupo-detail-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.grupo-detail-nome{font-size:13px;font-weight:700;color:var(--teal-light);}
+.grupo-detail-count{font-size:11px;color:var(--muted);}
+.culto-pill{display:inline-flex;align-items:center;gap:4px;background:var(--accent);
+  border:1px solid var(--teal-dim);border-radius:12px;padding:2px 9px;font-size:10px;color:var(--white);margin:2px;}
+.culto-pill .pill-data{color:var(--teal);font-weight:700;}
+
+/* ── CONFIGURAÇÕES ── */
+.config-section{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px;margin-bottom:16px;}
+.config-section h3{color:var(--teal);font-size:14px;margin-bottom:14px;}
+.config-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.config-row:last-child{border-bottom:none;}
+.config-nome{font-size:13px;}
+.config-cat{font-size:10px;color:var(--muted);margin-top:2px;}
+.add-grupo-form{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.add-grupo-form input,.add-grupo-form select{background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;color:var(--white);font-size:12px;padding:6px 10px;font-family:var(--font);}
+.add-grupo-form input{flex:1;min-width:180px;}
+
+/* ── ANUAL ── */
+.anual-mes-hdr{font-size:12px;font-weight:700;color:var(--teal-light);
+  margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.anual-empty{color:var(--muted);font-size:12px;font-style:italic;padding:6px 0;}
+
+/* ── AUTH / LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:500;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;}
+#login-screen.hidden{display:none;}
+.login-card{background:var(--surface);border:1px solid var(--teal-dim);border-radius:16px;
+  padding:40px 48px;text-align:center;max-width:380px;width:90%;}
+.login-logo{height:56px;margin-bottom:20px;}
+.login-card h1{color:var(--teal);font-size:22px;margin-bottom:6px;}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:28px;line-height:1.6;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff;color:#1a1a1a;border:none;border-radius:8px;padding:12px 24px;
+  font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:box-shadow .2s;}
+.btn-google:hover{box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.btn-google img{width:20px;height:20px;}
+.login-status{font-size:12px;color:var(--muted);margin-top:12px;min-height:18px;}
+/* Badge usuário no header */
+.user-badge{display:flex;align-items:center;gap:7px;background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 6px;cursor:pointer;
+  font-size:12px;color:var(--muted);transition:border-color .2s;}
+.user-badge:hover{border-color:var(--teal-dim);}
+.user-badge img{width:24px;height:24px;border-radius:50%;object-fit:cover;}
+.user-badge span{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Sincronização */
+.sync-indicator{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.sync-ok{background:rgba(42,180,130,.12);color:var(--teal);}
+.sync-saving{background:rgba(212,160,23,.12);color:#d4a017;}
+.sync-err{background:rgba(192,57,43,.12);color:#e06060;}
+.culto-card{cursor:default;}
+.culto-card.dragging-card{opacity:.4;border:2px dashed var(--teal);}
+.culto-card.drag-over-card{border-top:3px solid var(--teal);margin-top:-1px;}
+.drag-handle{cursor:grab;padding:0 8px;color:var(--muted);font-size:16px;display:flex;align-items:center;}
+.drag-handle:hover{color:var(--teal);}
+.drag-handle:active{cursor:grabbing;}
+
+/* ── ALERTA INATIVOS ── */
+.alerta-inativo{background:rgba(192,57,43,.10);border:1px solid #7a2020;border-radius:8px;
+  padding:11px 14px;margin-bottom:10px;font-size:12px;}
+.alerta-inativo strong{color:#e06060;display:block;margin-bottom:4px;font-size:11px;
+  text-transform:uppercase;letter-spacing:1px;}
+.alerta-inativo .grupo-alerta{display:inline-block;background:rgba(192,57,43,.15);
+  border-radius:10px;padding:2px 9px;margin:2px;color:#e06060;font-size:11px;}
+
+/* ── SEMANA ── */
+.semana-tabs{display:flex;gap:2px;margin-bottom:16px;background:var(--surface);
+  border-radius:var(--radius);padding:4px;width:fit-content;}
+.semana-tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;
+  cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:var(--font);}
+.semana-tab.active{background:var(--teal);color:#061208;}
+.semana-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.semana-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;
+  padding:14px 16px;transition:border-color .15s;}
+.semana-card:hover{border-color:var(--teal-dim);}
+.semana-card.dom{background:rgba(80,45,5,.35);border-color:rgba(180,130,30,.3);}
+.semana-card.hoje{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal);}
+.semana-data{font-size:28px;font-weight:800;color:var(--teal);}
+.semana-card.dom .semana-data{color:#d4a017;}
+.semana-dia{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.semana-culto{font-size:13px;font-weight:700;text-transform:uppercase;margin-top:8px;line-height:1.2;}
+.semana-hora{font-size:11px;color:var(--muted);margin-top:2px;}
+.semana-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.semana-vazio{color:var(--muted);font-size:12px;font-style:italic;margin-top:8px;}
+.tmpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:4px;}
+.tmpl-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;}
+.tmpl-card h3{color:var(--teal);font-size:14px;margin-bottom:6px;}
+.tmpl-card .meta{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.tmpl-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.tmpl-actions{display:flex;gap:6px;}
+.tmpl-form{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px;margin-bottom:16px;}
+.tmpl-form h3{color:var(--teal);font-size:14px;margin-bottom:14px;}
+.tmpl-grupos-sel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:28px;}
+
+/* ── NOTAS ── */
+.nota-wrap{margin-top:8px;}
+.nota-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--white);font-size:12px;padding:7px 10px;font-family:var(--font);resize:vertical;min-height:60px;}
+.nota-input:focus{outline:1px solid var(--teal-dim);}
+.nota-badge{font-size:10px;background:rgba(201,168,76,.12);color:#c9a84c;border-radius:10px;
+  padding:2px 7px;margin-left:5px;border:1px solid rgba(201,168,76,.3);}
+
+/* ── QR CODE ── */
+.qr-section{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px;margin-bottom:16px;}
+.qr-section h3{color:var(--teal);font-size:14px;margin-bottom:12px;}
+.qr-input-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.qr-input-row input{flex:1;min-width:240px;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;color:var(--white);font-size:13px;padding:7px 10px;font-family:var(--font);}
+.qr-canvas-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+#qr-canvas{border-radius:8px;background:white;padding:12px;}
+.qr-hint{font-size:11px;color:var(--muted);text-align:center;}
+
+/* ── MISC ── */
+.empty-state{text-align:center;padding:44px;color:var(--muted);}
+.empty-state .icon{font-size:40px;margin-bottom:10px;}
+.section-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.section-top h2{color:var(--teal);font-size:17px;}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);border:1px solid var(--teal-dim);
+  border-radius:var(--radius);padding:9px 15px;color:var(--teal-light);font-size:12px;font-weight:600;
+  opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;z-index:999;}
+#toast.show{opacity:1;transform:translateY(0);}
+#loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,16,22,.88);
+  z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+#loading-overlay.show{display:flex;}
+.spinner{width:42px;height:42px;border:3px solid var(--teal-dim);border-top-color:var(--teal);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loading-overlay p{color:var(--teal);font-size:13px;}
+
+/* ── PRINT A4 ── */
+@media print{
+  @page{size:A4 landscape;margin:0;}
+  *{box-sizing:border-box;}
+  html,body{height:auto;width:100%;background:white!important;color:#111;margin:0;padding:0;}
+  header,.nav-pills,.hdr-right,.edit-toolbar,#page-edit,#page-hist,#page-dash,
+  #page-config,.modal-overlay,#loading-overlay,#toast,.sidebar-panel,.edit-layout{display:none!important;}
+  main{padding:0!important;margin:0!important;max-width:100%!important;width:100%;}
+  #page-preview{display:block!important;width:100%;padding:4mm 5mm;}
+  .preview-wrap{border:none!important;border-radius:0;width:100%;overflow:visible;}
+  .preview-top{background:white!important;border:none!important;padding:2px 4px 5px;}
+  .prev-logo svg{height:22px!important;}
+  .prev-logo-txt .pt{color:#1a9068!important;font-size:11px!important;}
+  .prev-logo-txt .pd,.prev-logo-txt .pc{color:#999!important;font-size:7px!important;}
+  .prev-mes{color:#1a9068!important;font-size:15px!important;font-weight:800!important;}
+  table{table-layout:fixed;width:100%;border-collapse:collapse;font-size:11px;}
+  thead th{background:white!important;color:#1a9068!important;border-top:2px solid #2ab482!important;border-bottom:1px solid #ccc!important;padding:5px 8px;font-size:9px;letter-spacing:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  th:nth-child(1){width:9%;text-align:center;}
+  th:nth-child(2){width:7%;}
+  th:nth-child(3){width:42%;}
+  th:nth-child(4){width:42%;}
+  tbody td{padding:5px 8px;vertical-align:middle;}
+  tbody tr{border-bottom:1px solid #e8e8e8!important;}
+  tbody tr:last-child{border-bottom:none!important;}
+  .td-data{color:#1a9068!important;font-size:16px!important;font-weight:800!important;}
+  .td-dia{color:#888!important;font-size:9px!important;font-weight:700!important;}
+  .td-data-wrap{gap:5px;flex-direction:row;justify-content:flex-start;align-items:center;}
+  .td-culto-nome{font-size:11px!important;font-weight:700!important;text-transform:uppercase;color:#111!important;}
+  .td-culto-dir{font-size:8px!important;color:#1a9068!important;}
+  .td-culto-wrap{gap:5px;}
+  .td-louvor{text-align:left;}
+  .gbadge{padding:2px 7px!important;font-size:9px!important;margin:1px 2px 1px 0!important;line-height:1.4;border-radius:10px!important;}
+  tr.dom-row td{background:#f5e8c0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tr.dom-row .td-data{color:#7a5000!important;}
+  tr.dom-row .td-dia{color:#8B6914!important;}
+  tr.ter-row td{background:#e8f0ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tr.ter-row .td-data{color:#1a55bb!important;}
+  tr.ter-row .td-dia{color:#1a55bb!important;}
+  tr.qui-row td{background:#e6f7f0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tr.qui-row .td-data{color:#1a7a50!important;}
+  tr.qui-row .td-dia{color:#1a7a50!important;}
+  tr.sab-row td{background:#f0e8ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tr.sab-row .td-data{color:#6030a0!important;}
+  tr.sab-row .td-dia{color:#6030a0!important;}
+  tr.esp-row td{background:#ffe8e8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  tr.esp-row .td-data{color:#a02020!important;}
+  tr.esp-row .td-dia{color:#a02020!important;}
+  .gbadge-musical{background:#1a7a40!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .gbadge-coral{background:#1a5fa0!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .gbadge-vocal{background:#6a3ab8!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .gbadge-coreo{background:#c06018!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .gbadge-cantor{background:#c03030!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .gbadge-sh{background:#9a7800!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+/* ── NOTEPAD FLUTUANTE ── */
+#notepad-toggle{position:fixed;bottom:80px;right:18px;z-index:300;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--teal-dim);color:var(--teal);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s;}
+#notepad-toggle:hover{background:var(--teal);color:#061208;border-color:var(--teal);}
+#notepad-toggle.has-note{border-color:#d4a017;color:#d4a017;}
+#notepad-panel{position:fixed;bottom:134px;right:18px;z-index:299;width:300px;background:var(--navy);border:1px solid var(--teal-dim);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden;}
+#notepad-panel.open{display:flex;}
+#notepad-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);}
+#notepad-header span{font-size:13px;font-weight:700;color:var(--teal);}
+#notepad-header button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1;}
+#notepad-header button:hover{color:var(--white);}
+#notepad-area{width:100%;min-height:200px;max-height:360px;background:transparent;border:none;color:var(--white);font-size:13px;font-family:var(--font);line-height:1.7;padding:14px;resize:vertical;outline:none;box-sizing:border-box;}
+#notepad-area::placeholder{color:var(--muted);}
+#notepad-footer{padding:7px 14px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+#notepad-saved{font-size:10px;color:var(--muted);font-style:italic;}
+#notepad-clear{font-size:11px;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font);padding:0;}
+#notepad-clear:hover{color:#e06060;}
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0">
+  <defs>
+    <linearGradient id="dmlg" x1="41.19" y1="47" x2="41.19" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#27aae1"/><stop offset=".25" stop-color="#28afaf"/>
+      <stop offset=".61" stop-color="#2ab482"/><stop offset="1" stop-color="#2bb673"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header>
+  <div class="logo-wrap">
+    <svg viewBox="0 0 82.39 47.38" xmlns="http://www.w3.org/2000/svg">
+      <path fill="url(#dmlg)" d="M10.62,32.67c0-2.87,1.43-5.47,4.83-5.47,1.12,0,1.91.21,2.66.58v9.12c0,.74-.6,1.34-1.34,1.34h-1.58c-3.03,0-4.57-2.39-4.57-5.58M45.73.47c-7.96,1.66-14.08,6.77-17.1,13.48V5.21h-5.21c-2.93,0-5.3,2.37-5.3,5.3v8.88l-.11.05c-1.22-.48-2.71-.8-4.25-.8-7.65,0-13.76,6-13.76,14.45s5.68,12.68,11.95,12.68c2.23,0,6.37.02,6.37.02h5.14c2.85,0,5.16-2.31,5.16-5.16v-7.11c.98,2.14,2.29,4.13,3.95,5.95,1.46-1.84,1.51-1.87,4.54-2.67,0-.45,0-.92,0-1.39,0-6.13-.03-12.26.01-18.38.03-4.23,3.51-7.81,7.75-7.72,2.13.04,3.88.96,5.44,2.38.19-.17.34-.31.5-.45,2.49-2.1,5.3-2.57,8.23-1.26,2.95,1.32,4.43,3.75,4.43,7.02,0,1.56,0,3.12,0,4.68,0,4.5.02,9-.01,13.51-.01,1.86-.91,3.26-2.6,4.01-1.63.73-3.23.52-4.6-.68-1.36-1.19-1.88-2.71-1.36-4.45.67-2.22,2.32-3.21,4.67-3.25,0-4.75.02-9.41,0-14.08-.01-2.18-1.57-3.72-3.66-3.72-2.1,0-3.63,1.53-3.66,3.71-.03,2.94,0,5.89,0,8.83,0,1.56.04,3.12-.02,4.67-.05,1.32-.86,2.1-2.02,2.06-1.12-.04-1.8-.8-1.84-2.07-.02-.43,0-.87,0-1.3,0-4.07.02-8.14-.03-12.21-.03-2.38-1.92-3.98-4.21-3.67-1.85.24-3.13,1.75-3.15,3.84-.03,2.73,0,5.45,0,8.18,0,5.37.03,10.74-.01,16.1-.03,3.21-2.6,5.14-5.72,4.37-.41-.1-.81-.23-1.22-.35,2.02,1.79,4.27,1.61,6.62,1.01.65-.17,1.44-.2,2.08,0,4.05,1.25,8.16,1.56,12.3.66,7.85-1.7,13.88-6.81,16.83-13.52v12.44h5.53c2.75,0,4.99-2.23,4.99-4.98V5.21h-5.86c-2.57,0-4.66,2.09-4.66,4.66v4.2C68.13,5.67,59.56,0,50.33,0c-1.52,0-3.06.15-4.6.47"/>
+    </svg>
+    <div class="logo-txt">
+      <div class="dept">Departamento de</div>
+      <div class="name">Música e Louvor</div>
+      <div class="church">Igreja Evangélica Congregacional Central</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="nav-pills">
+      <button class="nav-pill active" onclick="irPara('upload')">🏠</button>
+      <button class="nav-pill" id="pill-edit" onclick="irPara('edit')" style="display:none">✏️ Editar</button>
+      <button class="nav-pill" id="pill-prev" onclick="irPara('preview')" style="display:none">👁 PDF</button>
+      <button class="nav-pill" onclick="irPara('hist')">📁 Histórico</button>
+      <button class="nav-pill" onclick="irPara('dash')">📊 Dashboard</button>
+      <button class="nav-pill" onclick="irPara('config')">⚙️ Grupos</button>
+      <button class="nav-pill" onclick="irPara('tmpl')">📋 Templates</button>
+      <button class="nav-pill" onclick="irPara('qr')">📲 QR Code</button>
+      <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none">📆 Semana</button>
+    </div>
+    <span id="hdr-badge" style="display:none" class="month-badge"></span>
+    <button class="btn btn-ghost btn-sm" id="btn-img" onclick="exportarImagem()" style="display:none">🖼 Imagem</button>
+    <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none">🌐 Publicar</button>
+    <button class="btn btn-outline btn-sm" id="btn-pdf" onclick="exportarPDF()" style="display:none">↓ PDF</button>
+    <button class="btn btn-primary btn-sm" id="btn-save" onclick="salvarSessao()" style="display:none">💾 Salvar</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportarJSON()" title="Backup JSON">⬇ Backup</button>
+    <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Restaurar JSON">⬆ Restaurar<input type="file" id="import-json" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
+    <span class="sync-indicator sync-ok" id="sync-status" style="display:none">☁️ Salvo</span>
+    <div class="user-badge" id="user-badge" onclick="menuUsuario()" style="display:none">
+      <img id="user-photo" src="" alt="">
+      <span id="user-name"></span>
+    </div>
+  </div>
+</header>
+
+<!-- TELA DE LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <svg class="login-logo" viewBox="0 0 86.01 49.86" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="lgg" x1="43" y1="50" x2="43" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#27aae1"/><stop offset=".61" stop-color="#2ab482"/><stop offset="1" stop-color="#2bb673"/>
+      </linearGradient></defs>
+      <path fill="url(#lgg)" d="M11.09,34.1c0-2.99,1.5-5.71,5.05-5.71,1.16,0,2,.22,2.77.61v9.53c0,.77-.63,1.4-1.4,1.4h-1.65c-3.16,0-4.77-2.5-4.77-5.82M52.54,0c-1.59,0-3.2.16-4.8.5-8.31,1.73-14.7,7.06-17.85,14.07V5.44h-5.44c-3.06,0-5.54,2.48-5.54,5.54v9.27l-.11.06c-1.28-.5-2.83-.83-4.44-.83-7.99,0-14.36,6.27-14.36,15.08s5.93,13.24,12.48,13.24c2.33,0,6.65.02,6.65.02h5.37c2.98,0,5.39-2.41,5.39-5.39v-7.42c1.02,2.24,2.4,4.31,4.12,6.21,1.53-1.92,1.58-1.95,4.74-2.78,0-.47,0-.96,0-1.45,0-6.4-.03-12.79.01-19.19.03-4.42,3.67-8.15,8.09-8.06,2.22.04,4.05,1,5.68,2.48.2-.17.36-.32.53-.47,2.6-2.19,5.53-2.69,8.6-1.31,3.08,1.38,4.62,3.91,4.62,7.33,0,1.63,0,3.25,0,4.88,0,4.7.02,9.4-.01,14.1-.01,1.94-.95,3.4-2.71,4.19-1.7.76-3.38.54-4.81-.71-1.42-1.24-1.97-2.83-1.42-4.64.7-2.32,2.42-3.35,4.87-3.39,0-4.95.02-9.82,0-14.7-.01-2.27-1.64-3.88-3.82-3.88-2.19,0-3.79,1.59-3.82,3.88-.03,3.07,0,6.15,0,9.22,0,1.63.04,3.25-.02,4.88-.05,1.38-.9,2.19-2.1,2.15-1.17-.04-1.87-.83-1.92-2.16-.02-.45,0-.9,0-1.36,0-4.25.03-8.5-.03-12.74-.03-2.48-2.01-4.15-4.39-3.83-1.93.26-3.27,1.83-3.29,4.01-.04,2.85,0,5.69,0,8.54,0,5.6.03,11.21-.01,16.81-.03,3.35-2.72,5.37-5.97,4.56-.43-.11-.85-.24-1.28-.37,2.11,1.87,4.46,1.68,6.91,1.05.68-.18,1.5-.21,2.17,0,4.23,1.3,8.52,1.63,12.84.69,8.2-1.78,14.49-7.11,17.57-14.11v12.98h5.78c2.87,0,5.2-2.33,5.2-5.2V5.44h-6.11c-2.69,0-4.87,2.18-4.87,4.87v4.38C71.12,5.92,62.18,0,52.54,0Z"/>
+    </svg>
+    <h1>Escala DML</h1>
+    <p>Sistema de Escala do Departamento de Música e Louvor<br>Igreja Evangélica Congregacional Central</p>
+    <button class="btn-google" onclick="fazerLogin()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Entrar com Google
+    </button>
+    <div class="login-status" id="login-status"></div>
+  </div>
+</div>
+
+<main>
+<!-- UPLOAD -->
+<div id="page-upload" class="page active">
+  <div class="upload-center">
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:700px;width:100%">
+      <!-- Opção 1: DOCX -->
+      <div class="upload-card" id="drop-zone" style="flex:1;min-width:220px" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:42px">📄</div>
+        <h2>Importar .docx</h2>
+        <p>Arraste a escala geral aqui<br>ou clique para selecionar</p>
+        <span class="file-tag">.DOCX</span>
+      </div>
+      <!-- Opção 2: Calendário -->
+      <div class="upload-card" style="flex:1;min-width:220px;cursor:pointer" onclick="abrirModalCalendario()">
+        <div style="font-size:42px">📅</div>
+        <h2>Criar pelo Calendário</h2>
+        <p>Gere a escala automaticamente<br>escolhendo o mês e ano</p>
+        <span class="file-tag">MANUAL</span>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept=".docx" onchange="lerArquivo(event)">
+    <!-- Botão limpar (só aparece se houver escala ativa) -->
+    <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px">🗑 Limpar Escala Atual</button>
+  </div>
+</div>
+
+<!-- EDITOR -->
+<div id="page-edit" class="page">
+  <div class="edit-toolbar">
+    <label class="toggle-label"><input type="checkbox" id="chk-ocultos" checked onchange="renderCultos()"> Mostrar ocultos</label>
+    <span style="flex:1"></span>
+    <button class="btn btn-danger btn-sm" onclick="limparEscala()">🗑 Limpar</button>
+    <button class="btn btn-outline btn-sm" onclick="abrirModalEsp()">+ Culto Especial</button>
+  </div>
+  <div class="edit-layout">
+    <div class="cultos-grid" id="cultos-grid"></div>
+    <div class="sidebar-panel" id="sidebar-panel">
+      <div class="sidebar-title">🎵 Grupos</div>
+      <div id="sidebar-cats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW -->
+<div id="page-preview" class="page">
+  <div id="preview-section">
+    <div class="prev-filtro-bar" id="prev-filtro-bar">
+      <span>Filtrando: <strong id="prev-filtro-label"></strong></span>
+      <button class="prev-filtro-btn" onclick="limparFiltroPrev()">✕ Mostrar todos</button>
+    </div>
+    <div class="preview-wrap" id="preview-wrap">
+      <div class="preview-top">
+        <div class="prev-logo">
+          <svg viewBox="0 0 82.39 47.38" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="dmlg2" x1="41.19" y1="47" x2="41.19" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#27aae1"/><stop offset=".25" stop-color="#28afaf"/>
+              <stop offset=".61" stop-color="#2ab482"/><stop offset="1" stop-color="#2bb673"/>
+            </linearGradient></defs>
+            <path fill="url(#dmlg2)" d="M10.62,32.67c0-2.87,1.43-5.47,4.83-5.47,1.12,0,1.91.21,2.66.58v9.12c0,.74-.6,1.34-1.34,1.34h-1.58c-3.03,0-4.57-2.39-4.57-5.58M45.73.47c-7.96,1.66-14.08,6.77-17.1,13.48V5.21h-5.21c-2.93,0-5.3,2.37-5.3,5.3v8.88l-.11.05c-1.22-.48-2.71-.8-4.25-.8-7.65,0-13.76,6-13.76,14.45s5.68,12.68,11.95,12.68c2.23,0,6.37.02,6.37.02h5.14c2.85,0,5.16-2.31,5.16-5.16v-7.11c.98,2.14,2.29,4.13,3.95,5.95,1.46-1.84,1.51-1.87,4.54-2.67,0-.45,0-.92,0-1.39,0-6.13-.03-12.26.01-18.38.03-4.23,3.51-7.81,7.75-7.72,2.13.04,3.88.96,5.44,2.38.19-.17.34-.31.5-.45,2.49-2.1,5.3-2.57,8.23-1.26,2.95,1.32,4.43,3.75,4.43,7.02,0,1.56,0,3.12,0,4.68,0,4.5.02,9-.01,13.51-.01,1.86-.91,3.26-2.6,4.01-1.63.73-3.23.52-4.6-.68-1.36-1.19-1.88-2.71-1.36-4.45.67-2.22,2.32-3.21,4.67-3.25,0-4.75.02-9.41,0-14.08-.01-2.18-1.57-3.72-3.66-3.72-2.1,0-3.63,1.53-3.66,3.71-.03,2.94,0,5.89,0,8.83,0,1.56.04,3.12-.02,4.67-.05,1.32-.86,2.1-2.02,2.06-1.12-.04-1.8-.8-1.84-2.07-.02-.43,0-.87,0-1.3,0-4.07.02-8.14-.03-12.21-.03-2.38-1.92-3.98-4.21-3.67-1.85.24-3.13,1.75-3.15,3.84-.03,2.73,0,5.45,0,8.18,0,5.37.03,10.74-.01,16.1-.03,3.21-2.6,5.14-5.72,4.37-.41-.1-.81-.23-1.22-.35,2.02,1.79,4.27,1.61,6.62,1.01.65-.17,1.44-.2,2.08,0,4.05,1.25,8.16,1.56,12.3.66,7.85-1.7,13.88-6.81,16.83-13.52v12.44h5.53c2.75,0,4.99-2.23,4.99-4.98V5.21h-5.86c-2.57,0-4.66,2.09-4.66,4.66v4.2C68.13,5.67,59.56,0,50.33,0c-1.52,0-3.06.15-4.6.47"/>
+          </svg>
+          <div class="prev-logo-txt">
+            <div class="pd">Departamento de</div><div class="pt">Música e Louvor</div>
+            <div class="pc">Igreja Evangélica Congregacional Central</div>
+          </div>
+        </div>
+        <div class="prev-mes" id="prev-mes"></div>
+      </div>
+      <table>
+        <thead><tr>
+          <th style="width:10%;text-align:center">Data</th>
+          <th style="width:8%">Hora</th>
+          <th style="width:38%">Culto / Dirigente</th>
+          <th style="width:44%;text-align:left">Louvor</th>
+        </tr></thead>
+        <tbody id="prev-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="page-hist" class="page">
+  <div class="hist-top">
+    <h2 style="color:var(--teal);font-size:17px">Histórico de Escalas</h2>
+    <input class="hist-search" type="text" placeholder="🔍 Buscar por grupo ou mês..." oninput="renderHist(this.value)">
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button class="btn btn-outline btn-sm hist-tab active" id="tab-hist" onclick="mostrarTabHist('hist')">📁 Escalas</button>
+    <button class="btn btn-ghost btn-sm hist-tab" id="tab-lixeira" onclick="mostrarTabHist('lixeira')">🗑 Lixeira <span id="lixeira-count" style="font-size:10px;background:rgba(200,60,60,.2);color:#e06060;border-radius:8px;padding:1px 6px;margin-left:2px;display:none"></span></button>
+  </div>
+  <div class="hist-grid" id="hist-grid"></div>
+  <div class="hist-grid" id="lixeira-grid" style="display:none"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dash" class="page">
+  <div class="dash-hdr"><h2>Dashboard de Atuação</h2><p>Participação de grupos, corais e cantores por período</p></div>
+  <div class="dash-filters">
+    <label>Período:</label>
+    <select id="dash-periodo" onchange="renderDash()"><option value="all">Todos os meses</option></select>
+    <label style="margin-left:8px">Tipo:</label>
+    <select id="dash-tipo" onchange="renderDash()">
+      <option value="all">Todos</option>
+      <option value="Grupos Musicais">Grupos Musicais</option>
+      <option value="Corais">Corais</option>
+      <option value="Grupos Vocais">Grupos Vocais</option>
+      <option value="Grupos de Coreografia">Grupos de Coreografia</option>
+      <option value="Cantores">Cantores</option>
+    </select>
+    <label style="margin-left:8px">Grupo:</label>
+    <select id="dash-grupo" onchange="renderDash()"><option value="all">Todos</option></select>
+    <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="exportarSheets()">📊 Google Sheets</button>
+    <button class="btn btn-ghost btn-sm" id="btn-push" onclick="configurarPush()">🔔 Notificações</button>
+  </div>
+
+  <!-- Gráficos Chart.js — containers fixos, nunca são recriados -->
+  <div class="dash-charts-wrap">
+    <div class="dash-card">
+      <h3>🏆 Ranking de Participação</h3>
+      <div style="position:relative;height:260px"><canvas id="chart-ranking"></canvas></div>
+    </div>
+    <div class="dash-card">
+      <h3>📈 Evolução Mensal</h3>
+      <div style="position:relative;height:260px"><canvas id="chart-evolucao"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Comparativo entre meses -->
+  <div class="dash-card full" style="margin-bottom:20px">
+    <h3>🔄 Comparativo entre Meses</h3>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:12px;color:var(--muted)">Mês A:</label>
+      <select id="comp-mes-a" onchange="renderComparativo()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:12px;padding:5px 10px;font-family:var(--font)"><option value="">— Selecione —</option></select>
+      <label style="font-size:12px;color:var(--muted)">Mês B:</label>
+      <select id="comp-mes-b" onchange="renderComparativo()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:12px;padding:5px 10px;font-family:var(--font)"><option value="">— Selecione —</option></select>
+    </div>
+    <div style="position:relative;height:200px"><canvas id="chart-comparativo"></canvas></div>
+    <div id="comp-insights" style="margin-top:14px"></div>
+  </div>
+
+  <!-- Detalhes por grupo — limpo e recriado a cada renderDash -->
+  <div class="dash-grid" id="dash-grid"></div>
+
+  <!-- Relatório anual -->
+  <div style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <h3 style="color:var(--teal);font-size:14px">📋 Relatório Anual por Grupo</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="dash-ano" onchange="renderAnual()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:11px;padding:4px 9px;font-family:var(--font)"><option value="all">Todos os anos</option></select>
+        <button class="btn btn-outline btn-sm" onclick="imprimirAnual()">↓ PDF Anual</button>
+      </div>
+    </div>
+    <div id="relatorio-anual"></div>
+  </div>
+</div>
+
+<!-- CONFIGURAÇÕES DE GRUPOS -->
+<div id="page-config" class="page">
+  <div class="section-top"><h2>⚙️ Gestão de Grupos</h2></div>
+  <div id="config-body"></div>
+  <div class="config-section">
+    <h3>➕ Adicionar Novo</h3>
+    <div class="add-grupo-form">
+      <input type="text" id="novo-grupo-nome" placeholder="Nome do grupo / cantor / coral">
+      <select id="novo-grupo-cat">
+        <option value="Grupos Musicais">Grupos Musicais</option>
+        <option value="Corais">Corais</option>
+        <option value="Grupos Vocais">Grupos Vocais</option>
+        <option value="Grupos de Coreografia">Grupos de Coreografia</option>
+        <option value="Cantores">Cantores</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="adicionarGrupo()">Adicionar</button>
+    </div>
+  </div>
+</div>
+<!-- TEMPLATES -->
+<div id="page-tmpl" class="page">
+  <div class="section-top">
+    <div><h2 style="color:var(--teal);font-size:17px">📋 Templates de Culto</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:3px">Salve configurações padrão por tipo de culto</p></div>
+    <button class="btn btn-outline btn-sm" onclick="abrirFormTemplate()">+ Novo Template</button>
+  </div>
+  <div class="tmpl-form" id="tmpl-form" style="display:none">
+    <h3>Novo Template</h3>
+    <div class="form-row"><label>Nome do Template</label><input type="text" id="tmpl-nome" placeholder="Ex: Culto de Doutrina padrão"></div>
+    <div class="form-row"><label>Nome do Culto (padrão)</label><input type="text" id="tmpl-culto" placeholder="Ex: CULTO DE DOUTRINA"></div>
+    <div class="form-row"><label>Grupos padrão</label><div class="tmpl-grupos-sel" id="tmpl-chips"></div><select id="tmpl-sel" onchange="addTmplChip()"><option value="">— Adicionar grupo —</option></select></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="fecharFormTemplate()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarTemplate()">Salvar Template</button></div>
+  </div>
+  <div class="tmpl-grid" id="tmpl-grid"></div>
+</div>
+<!-- SEMANA -->
+<div id="page-semana" class="page">
+  <div class="section-top">
+    <div><h2 style="color:var(--teal);font-size:17px">📆 Visão Semanal</h2>
+    <p style="color:var(--muted);font-size:13px;margin-top:3px" id="semana-subtitulo"></p></div>
+  </div>
+  <div class="semana-tabs">
+    <button class="semana-tab" onclick="navSemana(-1)">‹ Anterior</button>
+    <button class="semana-tab active" onclick="navSemana(0)">Esta semana</button>
+    <button class="semana-tab" onclick="navSemana(1)">Próxima ›</button>
+  </div>
+  <div id="alerta-inativos-semana"></div>
+  <div class="semana-grid" id="semana-grid"></div>
+</div>
+<!-- QR CODE -->
+<div id="page-qr" class="page">
+  <div class="section-top"><h2 style="color:var(--teal);font-size:17px">📲 QR Code da Escala</h2></div>
+  <div class="qr-section"><h3>Link da página pública</h3>
+    <div class="qr-input-row"><input type="url" id="qr-url" placeholder="https://escala-dml.netlify.app" oninput="gerarQR()"><button class="btn btn-primary btn-sm" onclick="gerarQR()">Gerar QR</button></div>
+    <div class="qr-canvas-wrap" id="qr-wrap" style="display:none"><canvas id="qr-canvas" width="240" height="240"></canvas><div class="qr-hint">Aponte a câmera do celular para o QR Code<br>ou baixe e imprima</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarQR()">⬇ Baixar PNG</button><button class="btn btn-ghost btn-sm" onclick="copiarLink()">📋 Copiar Link</button></div></div>
+  </div>
+  <div class="qr-section"><h3>💡 Como usar</h3><p style="font-size:13px;color:var(--muted);line-height:1.7">1. Exporte a página clicando em <strong style="color:var(--teal)">🌐 Página</strong><br>2. Publique no Netlify e copie o link<br>3. Cole o link acima e gere o QR Code<br>4. Baixe e compartilhe no grupo do WhatsApp ou imprima para o mural do DML</p></div>
+</div>
+</main>
+
+<!-- MODAL CALENDÁRIO -->
+<div class="modal-overlay" id="modal-cal">
+  <div class="modal" style="width:480px">
+    <h3>📅 Criar Escala pelo Calendário</h3>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div class="form-row" style="flex:1;margin-bottom:0">
+        <label>Mês</label>
+        <select id="cal-mes">
+          <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+          <option value="2">Março</option><option value="3">Abril</option>
+          <option value="4">Maio</option><option value="5">Junho</option>
+          <option value="6">Julho</option><option value="7">Agosto</option>
+          <option value="8">Setembro</option><option value="9">Outubro</option>
+          <option value="10">Novembro</option><option value="11">Dezembro</option>
+        </select>
+      </div>
+      <div class="form-row" style="flex:1;margin-bottom:0">
+        <label>Ano</label>
+        <input type="number" id="cal-ano" min="2024" max="2099" value="2026">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+      Serão gerados automaticamente todos os <strong style="color:var(--teal)">Domingos</strong> (manhã 9h + noite 18h),
+      <strong style="color:var(--teal)">Terças</strong>, <strong style="color:var(--teal)">Quintas</strong> e
+      <strong style="color:var(--teal)">Sábados</strong> do mês. S&H será adicionado por padrão nos dias aplicáveis.
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px">Nomes padrão dos cultos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-row" style="margin-bottom:0"><label>Dom. Manhã (9h)</label><input type="text" id="cal-dom-m" value="EBD"></div>
+        <div class="form-row" style="margin-bottom:0"><label>Dom. Noite (18h)</label><input type="text" id="cal-dom-n" value="CULTO DA FAMÍLIA"></div>
+        <div class="form-row" style="margin-bottom:0"><label>Terça (19:30)</label><input type="text" id="cal-ter" value="CULTO DA FAMÍLIA"></div>
+        <div class="form-row" style="margin-bottom:0"><label>Quinta (19:30)</label><input type="text" id="cal-qui" value="CULTO DE DOUTRINA"></div>
+        <div class="form-row" style="margin-bottom:0;grid-column:1/-1"><label>Sábado (19:30)</label><input type="text" id="cal-sab" value="CULTO DA JUVENTUDE"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-cal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarCalendario()">Gerar Escala</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR CULTO -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <h3>✏️ Editar Culto</h3>
+    <input type="hidden" id="edit-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row" style="margin-bottom:0"><label>Nome do Culto</label><input type="text" id="edit-nome"></div>
+      <div class="form-row" style="margin-bottom:0"><label>Horário</label><input type="text" id="edit-hora" placeholder="19:30"></div>
+    </div>
+    <div class="form-row" style="margin-top:12px"><label>Dirigente</label><input type="text" id="edit-dir"></div>
+    <div class="form-row"><label>📝 Nota interna (não aparece no PDF)</label>
+      <textarea class="nota-input" id="edit-nota" placeholder="Observações, substituições, avisos..."></textarea>
+    </div>
+    <div class="form-row">
+      <label>Grupos de Louvor</label>
+      <div class="grupo-chips" id="edit-chips"></div>
+      <select id="edit-sel" onchange="addChip()"><option value="">— Adicionar grupo —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-edit')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEdit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CULTO ESPECIAL -->
+<div class="modal-overlay" id="modal-esp">
+  <div class="modal">
+    <h3>✨ Culto Especial</h3>
+    <div class="form-row"><label>Data</label><input type="number" id="esp-data" min="1" max="31" placeholder="Dia"></div>
+    <div class="form-row"><label>Dia da Semana</label>
+      <select id="esp-dia">
+        <option value="Domingo">Domingo</option><option value="Terça">Terça</option>
+        <option value="Quinta">Quinta</option><option value="Sábado">Sábado</option>
+        <option value="Especial">Especial</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Horário</label><input type="text" id="esp-hora" placeholder="19:30"></div>
+    <div class="form-row"><label>Nome do Culto</label><input type="text" id="esp-culto"></div>
+    <div class="form-row"><label>Dirigente</label><input type="text" id="esp-dirg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-esp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEsp()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTEPAD FLUTUANTE -->
+<button id="notepad-toggle" onclick="toggleNotepad()" title="Anotações rápidas">📝</button>
+<div id="notepad-panel">
+  <div id="notepad-header">
+    <span>📝 Anotações</span>
+    <button onclick="toggleNotepad()" title="Fechar">×</button>
+  </div>
+  <textarea id="notepad-area" placeholder="Anote lembretes, observações entre meses, pendências..." oninput="salvarNotepad()"></textarea>
+  <div id="notepad-footer">
+    <span id="notepad-saved"></span>
+    <button id="notepad-clear" onclick="limparNotepad()">🗑 Limpar</button>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="loading-overlay"><div class="spinner"></div><p>Lendo arquivo...</p></div>
+
+<script>
+const SH_LABEL='S&H (SALMOS E HINOS)';
+const SH_DIAS=/domingo|ter[cç]a|quinta/i;
+
+const GRUPOS_DEFAULT = {
+  "Grupos Musicais":["ADONAI","ADORARE","ÁTRIOS DE LOUVOR","CANTO NOVO","COMUNHÃO","LOUVOR CONGREGACIONAL","REDENÇÃO"],
+  "Corais":["CORAL ROBERT KALLEY","CORAL CANÇÃO DE PAZ","CORAL CRESCENDO EM CRISTO"],
+  "Grupos Vocais":["QUARTETO KERIGMA","LEVITAS DO SENHOR","ADORADORAS DO REI","CHAMA ARDENTE","BANDINHA DE CASAIS"],
+  "Grupos de Coreografia":["SEMEARTE","KYRIOS"],
+  "Cantores":["THIAGO E GABRIELLY LEMOS","RIVAILDA","DIAC. MARCOS ANTÔNIO","IRMÃ GORETTI"]
+};
+
+function migrarGrupos(g){
+  if(g['Grupo Vocal']&&!g['Grupos Vocais']){g['Grupos Vocais']=g['Grupo Vocal'];delete g['Grupo Vocal'];}
+  if(g['Coreografia']&&!g['Grupos de Coreografia']){g['Grupos de Coreografia']=g['Coreografia'];delete g['Coreografia'];}
+  if(g['Cantores'])g['Cantores']=g['Cantores'].filter(x=>x!==SH_LABEL);
+  return g;
+}
+function loadGrupos(){
+  const raw=localStorage.getItem('dml_grupos');
+  const g=raw?JSON.parse(raw):JSON.parse(JSON.stringify(GRUPOS_DEFAULT));
+  const migrado=migrarGrupos(g);
+  localStorage.setItem('dml_grupos',JSON.stringify(migrado));
+  return migrado;
+}
+function saveGrupos(g){localStorage.setItem('dml_grupos',JSON.stringify(g));}
+let GRUPOS=loadGrupos();
+const todosGrupos=()=>Object.values(GRUPOS).flat();
+
+function getBadgeOrder(){
+  const g=GRUPOS;
+  return[
+    SH_LABEL,
+    ...(g['Corais']||[]),
+    ...(g['Grupos Vocais']||[]),
+    ...(g['Grupos de Coreografia']||[]),
+    ...(g['Cantores']||[]),
+    ...(g['Grupos Musicais']||[]),
+  ];
+}
+
+function sortGrupos(grupos){
+  const order=getBadgeOrder();
+  const rest=todosGrupos().filter(g=>!order.includes(g));
+  const full=[...order,...rest];
+  return [...grupos].sort((a,b)=>{
+    const ia=full.indexOf(a), ib=full.indexOf(b);
+    return (ia<0?9999:ia)-(ib<0?9999:ib);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// FILTROS DE IMPORTAÇÃO
+// ═══════════════════════════════════════════════
+const IGNORAR=[/hora\s*nona/i,/reuni[aã]o\s*(de\s*)?(coordenadores?|oficial|administrativa|ejc|pastores?|di[aá]conos?)/i,/reuni[aã]o\s+com/i,/conselho/i,/vig[ií]lia/i];
+const DIAS_OK=/domingo|ter[cç]a|quinta|s[aá]b(ado)?/i;
+
+let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null;
+const uid=()=>'c'+(++_uid);
+const getCulto=id=>cultos.find(c=>c.id===id);
+
+// ═══════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════
+// UPLOAD / PARSE
+// ═══════════════════════════════════════════════
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f?.name.endsWith('.docx'))processarArq(f);else toast('⚠️ Envie um .docx');});
+function lerArquivo(e){if(e.target.files[0])processarArq(e.target.files[0]);}
+
+async function processarArq(file){
+  mostrarLoad(true);
+  try{
+    const buf=await file.arrayBuffer();
+    const res=await mammoth.convertToHtml({arrayBuffer:buf});
+    const parsed=parsear(res.value);
+    if(!parsed.length){toast('⚠️ Nenhum culto encontrado.');mostrarLoad(false);return;}
+    cultos=parsed;sessaoId='sess_'+Date.now();mesLabel=extrairMes(file.name);
+    abrirEditor();
+  }catch(e){console.error(e);toast('❌ Erro ao ler arquivo');}
+  mostrarLoad(false);
+}
+
+function extrairMes(fn){
+  const m=fn.match(/([A-Za-záéíóúãõâêîôûçÁÉÍÓÚÃÕÂÊÎÔÛÇ]+)[_\s-]*(\d{4})/i);
+  return m?`${m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase()} ${m[2]}`:'Escala do Mês';
+}
+
+function parsear(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const rows=[...doc.querySelectorAll('tr')];
+  const lista=[];
+  for(const row of rows){
+    const cells=[...row.querySelectorAll('td')];
+    if(cells.length<4)continue;
+    const rData=cells[0]?.textContent?.trim()||'';
+    const rDia=cells[1]?.textContent?.trim()||'';
+    const rHora=cells[2]?.textContent?.trim()||'';
+    const rDir=cells[3]?.textContent?.trim()||'';
+    if(!rData||rData.toLowerCase().includes('data'))continue;
+    const dn=rData.replace(/\D/g,'');
+    if(!dn||dn==='0')continue;
+    const data=dn.padStart(2,'0');
+    const horas=(rHora.match(/\d{1,2}:\d{2}/g)||[rHora]).filter(Boolean);
+    const linhas=rDir.split(/\n|¶/).map(s=>s.trim()).filter(Boolean);
+    horas.forEach((hora,i)=>{
+      const ld=linhas[i]||linhas[0]||rDir;
+      const pts=ld.split(/\s*[-–—]{1,2}\s+/);
+      const nome=pts[0]?.trim()||'';
+      const dir=pts.slice(1).join(' ').trim();
+      if(IGNORAR.some(p=>p.test(nome)))return;
+      if(rDia&&!DIAS_OK.test(rDia))return;
+      if(!nome)return;
+      const dia=rDia.replace(/\s*\/?\s*(manh[aã]|noite|tarde)/gi,'').trim();
+      // S&H automático para Domingo, Terça, Quinta
+      const grupos=SH_DIAS.test(dia)?[SH_LABEL]:[];
+      lista.push({id:uid(),data,dia,hora,culto:nome.toUpperCase(),dirigente:dir,grupos,oculto:false,especial:false});
+    });
+  }
+  return lista;
+}
+
+// ═══════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════
+function abrirEditor(){
+  ['pill-edit','pill-prev','pill-semana'].forEach(id=>document.getElementById(id).style.display='');
+  document.getElementById('hdr-badge').style.display='inline';
+  document.getElementById('hdr-badge').textContent=mesLabel;
+  ['btn-img','btn-pdf','btn-save','btn-pagina'].forEach(id=>document.getElementById(id).style.display='inline-block');
+  document.getElementById('btn-limpar').style.display='inline-block';
+  irPara('edit');renderCultos();renderSidebar();
+}
+
+function renderCultos(){
+  const grid=document.getElementById('cultos-grid');
+  grid.innerHTML='';
+  const showOc=document.getElementById('chk-ocultos').checked;
+  cultos.forEach(c=>{
+    if(c.oculto&&!showOc)return;
+    const isDom=/domingo/i.test(c.dia);
+    const isTer=/ter[cç]a/i.test(c.dia);
+    const isQui=/quinta/i.test(c.dia);
+    const isSab=/s[aá]b/i.test(c.dia);
+    const diaClass=c.especial?'esp-card':isDom?'dom-card':isTer?'ter-card':isQui?'qui-card':isSab?'sab-card':'';
+    const card=document.createElement('div');
+    card.className='culto-card'+(c.grupos.length?' has-grupos':'')+(c.oculto?' oculto':'')+(diaClass?' '+diaClass:'');
+    const dot=c.grupos.length?'<span class="sdot sdot-ok"></span>':'<span class="sdot sdot-no"></span>';
+    const bOc=c.oculto?'<span class="badge badge-oc">oculto</span>':'';
+    const bEsp=c.especial?'<span class="badge badge-esp">especial</span>':'';
+    const bNota=c.nota?'<span class="nota-badge" title="'+c.nota.replace(/"/g,"'")+'">📝 nota</span>':'';
+    const gStr=c.grupos.length
+      ?sortGrupos(c.grupos).map(g=>{const lbl=g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ');return`<span class="gbadge ${badgeClass(g)}">${lbl}</span>`;}).join('')
+      :'<span style="color:var(--muted);font-style:italic;font-size:11px">sem grupo</span>';
+    card.draggable=true;
+    card.dataset.id=c.id;
+    card.innerHTML=`
+      <div class="c-header">
+        <div class="drag-handle" title="Arrastar para reordenar">⠿</div>
+        <div class="c-cell"><div class="cell-data">${c.data}</div><div class="cell-abrev">${abrevDia(c.dia)}</div></div>
+        <div class="c-cell"><div style="font-size:11px;color:var(--muted)">${c.dia}</div></div>
+        <div class="c-cell"><div class="cell-hora">${c.hora}</div></div>
+        <div class="c-cell flex1">
+          <div class="cell-nome">${dot}${c.culto}${bOc}${bEsp}${bNota}</div>
+          <div class="cell-dir">${c.dirigente||'<span style="color:var(--muted);font-style:italic">sem dirigente</span>'}</div>
+          <div style="margin-top:4px">${gStr}</div>
+        </div>
+        <div class="c-actions">
+          <button class="btn-icon" onclick="abrirModalEdit('${c.id}')">✏️</button>
+          <button class="btn-vis" onclick="toggleVis('${c.id}')">${c.oculto?'🙈':'👁'}</button>
+        </div>
+      </div>`;
+    // Drag reorder
+    card.addEventListener('dragstart',e=>{
+      if(e.target.classList.contains('drag-badge')||e.target.closest('.sidebar-panel'))return;
+      _dragCard=c.id;card.classList.add('dragging-card');
+      e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',()=>{card.classList.remove('dragging-card');_dragCard=null;document.querySelectorAll('.drag-over-card').forEach(el=>el.classList.remove('drag-over-card'));});
+    card.addEventListener('dragover',e=>{
+      if(!_dragCard||_dragCard===c.id)return;
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      document.querySelectorAll('.drag-over-card').forEach(el=>el.classList.remove('drag-over-card'));
+      card.classList.add('drag-over-card');
+    });
+    card.addEventListener('drop',e=>{
+      if(!_dragCard||_dragCard===c.id)return;
+      e.preventDefault();card.classList.remove('drag-over-card');
+      const fromIdx=cultos.findIndex(x=>x.id===_dragCard);
+      const toIdx=cultos.findIndex(x=>x.id===c.id);
+      if(fromIdx<0||toIdx<0)return;
+      const [moved]=cultos.splice(fromIdx,1);
+      cultos.splice(toIdx,0,moved);
+      renderCultos();
+    });
+    grid.appendChild(card);
+    enableDropOnCard(card, c.id);
+  });
+  renderSidebar();
+}
+
+function abrevDia(d){
+  const s=(d||'').toLowerCase();
+  if(s.includes('dom'))return'DOM';
+  if(s.includes('ter'))return'TER';
+  if(s.includes('qui'))return'QUI';
+  if(s.includes('sáb')||s.includes('sab'))return'SÁB';
+  if(s.includes('seg'))return'SEG';
+  if(s.includes('qua'))return'QUA';
+  if(s.includes('sex'))return'SEX';
+  return(d||'').substring(0,3).toUpperCase();
+}
+
+function toggleVis(id){const c=getCulto(id);if(!c)return;c.oculto=!c.oculto;renderCultos();toast(c.oculto?'🙈 Oculto':'👁 Visível');}
+
+// Conflito = mesmo grupo em cultos a ≤2 dias de distância (exceto mesmo dia)
+
+// ═══════════════════════════════════════════════
+// MODAL EDITAR
+// ═══════════════════════════════════════════════
+function buildSelect(excluir=[]){
+  let h='<option value="">— Adicionar grupo —</option>';
+  for(const[cat,lista]of Object.entries(GRUPOS)){
+    h+=`<optgroup label="${cat}">`;
+    lista.forEach(g=>{if(!excluir.includes(g))h+=`<option value="${g}">${g==='S&H (SALMOS E HINOS)'?'S&H':g}</option>`;});
+    h+='</optgroup>';
+  }
+  return h;
+}
+
+let _eg=[];
+function abrirModalEdit(id){
+  const c=getCulto(id);if(!c)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-nome').value=c.culto;
+  document.getElementById('edit-hora').value=c.hora;
+  document.getElementById('edit-dir').value=c.dirigente;
+  document.getElementById('edit-nota').value=c.nota||'';
+  _eg=[...c.grupos];renderChips();
+  document.getElementById('modal-edit').classList.add('open');
+}
+function chipClass(g){
+  if(g===SH_LABEL) return 'chip-sh';
+  const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0]||'';
+  if(cat==='Grupos Musicais')       return 'chip-musical';
+  if(cat==='Corais')                return 'chip-coral';
+  if(cat==='Grupos Vocais')         return 'chip-vocal';
+  if(cat==='Grupos de Coreografia') return 'chip-coreo';
+  if(cat==='Cantores')              return 'chip-cantor';
+  return 'chip-musical';
+}
+
+function renderChips(){
+  document.getElementById('edit-chips').innerHTML=_eg.map((g,i)=>
+    `<span class="chip ${chipClass(g)}"><span>${g===SH_LABEL?'S&H':g}</span><button onclick="remChip(${i})">×</button></span>`).join('');
+  document.getElementById('edit-sel').innerHTML=buildSelect(_eg);
+}
+function addChip(){const v=document.getElementById('edit-sel').value;if(!v)return;if(!_eg.includes(v)){_eg.push(v);renderChips();}}
+function remChip(i){_eg.splice(i,1);renderChips();}
+function confirmarEdit(){
+  const id=document.getElementById('edit-id').value;
+  const c=getCulto(id);if(!c)return;
+  c.culto=document.getElementById('edit-nome').value.trim().toUpperCase()||c.culto;
+  c.hora=document.getElementById('edit-hora').value.trim()||c.hora;
+  c.dirigente=document.getElementById('edit-dir').value.trim();
+  c.nota=document.getElementById('edit-nota').value.trim();
+  c.grupos=sortGrupos([..._eg]);
+  fecharModal('modal-edit');renderCultos();toast('✅ Culto atualizado');
+}
+
+// ═══════════════════════════════════════════════
+// MODAL ESPECIAL
+// ═══════════════════════════════════════════════
+function abrirModalEsp(){document.getElementById('modal-esp').classList.add('open');}
+function confirmarEsp(){
+  const data=document.getElementById('esp-data').value.trim();
+  const dia=document.getElementById('esp-dia').value;
+  const hora=document.getElementById('esp-hora').value.trim();
+  const nome=document.getElementById('esp-culto').value.trim();
+  const dir=document.getElementById('esp-dirg').value.trim();
+  if(!data||!nome||!hora){toast('⚠️ Preencha Data, Horário e Nome');return;}
+  const grupos=SH_DIAS.test(dia)?[SH_LABEL]:[];
+  cultos.push({id:uid(),data:data.padStart(2,'0'),dia,hora,culto:nome.toUpperCase(),dirigente:dir,grupos,oculto:false,especial:true});
+  cultos.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
+  fecharModal('modal-esp');renderCultos();toast('✅ Adicionado!');
+  ['esp-data','esp-hora','esp-culto','esp-dirg'].forEach(id=>document.getElementById(id).value='');
+}
+function fecharModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// ═══════════════════════════════════════════════
+// PREVIEW / PDF
+// ═══════════════════════════════════════════════
+function badgeClass(g){
+  if(g===SH_LABEL) return 'gbadge-sh';
+  const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0]||'';
+  if(cat==='Grupos Musicais') return 'gbadge-musical';
+  if(cat==='Corais')          return 'gbadge-coral';
+  if(cat==='Grupos Vocais')     return 'gbadge-vocal';
+  if(cat==='Grupos de Coreografia')     return 'gbadge-coreo';
+  if(cat==='Cantores')        return 'gbadge-cantor';
+  return 'gbadge-musical';
+}
+
+// ═══════════════════════════════════════════════
+// PAINEL LATERAL — DRAG & DROP
+// ═══════════════════════════════════════════════
+function badgeColorClass(g){
+  if(g===SH_LABEL) return 'gbadge-sh';
+  const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0]||'';
+  if(cat==='Grupos Musicais') return 'gbadge-musical';
+  if(cat==='Corais')          return 'gbadge-coral';
+  if(cat==='Grupos Vocais')     return 'gbadge-vocal';
+  if(cat==='Grupos de Coreografia')     return 'gbadge-coreo';
+  if(cat==='Cantores')        return 'gbadge-cantor';
+  return 'gbadge-musical';
+}
+
+// Migra categorias antigas para os nomes novos
+
+// Estado colapsado por categoria (persiste na sessão)
+const _catCollapsed={};
+
+// Ordem de exibição das categorias no painel lateral
+const CAT_ORDER=['Cantores','Grupos de Coreografia','Grupos Vocais','Corais','Grupos Musicais'];
+
+function renderSidebar(){
+  const container=document.getElementById('sidebar-cats');
+  if(!container)return;
+  container.innerHTML='';
+
+  // S&H como entrada especial no topo
+  const shSec=document.createElement('div');
+  shSec.className='sidebar-cat';
+  shSec.innerHTML=`
+    <div class="sidebar-cat-hdr" onclick="toggleSidebarCat('__sh')">
+      <span>S&H</span><span class="cat-arrow">${_catCollapsed['__sh']?'':'▾'}</span>
+    </div>
+    <div class="sidebar-cat-body" ${_catCollapsed['__sh']?'style="display:none"':''}>
+      <span class="drag-badge gbadge-sh"
+        draggable="true" data-grupo="${SH_LABEL}"
+        ondragstart="onDragStart(event,'${SH_LABEL.replace(/'/g,"\\'")}')">S&H</span>
+    </div>`;
+  container.appendChild(shSec);
+
+  // Demais categorias na ordem definida
+  const cats=[...CAT_ORDER,...Object.keys(GRUPOS).filter(c=>!CAT_ORDER.includes(c))];
+  for(const cat of cats){
+    const lista=GRUPOS[cat];
+    if(!lista||!lista.length)continue;
+    const collapsed=_catCollapsed[cat]||false;
+    const sec=document.createElement('div');
+    sec.className='sidebar-cat'+(collapsed?' collapsed':'');
+    sec.innerHTML=`
+      <div class="sidebar-cat-hdr" onclick="toggleSidebarCat('${cat}')">
+        <span>${cat}</span><span class="cat-arrow">▾</span>
+      </div>
+      <div class="sidebar-cat-body">
+        ${lista.map(g=>`
+          <span class="drag-badge ${badgeColorClass(g)}"
+            draggable="true"
+            data-grupo="${g}"
+            ondragstart="onDragStart(event,'${g.replace(/'/g,"\\'")}')">
+            ${g}
+          </span>`).join('')}
+      </div>`;
+    container.appendChild(sec);
+  }
+}
+
+function toggleSidebarCat(cat){
+  _catCollapsed[cat]=!_catCollapsed[cat];
+  renderSidebar();
+}
+
+let _dragGrupo=null;
+
+function onDragStart(e, grupo){
+  _dragGrupo=grupo;
+  e.dataTransfer.effectAllowed='copy';
+  e.target.classList.add('dragging');
+  setTimeout(()=>e.target.classList.remove('dragging'),0);
+}
+
+function enableDropOnCard(card, cultoId){
+  card.addEventListener('dragover', e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect='copy';
+    card.classList.add('drop-over');
+  });
+  card.addEventListener('dragleave', ()=>card.classList.remove('drop-over'));
+  card.addEventListener('drop', e=>{
+    e.preventDefault();
+    card.classList.remove('drop-over');
+    if(!_dragGrupo)return;
+    const c=getCulto(cultoId);
+    if(!c){_dragGrupo=null;return;}
+
+    // Verifica se é Grupo Musical sendo lançado num Domingo
+    const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(_dragGrupo))?.[0]||'';
+    const isMusical=cat==='Grupos Musicais';
+    const isDomingo=/domingo/i.test(c.dia);
+
+    if(isMusical && isDomingo){
+      // Aplica em todos os cultos do mesmo domingo (mesma data)
+      const irmãos=cultos.filter(x=>x.data===c.data&&/domingo/i.test(x.dia));
+      let adicionados=0;
+      irmãos.forEach(x=>{
+        if(!x.grupos.includes(_dragGrupo)){x.grupos=sortGrupos([...x.grupos,_dragGrupo]);adicionados++;}
+      });
+      renderCultos();
+      toast(adicionados>0?`✅ ${_dragGrupo} adicionado manhã e noite`:'⚠️ Já atribuído nos dois cultos');
+    } else {
+      if(!c.grupos.includes(_dragGrupo)){
+        c.grupos=sortGrupos([...c.grupos,_dragGrupo]);
+        renderCultos();
+        toast(`✅ ${_dragGrupo===SH_LABEL?'S&H':_dragGrupo} adicionado`);
+      } else {
+        toast('⚠️ Grupo já atribuído');
+      }
+    }
+    _dragGrupo=null;
+  });
+}
+
+function renderPreview(){
+  const tbody=document.getElementById('prev-tbody');
+  tbody.innerHTML='';
+  document.getElementById('prev-mes').textContent=mesLabel;
+  const vis=cultos.filter(c=>!c.oculto);
+  if(!vis.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><div class="icon">🎵</div><p>Nenhum culto visível.</p></div></td></tr>`;return;}
+
+  const louvorCell=c=>{
+    if(!c.grupos.length)return'<td>—</td>';
+    const sorted=sortGrupos(c.grupos);
+    const labelG=g=>g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ');
+    const badges=sorted.map(g=>`<span class="gbadge ${badgeClass(g)}" onclick="filtrarPrev('${g.replace(/'/g,"\\'")}')" title="Filtrar por ${labelG(g)}">${labelG(g)}</span>`).join('');
+    return`<td class="td-louvor">${badges}</td>`;
+  };
+
+  let i=0;
+  while(i<vis.length){
+    const c=vis[i];
+    const isDom=/domingo/i.test(c.dia);
+    const isTer=/ter[cç]a/i.test(c.dia);
+    const isQui=/quinta/i.test(c.dia);
+    const isSab=/s[aá]b/i.test(c.dia);
+    const rowClass=c.especial?'esp-row':isDom?'dom-row':isTer?'ter-row':isQui?'qui-row':isSab?'sab-row':'';
+    const nxt=vis[i+1];
+    const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
+
+    if(isDom&&hasNxt){
+      const tr1=document.createElement('tr');
+      tr1.className='dom-row dom-tr1';
+      tr1.dataset.grupos=[...new Set([...c.grupos,...nxt.grupos])].join('|');
+      tr1.innerHTML=`
+        <td rowspan="2" style="vertical-align:middle;border-right:1px solid var(--border)">
+          <div class="td-data-wrap"><span class="td-data">${c.data}</span><span class="td-dia">${abrevDia(c.dia)}</span></div>
+        </td>
+        <td class="td-hora">${c.hora}</td>
+        <td><div class="td-culto-wrap"><span class="td-culto-nome">${c.culto}</span><span class="td-culto-dir">${c.dirigente||''}</span></div></td>
+        ${louvorCell(c)}`;
+      tbody.appendChild(tr1);
+      const tr2=document.createElement('tr');
+      tr2.className='dom-row dom-tr2';
+      tr2.dataset.grupos=[...new Set([...c.grupos,...nxt.grupos])].join('|');
+      tr2.innerHTML=`
+        <td class="td-hora">${nxt.hora}</td>
+        <td><div class="td-culto-wrap"><span class="td-culto-nome">${nxt.culto}</span><span class="td-culto-dir">${nxt.dirigente||''}</span></div></td>
+        ${louvorCell(nxt)}`;
+      tbody.appendChild(tr2);
+      i+=2;
+    }else{
+      const tr=document.createElement('tr');
+      if(rowClass)tr.className=rowClass;
+      tr.dataset.grupos=c.grupos.join('|');
+      tr.innerHTML=`
+        <td><div class="td-data-wrap"><span class="td-data">${c.data}</span><span class="td-dia">${abrevDia(c.dia)}</span></div></td>
+        <td class="td-hora">${c.hora}</td>
+        <td><div class="td-culto-wrap"><span class="td-culto-nome">${c.culto}</span><span class="td-culto-dir">${c.dirigente||''}</span></div></td>
+        ${louvorCell(c)}`;
+      tbody.appendChild(tr);
+      i++;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// FILTRO DE GRUPO NO PREVIEW
+// ═══════════════════════════════════════════════
+function filtrarPrev(grupo){
+  const labelG=g=>g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ');
+  const bar=document.getElementById('prev-filtro-bar');
+  const lbl=document.getElementById('prev-filtro-label');
+  if(bar)bar.classList.add('show');
+  if(lbl)lbl.textContent=labelG(grupo);
+
+  const tbody=document.getElementById('prev-tbody');
+  if(!tbody)return;
+
+  // Para domingo: ambas as linhas (tr1 e tr2) têm o grupo combinado
+  // Oculta/mostra por grupo no data-grupos
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const grupos=(tr.dataset.grupos||'').split('|').filter(Boolean);
+    const temGrupo=grupos.includes(grupo);
+    // tr2 do domingo acompanha tr1 — ambos têm os mesmos grupos
+    tr.classList.toggle('oculto-prev',!temGrupo);
+  });
+
+  // Dimmer badges
+  tbody.querySelectorAll('.gbadge').forEach(b=>{
+    const oc=b.getAttribute('onclick')||'';
+    const isAtivo=oc.includes("'"+grupo.replace(/'/g,"\\'")+"'");
+    b.classList.toggle('dimmed-prev',!isAtivo);
+    b.classList.toggle('ativo-prev',isAtivo);
+  });
+}
+
+function limparFiltroPrev(){
+  document.getElementById('prev-filtro-bar')?.classList.remove('show');
+  const tbody=document.getElementById('prev-tbody');
+  if(!tbody)return;
+  tbody.querySelectorAll('tr').forEach(tr=>tr.classList.remove('oculto-prev'));
+  tbody.querySelectorAll('.gbadge').forEach(b=>b.classList.remove('dimmed-prev','ativo-prev'));
+}
+
+// ═══════════════════════════════════════════════
+// PERSISTÊNCIA
+// ═══════════════════════════════════════════════
+const SK=id=>'dml_sess_'+id;
+const getIdx=()=>JSON.parse(localStorage.getItem('dml_sessions')||'[]');
+const saveIdx=idx=>localStorage.setItem('dml_sessions',JSON.stringify(idx));
+
+function salvarSessao(){
+  const idx=getIdx();
+  const dup=idx.find(id=>{try{const d=JSON.parse(localStorage.getItem(SK(id)));return d&&d.mesLabel===mesLabel&&id!==sessaoId;}catch{return false;}});
+  if(dup){if(!confirm(`Já existe uma escala para "${mesLabel}". Substituir?`))return;localStorage.removeItem(SK(dup));saveIdx(getIdx().filter(i=>i!==dup));}
+  localStorage.setItem(SK(sessaoId),JSON.stringify({cultos,mesLabel,id:sessaoId,savedAt:new Date().toISOString()}));
+  const i=getIdx();if(!i.includes(sessaoId)){i.push(sessaoId);saveIdx(i);}
+  toast('✅ Escala salva!');renderHist();
+}
+
+function carregarSessao(id){
+  const raw=localStorage.getItem(SK(id));if(!raw)return;
+  const d=JSON.parse(raw);
+  cultos=d.cultos;mesLabel=d.mesLabel;sessaoId=d.id;
+  cultos.forEach(c=>{if(!c.id)c.id=uid();});
+  abrirEditor();
+}
+
+function excluirSessao(id){
+  if(!confirm('Excluir esta escala?'))return;
+  localStorage.removeItem(SK(id));saveIdx(getIdx().filter(i=>i!==id));
+  renderHist();toast('🗑 Excluída');
+}
+
+// ═══════════════════════════════════════════════
+// HISTÓRICO
+// ═══════════════════════════════════════════════
+function renderHist(busca=''){
+  const grid=document.getElementById('hist-grid');
+  const idx=getIdx();
+  const buscaLow=busca.toLowerCase();
+  const filtrado=idx.filter(id=>{
+    if(!busca)return true;
+    try{const d=JSON.parse(localStorage.getItem(SK(id)));
+    return d.mesLabel.toLowerCase().includes(buscaLow)||
+      d.cultos.some(c=>c.grupos.some(g=>g.toLowerCase().includes(buscaLow)));
+    }catch{return false;}
+  });
+  if(!filtrado.length){
+    grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty-state"><div class="icon">📭</div><p>${busca?'Nenhum resultado para "'+busca+'"':'Nenhuma escala salva ainda.'}</p></div></div>`;
+    return;
+  }
+  grid.innerHTML='';
+  [...filtrado].reverse().forEach(id=>{
+    const raw=localStorage.getItem(SK(id));if(!raw)return;
+    const d=JSON.parse(raw);
+    const saved=new Date(d.savedAt).toLocaleDateString('pt-BR');
+    const vis=d.cultos.filter(c=>!c.oculto).length;
+    const comG=d.cultos.filter(c=>c.grupos.length>0).length;
+    const freq={};d.cultos.forEach(c=>c.grupos.forEach(g=>{freq[g]=(freq[g]||0)+1;}));
+    const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const card=document.createElement('div');
+    card.className='hist-card';
+    card.innerHTML=`
+      <h3>${d.mesLabel}</h3>
+      <div class="meta">Salvo em ${saved} · ${vis} cultos · ${comG} com grupo</div>
+      <div class="hist-tags">${top.map(([g,n])=>`<span class="hist-tag">${g===SH_LABEL?'S&H':g} (${n}×)</span>`).join('')}</div>
+      <div class="hist-actions">
+        <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')">✏️ Abrir</button>
+        <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')">📋 Duplicar</button>
+        <button class="btn-danger" onclick="excluirSessao('${id}')">🗑</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function verHist(id){
+  const raw=localStorage.getItem(SK(id));if(!raw)return;
+  const d=JSON.parse(raw);
+  cultos=d.cultos;mesLabel=d.mesLabel;sessaoId=d.id;
+  irPara('preview');
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function todosOsCultos(filtroMes='all'){
+  return getIdx().flatMap(id=>{
+    try{const d=JSON.parse(localStorage.getItem(SK(id)));
+    if(filtroMes!=='all'&&d.mesLabel!==filtroMes)return[];
+    return d.cultos.filter(c=>!c.oculto&&c.grupos.length).map(c=>({...c,mesLabel:d.mesLabel}));
+    }catch{return[];}
+  });
+}
+
+function contarEscalas(filtroMes,filtroTipo,filtroGrupo){
+  const raw=todosOsCultos(filtroMes);
+  const seen={};const freq={};const detalhe={};
+  raw.forEach(c=>{
+    c.grupos.forEach(g=>{
+      // Filtro tipo
+      if(filtroTipo!=='all'){const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0];if(cat!==filtroTipo)return;}
+      if(filtroGrupo!=='all'&&g!==filtroGrupo)return;
+      const isDom=/domingo/i.test(c.dia);
+      const key=`${g}||${c.mesLabel}||${c.data}`;
+      if(isDom&&seen[key])return;
+      if(isDom)seen[key]=true;
+      freq[g]=(freq[g]||0)+1;
+      if(!detalhe[g])detalhe[g]=[];
+      detalhe[g].push({data:c.data,culto:c.culto,mes:c.mesLabel,dia:c.dia});
+    });
+  });
+  return{freq,detalhe};
+}
+
+function populateDashFilters(){
+  const idx=getIdx();
+  const meses=idx.map(id=>{try{return JSON.parse(localStorage.getItem(SK(id))).mesLabel;}catch{return null;}}).filter(Boolean);
+  const anos=[...new Set(meses.map(m=>m.split(' ')[1]).filter(Boolean))];
+
+  const sp=document.getElementById('dash-periodo');const cv=sp.value;
+  sp.innerHTML='<option value="all">Todos os meses</option>';
+  meses.forEach(m=>sp.innerHTML+=`<option value="${m}">${m}</option>`);
+  if(meses.includes(cv))sp.value=cv;
+
+  const sg=document.getElementById('dash-grupo');
+  sg.innerHTML='<option value="all">Todos</option>';
+  todosGrupos().forEach(g=>sg.innerHTML+=`<option value="${g}">${g===SH_LABEL?'S&H':g}</option>`);
+
+  const sa=document.getElementById('dash-ano');const ca=sa.value;
+  sa.innerHTML='<option value="all">Todos os anos</option>';
+  anos.forEach(a=>sa.innerHTML+=`<option value="${a}">${a}</option>`);
+  if(anos.includes(ca))sa.value=ca;
+}
+
+function renderDash(){
+  const fm=document.getElementById('dash-periodo').value;
+  const ft=document.getElementById('dash-tipo').value;
+  const fg=document.getElementById('dash-grupo').value;
+  const{freq,detalhe}=contarEscalas(fm,ft,fg);
+  const grid=document.getElementById('dash-grid');
+  grid.innerHTML=''; // limpa SEMPRE antes de adicionar
+
+  if(!Object.keys(freq).length){
+    grid.innerHTML=`<div class="dash-card full"><div class="empty-state"><div class="icon">📊</div><p>Nenhum dado. Salve escalas primeiro.</p></div></div>`;
+    return;
+  }
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  const max=sorted[0][1];
+
+  // Card ranking textual
+  const cardR=document.createElement('div');cardR.className='dash-card';
+  cardR.innerHTML=`<h3>📋 Detalhes por Participação</h3>`+sorted.map(([g,n])=>`
+    <div class="rank-item">
+      <span class="rank-name" title="${g}">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(n/max*100)}%"></div></div>
+      <span class="rank-count">${n}</span>
+    </div>`).join('');
+  grid.appendChild(cardR);
+
+  // Card detalhe por grupo
+  const grupos=fg==='all'?sorted.map(([g])=>g):[fg];
+  const cardD=document.createElement('div');cardD.className='dash-card';
+  cardD.innerHTML=`<h3>🔍 Cultos por Grupo</h3>`+grupos.map(g=>`
+    <div class="grupo-detail">
+      <div class="grupo-detail-hdr">
+        <span class="grupo-detail-nome">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>
+        <span class="grupo-detail-count">${freq[g]||0}×</span>
+      </div>
+      ${(detalhe[g]||[]).map(it=>`<span class="culto-pill"><span class="pill-data">${it.data} ${it.mes}</span>${it.culto}</span>`).join('')}
+    </div>`).join('');
+  grid.appendChild(cardD);
+
+  // Gráficos Chart.js — só atualiza, não recria o DOM
+  if(window.Chart) setTimeout(()=>{renderCharts();renderComparativo();},50);
+}
+
+
+// ═══════════════════════════════════════════════
+// RELATÓRIO ANUAL
+// ═══════════════════════════════════════════════
+function renderAnual(){
+  const filtroAno=document.getElementById('dash-ano').value;
+  const wrap=document.getElementById('relatorio-anual');wrap.innerHTML='';
+  const idx=getIdx();
+  const sessoes=idx.map(id=>{
+    try{const d=JSON.parse(localStorage.getItem(SK(id)));if(!d)return null;
+    const ano=d.mesLabel.split(' ')[1];
+    if(filtroAno!=='all'&&ano!==filtroAno)return null;
+    return d;}catch{return null;}
+  }).filter(Boolean).sort((a,b)=>a.mesLabel.localeCompare(b.mesLabel,'pt'));
+
+  if(!sessoes.length){wrap.innerHTML=`<div class="anual-empty">Nenhum dado para o período.</div>`;return;}
+  const agrupado={};
+  sessoes.forEach(d=>{
+    const seen={};
+    d.cultos.filter(c=>!c.oculto).forEach(c=>{
+      c.grupos.forEach(g=>{
+        const isDom=/domingo/i.test(c.dia);
+        const key=`${g}||${c.data}`;
+        if(isDom&&seen[key])return;if(isDom)seen[key]=true;
+        if(!agrupado[g])agrupado[g]={};
+        if(!agrupado[g][d.mesLabel])agrupado[g][d.mesLabel]=[];
+        agrupado[g][d.mesLabel].push({data:c.data,culto:c.culto});
+      });
+    });
+  });
+  Object.entries(agrupado)
+    .map(([g,meses])=>({g,total:Object.values(meses).reduce((s,a)=>s+a.length,0),meses}))
+    .sort((a,b)=>b.total-a.total)
+    .forEach(({g,total,meses})=>{
+      const sec=document.createElement('div');
+      sec.className='dash-card';sec.style.marginBottom='10px';
+      const mHtml=Object.entries(meses).sort(([a],[b])=>a.localeCompare(b,'pt')).map(([mes,itens])=>`
+        <div class="anual-mes-hdr">📅 ${mes} — ${itens.length}×</div>
+        <div>${itens.map(it=>`<span class="culto-pill"><span class="pill-data">Dia ${it.data}</span>${it.culto}</span>`).join('')}</div>`).join('');
+      sec.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span class="grupo-detail-nome" style="font-size:14px">${g===SH_LABEL?'S&H':g}</span>
+          <span class="month-badge">${total}× no ano</span>
+        </div>${mHtml}`;
+      wrap.appendChild(sec);
+    });
+}
+
+function imprimirAnual(){
+  const prev=document.getElementById('page-preview');
+  const dash=document.getElementById('page-dash');
+  // Cria janela de impressão só com o relatório anual
+  const html=`<html><head><meta charset="UTF-8"><style>
+    body{font-family:'Segoe UI',sans-serif;font-size:11px;color:#111;padding:14mm;}
+    h1{color:#1a9068;font-size:16px;margin-bottom:8px;}
+    h2{color:#1a9068;font-size:13px;margin:14px 0 5px;}
+    .mes{font-size:11px;font-weight:700;color:#27aae1;margin:8px 0 4px;border-bottom:1px solid #ddd;padding-bottom:2px;}
+    .pill{display:inline-block;background:#e8f8f3;border:1px solid #1a6a50;border-radius:10px;padding:1px 7px;font-size:10px;margin:1px;}
+    .pill .d{color:#1a9068;font-weight:700;}
+    .grupo{margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #eee;}
+    .grupo:last-child{border:none;}
+    .gnome{font-size:13px;font-weight:700;}
+    .gcont{font-size:11px;color:#666;}
+  </style></head><body>
+    <h1>📋 Relatório Anual — Departamento de Música e Louvor</h1>
+    <p style="color:#666;font-size:11px;margin-bottom:16px">Igreja Evangélica Congregacional Central · Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+    ${document.getElementById('relatorio-anual').innerHTML.replace(/class="dash-card"/g,'class="grupo"').replace(/class="grupo-detail-nome" style="font-size:14px"/g,'class="gnome"').replace(/class="month-badge"/g,'class="gcont"').replace(/class="anual-mes-hdr"/g,'class="mes"').replace(/class="culto-pill"/g,'class="pill"').replace(/class="pill-data"/g,'class="d"')}
+  </body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();w.print();
+}
+
+// ═══════════════════════════════════════════════
+// CONFIGURAÇÕES — GESTÃO DE GRUPOS
+// ═══════════════════════════════════════════════
+function renderConfig(){
+  const body=document.getElementById('config-body');
+  body.innerHTML='';
+  for(const[cat,lista]of Object.entries(GRUPOS)){
+    const sec=document.createElement('div');sec.className='config-section';
+    sec.innerHTML=`<h3>${cat}</h3>`+
+      lista.map(g=>`
+        <div class="config-row">
+          <div><div class="config-nome">${g}</div><div class="config-cat">${cat}</div></div>
+          <button class="btn-danger" onclick="removerGrupo('${cat}','${g.replace(/'/g,"\\'")}')">🗑 Remover</button>
+        </div>`).join('');
+    body.appendChild(sec);
+  }
+}
+
+function adicionarGrupo(){
+  const nome=document.getElementById('novo-grupo-nome').value.trim().toUpperCase();
+  const cat=document.getElementById('novo-grupo-cat').value;
+  if(!nome){toast('⚠️ Digite o nome');return;}
+  if(!GRUPOS[cat])GRUPOS[cat]=[];
+  if(GRUPOS[cat].includes(nome)){toast('⚠️ Já existe');return;}
+  GRUPOS[cat].push(nome);
+  saveGrupos(GRUPOS);
+  document.getElementById('novo-grupo-nome').value='';
+  renderConfig();toast('✅ Grupo adicionado!');
+}
+
+function removerGrupo(cat,nome){
+  if(!confirm(`Remover "${nome}" da categoria "${cat}"?`))return;
+  GRUPOS[cat]=GRUPOS[cat].filter(g=>g!==nome);
+  if(!GRUPOS[cat].length)delete GRUPOS[cat];
+  saveGrupos(GRUPOS);renderConfig();toast('🗑 Removido');
+}
+
+// ═══════════════════════════════════════════════
+// BACKUP / RESTAURAR JSON
+// ═══════════════════════════════════════════════
+function exportarJSON(){
+  const idx=getIdx();
+  const all={grupos:GRUPOS,sessions:{}};
+  idx.forEach(id=>{try{all.sessions[id]=JSON.parse(localStorage.getItem(SK(id)));}catch{}});
+  const blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`dml-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
+  toast('✅ Backup exportado!');
+}
+
+function importarJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const all=JSON.parse(ev.target.result);
+      if(all.grupos){GRUPOS=all.grupos;saveGrupos(GRUPOS);}
+      if(all.sessions){
+        const ids=Object.keys(all.sessions);
+        ids.forEach(id=>{localStorage.setItem(SK(id),JSON.stringify(all.sessions[id]));});
+        const idx=getIdx();const merged=[...new Set([...idx,...ids])];saveIdx(merged);
+      }
+      toast('✅ Backup restaurado!');renderHist();
+    }catch{toast('❌ Arquivo inválido');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ═══════════════════════════════════════════════
+// EXPORTAR IMAGEM — layout barras proporcionais
+// ═══════════════════════════════════════════════
+async function exportarImagem(){
+  mostrarLoad(true);
+  try{
+    const vis=cultos.filter(c=>!c.oculto);
+    if(!vis.length){toast('⚠️ Nenhum culto visível');mostrarLoad(false);return;}
+
+    // ── Carregar fontes via FontFace API
+    const fontsLoaded=await Promise.allSettled([
+      new FontFace('Montserrat','url(https://fonts.gstatic.com/s/montserrat/v26/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM73w5aX8.woff2)',{weight:'800'}).load(),
+      new FontFace('BebasNeue','url(https://fonts.gstatic.com/s/bebasneue/v14/JTUSjIg69CK48gW7PXooxW5rygbi49c.woff2)',{weight:'400'}).load(),
+    ]);
+    fontsLoaded.forEach(r=>{ if(r.status==='fulfilled') document.fonts.add(r.value); });
+    await document.fonts.ready;
+
+    const TITLE_FONT=`'Montserrat',Arial,sans-serif`;
+    const BADGE_FONT=`'BebasNeue','Arial Narrow',Arial,sans-serif`;
+    const ft=(sz,w='800')=>`${w} ${sz}px ${TITLE_FONT}`;
+    const fb=(sz)=>`400 ${sz}px ${BADGE_FONT}`;
+
+    // ── Paleta
+    const BG='#0d0d0d', HDR_BG='#141c28';
+    const TEAL='#2ab482', GOLD='#d4a017', GOLD2='#b8860b';
+    const WHITE='#ffffff', MUTED='#8899aa';
+    const BRONZE_BG='rgba(80,45,5,.45)';
+    const BADGE_COLORS={
+      sh:'#9a7800', coral:'#1a5fa0', vocal:'#6a3ab8',
+      coreo:'#c06018', cantor:'#c03030', musical:'#1a7a40'
+    };
+
+    function getBadgeColor(g){
+      if(g===SH_LABEL)return BADGE_COLORS.sh;
+      const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0]||'';
+      if(cat==='Grupos Musicais')return BADGE_COLORS.musical;
+      if(cat==='Corais')return BADGE_COLORS.coral;
+      if(cat==='Grupos Vocais')return BADGE_COLORS.vocal;
+      if(cat==='Grupos de Coreografia')return BADGE_COLORS.coreo;
+      if(cat==='Cantores')return BADGE_COLORS.cantor;
+      return BADGE_COLORS.musical;
+    }
+
+    function labelGrupo(g){
+      if(g===SH_LABEL)return'S&H';
+      return g.replace(/^CORAL\s+/,'C. ');
+    }
+
+    // ── Dimensões fixas
+    const W=1080;
+    const PAD=36;
+    const HDR_H=128;
+    const FOOTER_H=52;
+    const ROW_H=240;     // dias normais
+    const DOM_H=450;     // domingo
+    const DIV=2;         // linha divisória
+
+    // Colunas
+    const COL_DATA_X=PAD;
+    const COL_DATA_W=170;
+    const COL_HORA_X=COL_DATA_X+COL_DATA_W;
+    const COL_HORA_W=150;
+    const COL_CONTENT_X=COL_HORA_X+COL_HORA_W;
+    const COL_CONTENT_W=W-COL_CONTENT_X-PAD;
+
+    // Badge settings
+    const BAR_H=40;
+    const BAR_FS=26;
+    const BAR_PAD_H=18;
+    const BAR_R=BAR_H/2;
+    const BAR_GAP_X=8;
+    const BAR_GAP_Y=8;
+    const MAX_BADGE_LINES=2;
+
+    function roundRect(x,y,w,h,r,fill){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+      ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+      ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+      ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+      ctx.fillStyle=fill;ctx.fill();
+    }
+
+    // Mede e desenha badges proporcionais, máx 2 linhas
+    function drawBadgesProportional(grupos,x,y,maxW){
+      if(!grupos.length)return 0;
+      const sorted=sortGrupos(grupos);
+      ctx.font=fb(BAR_FS);
+      const items=sorted.map(g=>({g,label:labelGrupo(g),w:ctx.measureText(labelGrupo(g)).width+BAR_PAD_H*2}));
+
+      // Distribui em linhas (máx 2)
+      const lines=[];let cur=[],curW=0;
+      for(const it of items){
+        if(cur.length>0&&curW+BAR_GAP_X+it.w>maxW){
+          if(lines.length>=MAX_BADGE_LINES-1){
+            // Força entrar na última linha mesmo que ultrapasse
+            cur.push(it); break;
+          }
+          lines.push(cur);cur=[];curW=0;
+        }
+        cur.push(it);curW+=(cur.length>1?BAR_GAP_X:0)+it.w;
+      }
+      if(cur.length)lines.push(cur);
+
+      lines.forEach((line,li)=>{
+        let bx=x;
+        const by=y+li*(BAR_H+BAR_GAP_Y);
+        line.forEach(({g,label,w})=>{
+          roundRect(bx,by,w,BAR_H,BAR_R,getBadgeColor(g));
+          ctx.fillStyle=WHITE;ctx.font=fb(BAR_FS);
+          ctx.textBaseline='middle';
+          ctx.fillText(label,bx+BAR_PAD_H,by+BAR_H/2);
+          bx+=w+BAR_GAP_X;
+        });
+      });
+      return lines.length*(BAR_H+BAR_GAP_Y)-BAR_GAP_Y;
+    }
+
+    // Pré-calcular linhas
+    const rows=[];let i=0;
+    while(i<vis.length){
+      const c=vis[i];
+      const isDom=/domingo/i.test(c.dia);
+      const nxt=vis[i+1];
+      const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
+      if(isDom&&hasNxt){rows.push({type:'dom',c,nxt});i+=2;}
+      else{rows.push({type:'single',c,isDom});i++;}
+    }
+
+    // Altura total
+    let totalH=HDR_H+FOOTER_H;
+    rows.forEach(r=>totalH+=(r.type==='dom'?DOM_H:ROW_H)+DIV);
+
+    // ── Canvas
+    const canvas=document.createElement('canvas');
+    canvas.width=W;canvas.height=totalH;
+    const ctx=canvas.getContext('2d');
+
+    // Fundo geral
+    ctx.fillStyle=BG;ctx.fillRect(0,0,W,totalH);
+
+    // ── Cabeçalho
+    ctx.fillStyle=HDR_BG;ctx.fillRect(0,0,W,HDR_H);
+    ctx.fillStyle=TEAL;ctx.fillRect(0,HDR_H-3,W,3);
+
+    // Logo SVG branca
+    await new Promise(res=>{
+      const svgD=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86.01 49.86"><path fill="white" d="M11.09,34.1c0-2.99,1.5-5.71,5.05-5.71,1.16,0,2,.22,2.77.61v9.53c0,.77-.63,1.4-1.4,1.4h-1.65c-3.16,0-4.77-2.5-4.77-5.82M52.54,0c-1.59,0-3.2.16-4.8.5-8.31,1.73-14.7,7.06-17.85,14.07V5.44h-5.44c-3.06,0-5.54,2.48-5.54,5.54v9.27l-.11.06c-1.28-.5-2.83-.83-4.44-.83-7.99,0-14.36,6.27-14.36,15.08s5.93,13.24,12.48,13.24c2.33,0,6.65.02,6.65.02h5.37c2.98,0,5.39-2.41,5.39-5.39v-7.42c1.02,2.24,2.4,4.31,4.12,6.21,1.53-1.92,1.58-1.95,4.74-2.78,0-.47,0-.96,0-1.45,0-6.4-.03-12.79.01-19.19.03-4.42,3.67-8.15,8.09-8.06,2.22.04,4.05,1,5.68,2.48.2-.17.36-.32.53-.47,2.6-2.19,5.53-2.69,8.6-1.31,3.08,1.38,4.62,3.91,4.62,7.33,0,1.63,0,3.25,0,4.88,0,4.7.02,9.4-.01,14.1-.01,1.94-.95,3.4-2.71,4.19-1.7.76-3.38.54-4.81-.71-1.42-1.24-1.97-2.83-1.42-4.64.7-2.32,2.42-3.35,4.87-3.39,0-4.95.02-9.82,0-14.7-.01-2.27-1.64-3.88-3.82-3.88-2.19,0-3.79,1.59-3.82,3.88-.03,3.07,0,6.15,0,9.22,0,1.63.04,3.25-.02,4.88-.05,1.38-.9,2.19-2.1,2.15-1.17-.04-1.87-.83-1.92-2.16-.02-.45,0-.9,0-1.36,0-4.25.03-8.5-.03-12.74-.03-2.48-2.01-4.15-4.39-3.83-1.93.26-3.27,1.83-3.29,4.01-.04,2.85,0,5.69,0,8.54,0,5.6.03,11.21-.01,16.81-.03,3.35-2.72,5.37-5.97,4.56-.43-.11-.85-.24-1.28-.37,2.11,1.87,4.46,1.68,6.91,1.05.68-.18,1.5-.21,2.17,0,4.23,1.3,8.52,1.63,12.84.69,8.2-1.78,14.49-7.11,17.57-14.11v12.98h5.78c2.87,0,5.2-2.33,5.2-5.2V5.44h-6.11c-2.69,0-4.87,2.18-4.87,4.87v4.38C71.12,5.92,62.18,0,52.54,0Z"/></svg>`;
+      const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgD);
+      const img=new Image();
+      img.onload=()=>{const lh=68,lw=Math.round(lh*86.01/49.86);ctx.drawImage(img,PAD,(HDR_H-lh)/2,lw,lh);res();};
+      img.onerror=res;img.src=url;
+    });
+
+    // Título cabeçalho
+    ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillStyle=WHITE;ctx.font=ft(46);
+    ctx.fillText('ESCALA',W-PAD,HDR_H/2-22);
+    ctx.fillStyle=GOLD;ctx.font=ft(46);
+    ctx.fillText(mesLabel.toUpperCase(),W-PAD,HDR_H/2+26);
+    ctx.textAlign='left';
+
+    // ── Função bloco de um culto (nome + dirigente + badges)
+    function drawCultoContent(cu,x,y,maxW,dirColor){
+      let cy=y;
+      // Nome
+      ctx.fillStyle=WHITE;ctx.font=ft(38);ctx.textBaseline='top';
+      ctx.fillText(cu.culto,x,cy);cy+=46;
+      // Dirigente
+      if(cu.dirigente){
+        ctx.fillStyle=dirColor||GOLD;ctx.font=ft(22,'700');
+        ctx.fillText(cu.dirigente.toUpperCase(),x,cy);cy+=30;
+      }
+      cy+=10;
+      // Badges
+      drawBadgesProportional(cu.grupos,x,cy,maxW);
+    }
+
+    // ── Desenhar linhas
+    let y=HDR_H;
+    rows.forEach(row=>{
+      const h=row.type==='dom'?DOM_H:ROW_H;
+      const isDom=row.isDom||row.type==='dom';
+
+      // Fundo domingo
+      if(isDom){ctx.fillStyle=BRONZE_BG;ctx.fillRect(0,y,W,h);}
+
+      if(row.type==='dom'){
+        const {c,nxt}=row;
+        // Data+DOM centralizado horizontalmente na coluna e verticalmente no bloco
+        const dataCX=COL_DATA_X+COL_DATA_W/2;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle=GOLD;ctx.font=ft(100);
+        ctx.fillText(c.data,dataCX,y+h/2-26);
+        ctx.fillStyle=GOLD2;ctx.font=ft(32);
+        ctx.fillText('DOM',dataCX,y+h/2+48);
+        ctx.textAlign='left';
+
+        // Duas sub-linhas: manhã e noite — cada uma DOM_H/2 de altura
+        const subH=h/2;
+        [c,nxt].forEach((cu,li)=>{
+          const sy=y+li*subH;
+          const midSY=sy+subH/2;
+          // Hora
+          ctx.fillStyle=MUTED;ctx.font=ft(28,'600');ctx.textBaseline='middle';
+          ctx.fillText(cu.hora,COL_HORA_X,midSY);
+          // Conteúdo
+          const bh=MAX_BADGE_LINES*(BAR_H+BAR_GAP_Y);
+          const nomeDirH=cu.dirigente?76:50;
+          const totalContentH=nomeDirH+10+bh;
+          const contentY=midSY-totalContentH/2;
+          drawCultoContent(cu,COL_CONTENT_X,contentY,COL_CONTENT_W,GOLD2);
+        });
+
+      } else {
+        const {c}=row;
+        const dcol=isDom?GOLD:TEAL;
+        const midY=y+h/2;
+        // Data e dia centralizados na coluna
+        const dataCX=COL_DATA_X+COL_DATA_W/2;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillStyle=dcol;ctx.font=ft(100);
+        ctx.fillText(c.data,dataCX,midY-26);
+        ctx.fillStyle=isDom?GOLD2:MUTED;ctx.font=ft(32);
+        ctx.fillText(abrevDia(c.dia),dataCX,midY+48);
+        ctx.textAlign='left';
+        // Hora
+        ctx.fillStyle=MUTED;ctx.font=ft(28,'600');ctx.textBaseline='middle';
+        ctx.fillText(c.hora,COL_HORA_X,midY);
+        // Conteúdo centralizado
+        const bh=MAX_BADGE_LINES*(BAR_H+BAR_GAP_Y);
+        const nomeDirH=c.dirigente?76:50;
+        const totalContentH=nomeDirH+10+bh;
+        const contentY=midY-totalContentH/2;
+        drawCultoContent(c,COL_CONTENT_X,contentY,COL_CONTENT_W,isDom?GOLD2:TEAL);
+      }
+
+      // Divisória
+      y+=h;
+      ctx.fillStyle='rgba(255,255,255,.07)';ctx.fillRect(0,y,W,DIV);
+      y+=DIV;
+    });
+
+    // ── Footer
+    ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(0,totalH-FOOTER_H,W,FOOTER_H);
+    ctx.fillStyle=MUTED;ctx.font=ft(20,'400');ctx.textBaseline='middle';ctx.textAlign='center';
+    ctx.fillText('Departamento de Música e Louvor — Igreja Evangélica Congregacional Central',W/2,totalH-FOOTER_H/2);
+    ctx.textAlign='left';
+
+    const a=document.createElement('a');
+    a.download=`escala-${mesLabel.replace(/\s/g,'-')}-stories.png`;
+    a.href=canvas.toDataURL('image/png');a.click();
+    toast('🖼 Imagem exportada!');
+  }catch(e){console.error(e);toast('❌ Erro: '+e.message);}
+  mostrarLoad(false);
+}
+
+// ═══════════════════════════════════════════════
+// PUBLICAR NO NETLIFY (deploy automático)
+// ═══════════════════════════════════════════════
+const NETLIFY_TOKEN=''; // configurado nas configurações
+const NETLIFY_SITE_ID='584aff64-553e-4a7c-938b-b7dcfdf4f494';
+const GITHUB_REPO='escala-dml-public';
+const GITHUB_USER='krysnamurty3D';
+
+function getGithubToken(){return localStorage.getItem('dml_gh_token')||'';}
+function getNetlifyToken(){return localStorage.getItem('dml_nl_token')||'';}
+
+async function publicarNetlify(){
+  if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
+  mostrarLoad(true);
+  try{
+    const html=await gerarHTMLPublico();
+    if(!html){mostrarLoad(false);return;}
+
+    const owner=GITHUB_USER;
+    const repo=GITHUB_REPO;
+    const headers={
+      'Authorization':`Bearer ${ghToken}`,
+      'Accept':'application/vnd.github+json',
+      'Content-Type':'application/json'
+    };
+
+    // 1. Pega SHA atual do index.html
+    let sha=null;
+    const getRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{headers});
+    if(getRes.ok){const f=await getRes.json();sha=f.sha;}
+
+    // 2. Envia arquivo
+    const content=btoa(unescape(encodeURIComponent(html)));
+    const putRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{
+      method:'PUT',headers,
+      body:JSON.stringify({
+        message:`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`,
+        content,
+        ...(sha?{sha}:{})
+      })
+    });
+    if(!putRes.ok){
+      const t=await putRes.text();
+      if(putRes.status===401){localStorage.removeItem('dml_gh_token');throw new Error('Token inválido. Reconfigure nas ⚙️ Configurações.');}
+      throw new Error(`GitHub ${putRes.status}: ${t}`);
+    }
+
+    mostrarLoad(false);
+    toast('🌐 Publicado! Site atualiza em instantes...');
+  }catch(e){
+    mostrarLoad(false);
+    console.error('Publish erro:',e);
+    alert('❌ Erro:\n\n'+e.message);
+  }
+}
+
+function configurarTokens(){
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:480px;max-width:96vw">
+    <h3 style="color:var(--teal);margin-bottom:16px">🔑 Configurar Publicação</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      Cole seu <strong style="color:var(--white)">GitHub Personal Access Token</strong> abaixo.<br>
+      Ele fica salvo apenas no seu navegador — nunca no código.
+    </p>
+    <div style="margin-bottom:14px">
+      <label style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px">GitHub Token (permissão: repo)</label>
+      <input type="password" id="cfg-gh-token" placeholder="ghp_..." value="${getGithubToken()}"
+        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font);box-sizing:border-box">
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px">
+      Para gerar: github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → marque <strong style="color:var(--white)">repo</strong>
+    </p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="this.closest('div[style]').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTokens(this)">Salvar e Publicar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+async function salvarTokens(btn){
+  const gh=document.getElementById('cfg-gh-token').value.trim();
+  if(!gh){alert('Cole o token do GitHub');return;}
+  localStorage.setItem('dml_gh_token',gh);
+  btn.closest('div[style*="position:fixed"]').remove();
+  await publicarNetlify();
+}
+
+async function publicarNetlify(){
+  if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
+  mostrarLoad(true);
+  try{
+    const html=await gerarHTMLPublico();
+    if(!html){mostrarLoad(false);return;}
+
+    const owner=GITHUB_USER;
+    const repo=GITHUB_REPO;
+    const headers={
+      'Authorization':`Bearer ${GITHUB_TOKEN}`,
+      'Accept':'application/vnd.github+json',
+      'Content-Type':'application/json'
+    };
+
+    // 1. Pega SHA atual do index.html
+    let sha=null;
+    const getRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{headers});
+    if(getRes.ok){const f=await getRes.json();sha=f.sha;}
+
+    // 2. Envia arquivo
+    const content=btoa(unescape(encodeURIComponent(html)));
+    const putRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{
+      method:'PUT',headers,
+      body:JSON.stringify({
+        message:`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`,
+        content,
+        ...(sha?{sha}:{})
+      })
+    });
+    if(!putRes.ok){const t=await putRes.text();throw new Error(`GitHub ${putRes.status}: ${t}`);}
+
+    mostrarLoad(false);
+    toast('🌐 Publicado! escala-dml.netlify.app atualiza em instantes...');
+  }catch(e){
+    mostrarLoad(false);
+    console.error('Publish erro:',e);
+    alert('❌ Erro:\n\n'+e.message);
+  }
+}
+
+// Gera o HTML público como string (sem baixar)
+function gerarHTMLPublico(){
+  return new Promise(resolve=>{
+    // Intercepta o Blob criado por exportarPagina
+    const origBlob=window.Blob;
+    window.Blob=function(parts,opts){
+      window.Blob=origBlob;
+      const blob=new origBlob(parts,opts);
+      // Lê o conteúdo e resolve a Promise
+      const reader=new FileReader();
+      reader.onload=e=>resolve(e.target.result);
+      reader.readAsText(blob);
+      return blob;
+    };
+    exportarPagina();
+  });
+}
+
+// ═══════════════════════════════════════════════
+// EXPORTAR PÁGINA PÚBLICA (para Netlify/WhatsApp)
+// ═══════════════════════════════════════════════
+function exportarPagina(){
+
+  if(!cultos.length){toast('⚠️ Nenhum culto para exportar');return;}
+  const vis=cultos.filter(c=>!c.oculto);
+
+  const logoSVG=`<svg viewBox="0 0 86.01 49.86" xmlns="http://www.w3.org/2000/svg" style="height:100%;width:auto"><path fill="#ffffff" d="M11.09,34.1c0-2.99,1.5-5.71,5.05-5.71,1.16,0,2,.22,2.77.61v9.53c0,.77-.63,1.4-1.4,1.4h-1.65c-3.16,0-4.77-2.5-4.77-5.82M52.54,0c-1.59,0-3.2.16-4.8.5-8.31,1.73-14.7,7.06-17.85,14.07V5.44h-5.44c-3.06,0-5.54,2.48-5.54,5.54v9.27l-.11.06c-1.28-.5-2.83-.83-4.44-.83-7.99,0-14.36,6.27-14.36,15.08s5.93,13.24,12.48,13.24c2.33,0,6.65.02,6.65.02h5.37c2.98,0,5.39-2.41,5.39-5.39v-7.42c1.02,2.24,2.4,4.31,4.12,6.21,1.53-1.92,1.58-1.95,4.74-2.78,0-.47,0-.96,0-1.45,0-6.4-.03-12.79.01-19.19.03-4.42,3.67-8.15,8.09-8.06,2.22.04,4.05,1,5.68,2.48.2-.17.36-.32.53-.47,2.6-2.19,5.53-2.69,8.6-1.31,3.08,1.38,4.62,3.91,4.62,7.33,0,1.63,0,3.25,0,4.88,0,4.7.02,9.4-.01,14.1-.01,1.94-.95,3.4-2.71,4.19-1.7.76-3.38.54-4.81-.71-1.42-1.24-1.97-2.83-1.42-4.64.7-2.32,2.42-3.35,4.87-3.39,0-4.95.02-9.82,0-14.7-.01-2.27-1.64-3.88-3.82-3.88-2.19,0-3.79,1.59-3.82,3.88-.03,3.07,0,6.15,0,9.22,0,1.63.04,3.25-.02,4.88-.05,1.38-.9,2.19-2.1,2.15-1.17-.04-1.87-.83-1.92-2.16-.02-.45,0-.9,0-1.36,0-4.25.03-8.5-.03-12.74-.03-2.48-2.01-4.15-4.39-3.83-1.93.26-3.27,1.83-3.29,4.01-.04,2.85,0,5.69,0,8.54,0,5.6.03,11.21-.01,16.81-.03,3.35-2.72,5.37-5.97,4.56-.43-.11-.85-.24-1.28-.37,2.11,1.87,4.46,1.68,6.91,1.05.68-.18,1.5-.21,2.17,0,4.23,1.3,8.52,1.63,12.84.69,8.2-1.78,14.49-7.11,17.57-14.11v12.98h5.78c2.87,0,5.2-2.33,5.2-5.2V5.44h-6.11c-2.69,0-4.87,2.18-4.87,4.87v4.38C71.12,5.92,62.18,0,52.54,0Z"/></svg>`;
+
+  const BADGE_COLORS={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
+  function getBadgeColorHex(g){
+    if(g===SH_LABEL)return BADGE_COLORS.sh;
+    const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0]||'';
+    if(cat==='Grupos Musicais')return BADGE_COLORS.musical;
+    if(cat==='Corais')return BADGE_COLORS.coral;
+    if(cat==='Grupos Vocais')return BADGE_COLORS.vocal;
+    if(cat==='Grupos de Coreografia')return BADGE_COLORS.coreo;
+    if(cat==='Cantores')return BADGE_COLORS.cantor;
+    return BADGE_COLORS.musical;
+  }
+  function labelG(g){return g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ');}
+
+  // Todos os grupos únicos presentes na escala
+  const todosGruposEscala=[...new Set(vis.flatMap(c=>c.grupos))].sort();
+
+  // Dados serializados para o JS da página
+  const dadosJSON=JSON.stringify(vis.map(c=>({
+    id:c.id, data:c.data, dia:c.dia, hora:c.hora,
+    culto:c.culto, dirigente:c.dirigente, grupos:c.grupos
+  })));
+  const mesLabelJSON=JSON.stringify(mesLabel);
+
+  // Badge chips para filtro
+  const filtroBadges=todosGruposEscala.map(g=>
+    `<button class="filtro-btn" data-grupo="${g}" style="--bc:${getBadgeColorHex(g)}" onclick="filtrar('${g.replace(/'/g,"\\'")}')">
+      ${labelG(g)}
+    </button>`
+  ).join('');
+
+  function cardHTML(c,ano,mes){
+    const isDom=/domingo/i.test(c.dia);
+    const badges=sortGrupos(c.grupos).map(g=>
+      `<span class="badge" data-grupo="${g}" style="background:${getBadgeColorHex(g)}">${labelG(g)}</span>`
+    ).join('');
+    const dir=c.dirigente?`<div class="culto-dir">${c.dirigente}</div>`:'';
+    // Data para Google Calendar: ANO MES DIA
+    const [anoN,mesN]=mesLabel.split(' ');
+    const meses={Janeiro:'01',Fevereiro:'02',Março:'03',Abril:'04',Maio:'05',Junho:'06',Julho:'07',Agosto:'08',Setembro:'09',Outubro:'10',Novembro:'11',Dezembro:'12'};
+    const mesNum=meses[anoN]||'01';
+    const anoNum=mesN||new Date().getFullYear();
+    const dtStr=`${anoNum}${mesNum}${c.data.padStart(2,'0')}`;
+    const [hh,mm]=(c.hora||'00:00').split(':');
+    const dtStart=`${dtStr}T${hh}${mm||'00'}00`;
+    const dtEnd=`${dtStr}T${(parseInt(hh)+2).toString().padStart(2,'0')}${mm||'00'}00`;
+    const gcUrl=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(c.culto+' — DML')}&dates=${dtStart}/${dtEnd}&details=${encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+c.grupos.map(g=>labelG(g)).join(', '))}`;
+    const waText=encodeURIComponent(`📅 *${c.culto}*\n🗓 Dia ${c.data} — ${c.hora}\n${c.dirigente?'🎤 '+c.dirigente+'\n':''}🎵 ${c.grupos.map(g=>labelG(g)).join(' | ')}`);
+    return `<div class="culto-row${isDom?' dom':''}" data-grupos="${c.grupos.join(',')}" data-data="${c.data}">
+      <div class="col-hora">${c.hora}</div>
+      <div class="col-info">
+        <div class="culto-nome">${c.culto}</div>
+        ${dir}
+        <div class="culto-countdown" data-data="${c.data}"></div>
+        ${badges?`<div class="badges">${badges}</div>`:''}
+        <div class="culto-actions">
+          <a class="btn-acao" href="${gcUrl}" target="_blank" title="Adicionar ao Google Calendar">📅 Calendário</a>
+          <a class="btn-acao" href="https://wa.me/?text=${waText}" target="_blank" title="Compartilhar no WhatsApp">📤 Compartilhar</a>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function gerarCards(){
+    let html='',i=0;
+    while(i<vis.length){
+      const c=vis[i];
+      const isDom=/domingo/i.test(c.dia);
+      const isTer=/ter[cç]a/i.test(c.dia);
+      const isQui=/quinta/i.test(c.dia);
+      const isSab=/s[aá]b/i.test(c.dia);
+      const blockClass=c.especial?'esp-block':isDom?'dom-block':isTer?'ter-block':isQui?'qui-block':isSab?'sab-block':'';
+      const headerClass=c.especial?'esp-header':isDom?'dom-header':isTer?'ter-header':isQui?'qui-header':isSab?'sab-header':'';
+      const nxt=vis[i+1];
+      const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
+      const grupos=isDom&&hasNxt?[...c.grupos,...nxt.grupos].join(','):c.grupos.join(',');
+      if(isDom&&hasNxt){
+        html+=`<div class="dia-block dom-block" data-grupos="${grupos}">
+          <div class="dia-header dom-header">
+            <div><span class="dia-num">${c.data}</span><span class="dia-abrev">DOM</span></div>
+          </div>
+          <div class="dia-cultos">${cardHTML(c)}${cardHTML(nxt)}</div>
+        </div>`;i+=2;
+      }else{
+        html+=`<div class="dia-block${blockClass?' '+blockClass:''}" data-grupos="${grupos}">
+          <div class="dia-header${headerClass?' '+headerClass:''}">
+            <div><span class="dia-num">${c.data}</span><span class="dia-abrev">${c.dia.substring(0,3).toUpperCase()}</span></div>
+          </div>
+          <div class="dia-cultos">${cardHTML(c)}</div>
+        </div>`;i++;
+      }
+    }
+    return html;
+  }
+
+  const paginaHTML=`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#111820">
+<title>Escala DML — ${mesLabel}</title>
+<!-- OneSignal Push Notifications -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "4e65a3a9-4406-4845-8619-fa2376046d27",
+      safari_web_id: "web.onesignal.auto.4e65a3a9-4406-4845-8619-fa2376046d27",
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+  });
+<\/script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0f1820;color:#edf4f4;font-family:'Montserrat',system-ui,sans-serif;min-height:100vh;padding-bottom:60px;transition:background .3s,color .3s;}
+body.light{background:#f0f4f8;color:#1a2535;}
+
+/* HEADER */
+header{background:#1e2d40;border-bottom:3px solid #2ab482;padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;
+  box-shadow:0 2px 20px rgba(0,0,0,.5);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-wrap svg{height:44px;width:auto;}
+.logo-txt .dept{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#7a9aa8;}
+.logo-txt .nome{font-size:16px;font-weight:800;color:#3dbfb8;}
+.logo-txt .igreja{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;
+  border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800;white-space:nowrap;}
+.btn-theme{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;
+  padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;}
+.btn-theme:hover{border-color:#2ab482;color:#2ab482;}
+.btn-notif{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;
+  padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;transition:all .2s;}
+.btn-notif:hover{border-color:#d4a017;color:#d4a017;}
+.btn-notif.ativo{border-color:#2ab482;color:#2ab482;background:rgba(42,180,130,.1);}
+
+/* FILTROS */
+.filtros-wrap{background:#162030;border-bottom:1px solid #1e2d38;padding:12px 14px;position:sticky;top:75px;z-index:9;}
+.filtros-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#7a9aa8;margin-bottom:8px;}
+.filtros-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.filtros-scroll::-webkit-scrollbar{display:none;}
+.filtro-btn{border:2px solid var(--bc,#2ab482);background:transparent;color:#edf4f4;
+  border-radius:50px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;
+  white-space:nowrap;font-family:'Montserrat',sans-serif;transition:all .2s;flex-shrink:0;}
+.filtro-btn.ativo{background:var(--bc,#2ab482);color:#fff;}
+.filtro-btn-todos{border-color:#2ab482;color:#2ab482;}
+.filtro-btn-todos.ativo{background:#2ab482;color:#061208;}
+
+/* PRÓXIMO CULTO */
+.proximo-banner{background:linear-gradient(135deg,#1a3a2a,#1e2d40);border:1px solid #2ab482;
+  border-radius:12px;padding:14px 16px;margin:14px 14px 0;display:none;}
+.proximo-banner.show{display:block;}
+.proximo-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;margin-bottom:6px;}
+.proximo-info{font-size:16px;font-weight:800;}
+.proximo-dias{font-size:13px;color:#7a9aa8;margin-top:3px;}
+
+/* MAIN */
+main{max-width:600px;margin:0 auto;padding:14px 14px;}
+
+/* BLOCOS */
+.dia-block{background:#1a2535;border:1px solid #243040;border-radius:14px;
+  margin-bottom:12px;overflow:hidden;transition:all .25s;}
+.dia-block.oculto{display:none;}
+.dia-block:hover{box-shadow:0 4px 20px rgba(0,0,0,.3);}
+/* Domingo — bronze */
+.dom-block{background:rgba(80,45,5,.35);border-color:rgba(180,130,30,.3);border-left:3px solid #d4a017;}
+.dom-block.destaque{box-shadow:0 0 0 2px #d4a017,0 4px 24px rgba(212,160,23,.2);}
+body.light .dom-block{background:rgba(212,160,23,.08);border-color:rgba(180,130,30,.3);}
+/* Terça — azul */
+.ter-block{background:rgba(15,45,100,.30);border-color:rgba(39,120,220,.30);border-left:3px solid #2778dc;}
+.ter-block.destaque{box-shadow:0 0 0 2px #2778dc,0 4px 24px rgba(39,120,220,.2);}
+body.light .ter-block{background:rgba(39,120,220,.06);border-color:rgba(39,120,220,.3);}
+/* Quinta — verde */
+.qui-block{background:rgba(10,55,38,.30);border-color:rgba(42,180,130,.30);border-left:3px solid #2ab482;}
+.qui-block.destaque{box-shadow:0 0 0 2px #2ab482,0 4px 24px rgba(42,180,130,.2);}
+body.light .qui-block{background:rgba(42,180,130,.06);border-color:rgba(42,180,130,.3);}
+/* Sábado — roxo */
+.sab-block{background:rgba(55,20,90,.28);border-color:rgba(150,80,220,.30);border-left:3px solid #9050dc;}
+.sab-block.destaque{box-shadow:0 0 0 2px #9050dc,0 4px 24px rgba(150,80,220,.2);}
+body.light .sab-block{background:rgba(150,80,220,.06);border-color:rgba(150,80,220,.3);}
+/* Especial — vermelho */
+.esp-block{background:rgba(100,20,20,.28);border-color:rgba(200,60,60,.30);border-left:3px solid #c03030;}
+.esp-block.destaque{box-shadow:0 0 0 2px #c03030,0 4px 24px rgba(200,60,60,.2);}
+body.light .esp-block{background:rgba(200,60,60,.06);border-color:rgba(200,60,60,.3);}
+.dia-block.destaque{box-shadow:0 0 0 2px #2ab482,0 4px 24px rgba(42,180,130,.2);}
+body.light .dia-block{background:#fff;border-color:#dce6f0;}
+
+/* HEADER DO DIA */
+.dia-header{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px 10px;border-bottom:1px solid #243040;}
+/* Cores da data/dia por tipo */
+.dom-header{border-bottom-color:rgba(180,130,30,.2);}
+.dom-header .dia-num{color:#d4a017;}
+.dom-header .dia-abrev{color:#b8860b;}
+.ter-header{border-bottom-color:rgba(39,120,220,.2);}
+.ter-header .dia-num{color:#4a9eff;}
+.ter-header .dia-abrev{color:#2778dc;}
+.qui-header{border-bottom-color:rgba(42,180,130,.2);}
+.qui-header .dia-num{color:#2ab482;}
+.qui-header .dia-abrev{color:#1a8060;}
+.sab-header{border-bottom-color:rgba(150,80,220,.2);}
+.sab-header .dia-num{color:#b07ae8;}
+.sab-header .dia-abrev{color:#9050dc;}
+.esp-header{border-bottom-color:rgba(200,60,60,.2);}
+.esp-header .dia-num{color:#e06060;}
+.esp-header .dia-abrev{color:#c03030;}
+.dia-num{font-size:48px;font-weight:900;color:#2ab482;line-height:1;margin-right:8px;}
+.dia-abrev{font-size:16px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;}
+.dias-faltam{font-size:11px;font-weight:700;color:#2ab482;background:rgba(42,180,130,.12);
+  border:1px solid #1a6a50;border-radius:20px;padding:3px 10px;white-space:nowrap;}
+.dias-faltam.passado{color:#7a9aa8;border-color:#2a3a4a;background:rgba(0,0,0,.15);}
+/* Cores dias-faltam por tipo de dia */
+.dom-block .dias-faltam{color:#d4a017;background:rgba(212,160,23,.12);border-color:rgba(212,160,23,.3);}
+.ter-block .dias-faltam{color:#4a9eff;background:rgba(39,120,220,.12);border-color:rgba(39,120,220,.3);}
+.qui-block .dias-faltam{color:#2ab482;background:rgba(42,180,130,.12);border-color:rgba(42,180,130,.3);}
+.sab-block .dias-faltam{color:#b07ae8;background:rgba(150,80,220,.12);border-color:rgba(150,80,220,.3);}
+.esp-block .dias-faltam{color:#e06060;background:rgba(200,60,60,.12);border-color:rgba(200,60,60,.3);}
+/* Dirigente por tipo */
+.ter-block .culto-dir{color:#4a9eff;}
+.qui-block .culto-dir{color:#2ab482;}
+.sab-block .culto-dir{color:#b07ae8;}
+.esp-block .culto-dir{color:#e06060;}
+
+/* CULTO ROW */
+.culto-row{display:flex;align-items:flex-start;gap:14px;padding:16px 16px;border-bottom:1px solid #1e2d38;}
+.culto-row:last-child{border-bottom:none;}
+.col-hora{font-size:17px;font-weight:700;color:#7a9aa8;min-width:60px;padding-top:3px;flex-shrink:0;}
+.col-info{flex:1;}
+.culto-nome{font-size:19px;font-weight:800;text-transform:uppercase;line-height:1.2;margin-bottom:4px;}
+.culto-dir{font-size:14px;color:#2ab482;font-weight:600;margin-bottom:8px;}
+.dom .culto-dir{color:#d4a017;}
+.culto-countdown{font-size:12px;color:#7a9aa8;margin-bottom:6px;font-weight:600;}
+
+/* BADGES — clicáveis */
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.badge{display:inline-block;border-radius:50px;padding:5px 14px;
+  font-size:13px;font-weight:700;color:#fff;white-space:nowrap;transition:all .2s;
+  cursor:pointer;user-select:none;}
+.badge:hover{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.badge.dimmed{opacity:.2;transform:scale(1);}
+.badge.ativo{outline:2px solid #fff;outline-offset:2px;}
+
+/* BOTÃO MOSTRAR TODOS — flutuante */
+.btn-mostrar-todos{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#1e2d40;border:1.5px solid #2ab482;color:#2ab482;border-radius:50px;
+  padding:10px 22px;font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;
+  cursor:pointer;z-index:20;opacity:0;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.btn-mostrar-todos.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.btn-mostrar-todos:hover{background:#2ab482;color:#061208;}
+
+/* AÇÕES */
+.culto-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn-acao{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);
+  border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;padding:7px 13px;
+  font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;text-decoration:none;
+  transition:all .2s;white-space:nowrap;}
+.btn-acao:hover{background:rgba(42,180,130,.12);border-color:#2ab482;color:#2ab482;}
+body.light .btn-acao{background:rgba(0,0,0,.04);border-color:#ccd8e8;color:#4a6070;}
+
+/* PRÓXIMO CULTO */
+.proximo-banner{background:linear-gradient(135deg,#1a3a2a,#1e2d40);border:1px solid #2ab482;
+  border-radius:12px;padding:14px 16px;margin:14px 14px 0;display:none;}
+.proximo-banner.show{display:block;}
+.proximo-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;margin-bottom:6px;}
+.proximo-info{font-size:16px;font-weight:800;}
+.proximo-dias{font-size:13px;color:#7a9aa8;margin-top:3px;}
+
+/* FOOTER */
+footer{text-align:center;padding:24px 20px 0;color:#4a6070;font-size:11px;letter-spacing:1px;text-transform:uppercase;}
+footer strong{display:block;color:#2ab482;font-size:13px;margin-bottom:4px;}
+.updated{text-align:center;padding:12px;font-size:11px;color:#4a6070;}
+
+/* LIGHT MODE */
+body.light header{background:#1e2d40;}
+body.light .culto-nome{color:#1a2535;}
+body.light .col-hora{color:#4a6070;}
+body.light .culto-dir{color:#1a8060;}
+body.light .btn-acao{color:#4a6070;}
+body.light .btn-mostrar-todos{background:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    ${logoSVG}
+    <div class="logo-txt">
+      <div class="dept">Departamento de</div>
+      <div class="nome">Música e Louvor</div>
+      <div class="igreja">Igreja Evangélica Congregacional Central</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="mes-badge">${mesLabel}</div>
+    <button class="btn-notif" id="btn-notif" onclick="toggleNotif()" title="Ativar notificações">🔔</button>
+    <button class="btn-theme" onclick="toggleTheme()" id="btn-theme" title="Alternar modo claro/escuro">🌙</button>
+  </div>
+</header>
+
+<div class="proximo-banner" id="proximo-banner">
+  <div class="proximo-label">⭐ Seu próximo culto</div>
+  <div class="proximo-info" id="proximo-info"></div>
+  <div class="proximo-dias" id="proximo-dias"></div>
+</div>
+
+<button class="btn-mostrar-todos" id="btn-todos" onclick="filtrar('todos')">✕ Mostrar todos</button>
+
+<main id="main-content">
+  ${gerarCards()}
+</main>
+
+<div class="updated">Atualizado em ${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</div>
+<footer>
+  <strong>Departamento de Música e Louvor</strong>
+  Igreja Evangélica Congregacional Central
+</footer>
+
+<script>
+// ── Dados da escala
+const CULTOS=${dadosJSON};
+const MES_LABEL=${mesLabelJSON};
+
+// ── Mapa de cores dos grupos
+const MESES_MAP={Janeiro:0,Fevereiro:1,Março:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};
+
+// ── Contagem regressiva
+function calcDias(diaNum){
+  const partes=MES_LABEL.split(' ');
+  const mes=MESES_MAP[partes[0]]??new Date().getMonth();
+  const ano=parseInt(partes[1])||new Date().getFullYear();
+  const cultoDate=new Date(ano,mes,parseInt(diaNum));
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const diff=Math.round((cultoDate-hoje)/(1000*60*60*24));
+  return diff;
+}
+
+function atualizarContagens(){
+  document.querySelectorAll('[data-data]').forEach(el=>{
+    if(!el.classList.contains('culto-countdown'))return;
+    const diff=calcDias(el.dataset.data);
+    if(diff<0)el.textContent='Realizado';
+    else if(diff===0)el.textContent='🔴 Hoje!';
+    else if(diff===1)el.textContent='⚡ Amanhã!';
+    else el.textContent='Faltam '+diff+' dias';
+  });
+  // dias-faltam no header do bloco
+  document.querySelectorAll('.dias-faltam[data-data]').forEach(el=>{
+    const diff=calcDias(el.dataset.data);
+    if(diff<0){el.textContent='Realizado';el.classList.add('passado');}
+    else if(diff===0){el.textContent='Hoje! 🔴';}
+    else if(diff===1){el.textContent='Amanhã ⚡';}
+    else{el.textContent='em '+diff+' dias';}
+  });
+}
+
+// Insere contagem no header de cada bloco
+document.querySelectorAll('.dia-header').forEach(hdr=>{
+  const num=hdr.querySelector('.dia-num');
+  if(!num)return;
+  const span=document.createElement('span');
+  span.className='dias-faltam';
+  span.dataset.data=num.textContent.trim();
+  hdr.appendChild(span);
+});
+atualizarContagens();
+
+// ── Badges clicáveis — click filtra o grupo
+document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
+  b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const g=b.dataset.grupo;
+    if(filtroAtivo===g)filtrar('todos');
+    else filtrar(g);
+  });
+});
+
+// ── Filtro por grupo
+let filtroAtivo='todos';
+function filtrar(grupo){
+  filtroAtivo=grupo;
+  const btnTodos=document.getElementById('btn-todos');
+  // Botão flutuante
+  if(btnTodos)btnTodos.classList.toggle('show',grupo!=='todos');
+  // Mostra/oculta blocos
+  document.querySelectorAll('.dia-block').forEach(blk=>{
+    if(grupo==='todos'){blk.classList.remove('oculto','destaque');return;}
+    const gs=blk.dataset.grupos||'';
+    const temGrupo=gs.split(',').includes(grupo);
+    blk.classList.toggle('oculto',!temGrupo);
+    blk.classList.toggle('destaque',temGrupo);
+  });
+  // Dimmer e destaque dos badges
+  document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
+    if(grupo==='todos'){b.classList.remove('dimmed','ativo');return;}
+    const isAtivo=b.dataset.grupo===grupo;
+    b.classList.toggle('dimmed',!isAtivo);
+    b.classList.toggle('ativo',isAtivo);
+  });
+  // Próximo culto
+  atualizarProximo(grupo);
+}
+
+// ── Próximo culto do grupo
+function atualizarProximo(grupo){
+  const banner=document.getElementById('proximo-banner');
+  if(!banner)return;
+  if(grupo==='todos'){banner.classList.remove('show');return;}
+  const futuros=CULTOS.filter(c=>c.grupos.includes(grupo)&&calcDias(c.data)>=0);
+  futuros.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
+  if(!futuros.length){banner.classList.remove('show');return;}
+  const p=futuros[0];
+  const diff=calcDias(p.data);
+  document.getElementById('proximo-info').textContent=p.data+' — '+p.hora+' — '+p.culto;
+  document.getElementById('proximo-dias').textContent=diff===0?'Hoje!':diff===1?'Amanhã!':'Faltam '+diff+' dias';
+  banner.classList.add('show');
+}
+
+// ── Notificações Push (OneSignal)
+async function toggleNotif(){
+  if(!window.OneSignal){alert('OneSignal ainda carregando, tente em instantes.');return;}
+  try{
+    const isEnabled=await OneSignal.User.PushSubscription.optedIn;
+    if(isEnabled){
+      await OneSignal.User.PushSubscription.optOut();
+      atualizarBtnNotif(false);
+    }else{
+      await OneSignal.Notifications.requestPermission();
+      await new Promise(r=>setTimeout(r,800));
+      const optedIn=await OneSignal.User.PushSubscription.optedIn;
+      atualizarBtnNotif(!!optedIn);
+    }
+  }catch(e){console.error('OneSignal:',e);}
+}
+
+function atualizarBtnNotif(ativo){
+  const btn=document.getElementById('btn-notif');
+  if(!btn)return;
+  btn.textContent=ativo?'🔔':'🔕';
+  btn.title=ativo?'Notificações ativas — clique para desativar':'Ativar notificações';
+  btn.classList.toggle('ativo',!!ativo);
+}
+
+// Inicializa estado do botão quando OneSignal carregar
+OneSignalDeferred.push(async function(OneSignal){
+  try{
+    // Aguarda subscrição estabilizar
+    await new Promise(r=>setTimeout(r,1000));
+    const optedIn=await OneSignal.User.PushSubscription.optedIn;
+    atualizarBtnNotif(!!optedIn);
+    // Listener para mudanças futuras
+    OneSignal.User.PushSubscription.addEventListener('change',e=>{
+      atualizarBtnNotif(!!e.current?.optedIn);
+    });
+  }catch(e){console.error('OneSignal init:',e);}
+});
+
+// ── Modo claro/escuro
+function toggleTheme(){
+  const isLight=document.body.classList.toggle('light');
+  document.getElementById('btn-theme').textContent=isLight?'🌙':'☀️';
+  localStorage.setItem('dml-theme',isLight?'light':'dark');
+}
+if(localStorage.getItem('dml-theme')==='light'){
+  document.body.classList.add('light');
+  document.getElementById('btn-theme').textContent='🌙';
+}
+<\/script>
+</body>
+</html>`;
+
+  const blob=new Blob([paginaHTML],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`escala-dml-${mesLabel.toLowerCase().replace(/\s/g,'-')}.html`;
+  a.click();
+  toast('🌐 Página exportada com interatividade!');
+}
+
+function exportarPDF(){irPara('preview');renderPreview();setTimeout(()=>window.print(),300);}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function mostrarLoad(s){document.getElementById('loading-overlay').classList.toggle('show',s);}
+let _tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
+
+// ═══════════════════════════════════════════════
+// CALENDÁRIO
+// ═══════════════════════════════════════════════
+const MESES_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS_SEMANA=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+function abrirModalCalendario(){
+  const now=new Date();
+  document.getElementById('cal-mes').value=now.getMonth();
+  document.getElementById('cal-ano').value=now.getFullYear();
+  document.getElementById('modal-cal').classList.add('open');
+}
+
+function confirmarCalendario(){
+  const mes=parseInt(document.getElementById('cal-mes').value);
+  const ano=parseInt(document.getElementById('cal-ano').value);
+  const nomeDomM=document.getElementById('cal-dom-m').value.trim().toUpperCase()||'EBD';
+  const nomeDomN=document.getElementById('cal-dom-n').value.trim().toUpperCase()||'CULTO DA FAMÍLIA';
+  const nomeTer=document.getElementById('cal-ter').value.trim().toUpperCase()||'CULTO DA FAMÍLIA';
+  const nomeQui=document.getElementById('cal-qui').value.trim().toUpperCase()||'CULTO DE DOUTRINA';
+  const nomeSab=document.getElementById('cal-sab').value.trim().toUpperCase()||'CULTO DA JUVENTUDE';
+
+  const lista=[];
+  const diasNoMes=new Date(ano,mes+1,0).getDate();
+
+  for(let d=1;d<=diasNoMes;d++){
+    const dt=new Date(ano,mes,d);
+    const diaSem=dt.getDay(); // 0=Dom,2=Ter,4=Qui,6=Sab
+    const dataStr=String(d).padStart(2,'0');
+    const diaLabel=DIAS_SEMANA[diaSem];
+
+    if(diaSem===0){ // Domingo
+      lista.push({id:uid(),data:dataStr,dia:'Domingo',hora:'09:00',culto:nomeDomM,dirigente:'',grupos:[SH_LABEL],oculto:false,especial:false});
+      lista.push({id:uid(),data:dataStr,dia:'Domingo',hora:'18:00',culto:nomeDomN,dirigente:'',grupos:[SH_LABEL],oculto:false,especial:false});
+    } else if(diaSem===2){ // Terça
+      lista.push({id:uid(),data:dataStr,dia:'Terça',hora:'19:30',culto:nomeTer,dirigente:'',grupos:[SH_LABEL],oculto:false,especial:false});
+    } else if(diaSem===4){ // Quinta
+      lista.push({id:uid(),data:dataStr,dia:'Quinta',hora:'19:30',culto:nomeQui,dirigente:'',grupos:[SH_LABEL],oculto:false,especial:false});
+    } else if(diaSem===6){ // Sábado
+      lista.push({id:uid(),data:dataStr,dia:'Sábado',hora:'19:30',culto:nomeSab,dirigente:'',grupos:[],oculto:false,especial:false});
+    }
+  }
+
+  cultos=lista;
+  sessaoId='sess_'+Date.now();
+  mesLabel=`${MESES_PT[mes]} ${ano}`;
+  fecharModal('modal-cal');
+  abrirEditor();
+  toast(`✅ ${lista.length} cultos gerados para ${mesLabel}`);
+}
+
+// ═══════════════════════════════════════════════
+// LIMPAR ESCALA
+// ═══════════════════════════════════════════════
+function limparEscala(){
+  if(!confirm('Limpar todos os cultos da escala atual? Esta ação não pode ser desfeita.'))return;
+  cultos=[];
+  renderCultos();
+  toast('🗑 Escala limpa');
+}
+
+function irPara(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,semana:8};
+  document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
+  if(p==='preview')renderPreview();
+  if(p==='hist')renderHist();
+  if(p==='dash'){populateDashFilters();populateComparativoSelects();renderDash();renderAnual();}
+  if(p==='config')renderConfig();
+  if(p==='tmpl')renderTemplates();
+  if(p==='qr')iniciarQR();
+  if(p==='semana')renderSemana(0);
+}
+
+// ═══════════════════════════════════════════════
+// TEMPLATES DE CULTO
+// ═══════════════════════════════════════════════
+function getTmpls(){return JSON.parse(localStorage.getItem('dml_templates')||'[]');}
+function saveTmpls(t){localStorage.setItem('dml_templates',JSON.stringify(t));}
+
+let _tmplGrupos=[];
+
+function abrirFormTemplate(){
+  _tmplGrupos=[];
+  document.getElementById('tmpl-nome').value='';
+  document.getElementById('tmpl-culto').value='';
+  document.getElementById('tmpl-form').style.display='block';
+  // Popula select
+  let h='<option value="">— Adicionar grupo —</option>';
+  for(const[cat,lista]of Object.entries(GRUPOS)){
+    h+=`<optgroup label="${cat}">`;
+    lista.forEach(g=>h+=`<option value="${g}">${g===SH_LABEL?'S&H':g}</option>`);
+    h+='</optgroup>';
+  }
+  document.getElementById('tmpl-sel').innerHTML=h;
+  renderTmplChips();
+}
+
+function fecharFormTemplate(){
+  document.getElementById('tmpl-form').style.display='none';
+}
+
+function renderTmplChips(){
+  document.getElementById('tmpl-chips').innerHTML=
+    _tmplGrupos.map((g,i)=>`
+      <span class="chip ${chipClass(g)}">
+        <span>${g===SH_LABEL?'S&H':g}</span>
+        <button onclick="_tmplGrupos.splice(${i},1);renderTmplChips()">×</button>
+      </span>`).join('');
+  // Atualiza select excluindo já selecionados
+  const sel=document.getElementById('tmpl-sel');
+  [...sel.querySelectorAll('option')].forEach(o=>{
+    if(o.value) o.disabled=_tmplGrupos.includes(o.value);
+  });
+}
+
+function addTmplChip(){
+  const v=document.getElementById('tmpl-sel').value;
+  if(!v)return;
+  if(!_tmplGrupos.includes(v)){_tmplGrupos.push(v);renderTmplChips();}
+  document.getElementById('tmpl-sel').value='';
+}
+
+function salvarTemplate(){
+  const nome=document.getElementById('tmpl-nome').value.trim();
+  const culto=document.getElementById('tmpl-culto').value.trim().toUpperCase();
+  if(!nome){toast('⚠️ Digite o nome do template');return;}
+  const tmpls=getTmpls();
+  tmpls.push({id:'t'+Date.now(),nome,culto,grupos:[..._tmplGrupos]});
+  saveTmpls(tmpls);
+  fecharFormTemplate();
+  renderTemplates();
+  toast('✅ Template salvo!');
+}
+
+function excluirTemplate(id){
+  if(!confirm('Excluir este template?'))return;
+  saveTmpls(getTmpls().filter(t=>t.id!==id));
+  renderTemplates();toast('🗑 Template removido');
+}
+
+function aplicarTemplate(id){
+  const t=getTmpls().find(t=>t.id===id);
+  if(!t||!cultos.length){toast('⚠️ Abra uma escala primeiro');return;}
+  // Abre modal de culto especial pré-preenchido
+  document.getElementById('esp-culto').value=t.culto;
+  // Vai para edição e abre modal especial
+  irPara('edit');
+  setTimeout(()=>{
+    abrirModalEsp();
+    // Pre-fill grupos
+    _eg=[...t.grupos];renderChips();
+  },200);
+  toast('📋 Template carregado no formulário');
+}
+
+function aplicarTemplateAoCulto(tmplId,cultoId){
+  const t=getTmpls().find(t=>t.id===tmplId);
+  const c=getCulto(cultoId);
+  if(!t||!c)return;
+  if(t.culto)c.culto=t.culto;
+  t.grupos.forEach(g=>{if(!c.grupos.includes(g))c.grupos.push(g);});
+  c.grupos=sortGrupos(c.grupos);
+  renderCultos();
+  toast(`✅ Template "${t.nome}" aplicado!`);
+}
+
+function renderTemplates(){
+  const tmpls=getTmpls();
+  const grid=document.getElementById('tmpl-grid');
+  if(!tmpls.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>Nenhum template salvo ainda.<br>Crie templates para agilizar a montagem mensal.</p></div>`;
+    return;
+  }
+  grid.innerHTML=tmpls.map(t=>`
+    <div class="tmpl-card">
+      <h3>${t.nome}</h3>
+      <div class="meta">${t.culto||'Sem nome de culto definido'}</div>
+      <div class="tmpl-tags">${t.grupos.map(g=>`<span class="gbadge ${badgeClass(g)}">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}</div>
+      <div class="tmpl-actions">
+        <button class="btn btn-outline btn-sm" onclick="aplicarTemplate('${t.id}')">▶ Usar</button>
+        <button class="btn-danger" onclick="excluirTemplate('${t.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// NOTAS POR CULTO — integradas no modal de edição
+// ═══════════════════════════════════════════════
+// As notas são salvas em c.nota e mostradas no card
+
+// ═══════════════════════════════════════════════
+// QR CODE
+// ═══════════════════════════════════════════════
+function iniciarQR(){
+  // Restaura URL salva
+  const saved=localStorage.getItem('dml_qr_url');
+  if(saved)document.getElementById('qr-url').value=saved;
+}
+
+function gerarQR(){
+  const url=document.getElementById('qr-url').value.trim();
+  if(!url){document.getElementById('qr-wrap').style.display='none';return;}
+  localStorage.setItem('dml_qr_url',url);
+  const canvas=document.getElementById('qr-canvas');
+  const ctx=canvas.getContext('2d');
+  const size=240;
+  canvas.width=canvas.height=size;
+  // Gera QR via API pública qrserver.com como imagem
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=()=>{
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);
+    ctx.drawImage(img,0,0,size,size);
+    document.getElementById('qr-wrap').style.display='flex';
+  };
+  img.onerror=()=>{
+    // Fallback: exibe link
+    ctx.fillStyle='#1a2535';ctx.fillRect(0,0,size,size);
+    ctx.fillStyle='#2ab482';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    ctx.fillText('QR gerado via API',size/2,size/2-10);
+    ctx.fillStyle='#edf4f4';ctx.font='11px sans-serif';
+    ctx.fillText('Verifique a conexão',size/2,size/2+10);
+    document.getElementById('qr-wrap').style.display='flex';
+  };
+  img.src=`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}&color=111820&bgcolor=ffffff`;
+}
+
+function baixarQR(){
+  const canvas=document.getElementById('qr-canvas');
+  const a=document.createElement('a');
+  a.download=`qr-escala-dml.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  toast('⬇ QR Code baixado!');
+}
+
+function copiarLink(){
+  const url=document.getElementById('qr-url').value.trim();
+  if(!url){toast('⚠️ Digite o link primeiro');return;}
+  navigator.clipboard.writeText(url).then(()=>toast('📋 Link copiado!'));
+}
+
+// ═══════════════════════════════════════════════
+// NOTAS — campo adicional no modal de edição
+// ═══════════════════════════════════════════════
+// Integra nota no abrirModalEdit e confirmarEdit (já existentes)
+
+// ═══════════════════════════════════════════════
+// DUPLICAR MÊS
+// ═══════════════════════════════════════════════
+function duplicarMes(id){
+  const raw=localStorage.getItem(SK(id));if(!raw)return;
+  const d=JSON.parse(raw);
+  // Abre modal de calendário para escolher o mês destino
+  abrirModalCalendario();
+  // Ao confirmar, preserva grupos do mês original por tipo de culto
+  _duplicarFonte=d;
+  toast('📋 Escolha o mês destino no calendário');
+}
+
+let _duplicarFonte=null;
+
+// Override confirmarCalendario para suportar duplicação
+const _origConfirmarCalendario=confirmarCalendario;
+function confirmarCalendario(){
+  if(_duplicarFonte){
+    _confirmarCalendarioDuplicar();
+    _duplicarFonte=null;
+  } else {
+    _origConfirmarCalendario();
+  }
+}
+
+function _confirmarCalendarioDuplicar(){
+  const mes=parseInt(document.getElementById('cal-mes').value);
+  const ano=parseInt(document.getElementById('cal-ano').value);
+  const fonte=_duplicarFonte;
+  // Mapa: tipo de culto → grupos (do mês fonte)
+  const mapaGrupos={};
+  fonte.cultos.forEach(c=>{
+    if(c.grupos.length) mapaGrupos[c.culto]=c.grupos;
+  });
+  // Gera nova escala pelo calendário
+  _origConfirmarCalendario();
+  // Aplica grupos do mapa
+  cultos.forEach(c=>{
+    if(mapaGrupos[c.culto]) c.grupos=sortGrupos([...mapaGrupos[c.culto]]);
+  });
+  renderCultos();
+  toast(`✅ Escala duplicada de "${fonte.mesLabel}" para ${MESES_PT[mes]} ${ano}!`);
+}
+
+// ═══════════════════════════════════════════════
+// ALERTA DE GRUPOS INATIVOS
+// ═══════════════════════════════════════════════
+function verificarInativos(semanas=4){
+  if(!cultos.length)return[];
+  const inativos=[];
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const limit=new Date(hoje.getTime()-semanas*7*24*60*60*1000);
+  // Pega todos os cultos do histórico
+  const todosCultos=getIdx().flatMap(id=>{
+    try{return JSON.parse(localStorage.getItem(SK(id))).cultos;}catch{return[];}
+  });
+  TODOS_GRUPOS().forEach(g=>{
+    if(g===SH_LABEL)return;
+    const ult=todosCultos.filter(c=>c.grupos.includes(g))
+      .map(c=>{
+        const [mes,ano]=(mesLabel+' ').split(' ');
+        return new Date();// simplificado — usa data atual como proxy
+      });
+    // Verifica se grupo está na escala atual
+    const naEscalaAtual=cultos.some(c=>c.grupos.includes(g));
+    if(!naEscalaAtual){
+      // Verifica últimas semanas no histórico
+      const escalado=todosCultos.some(c=>c.grupos.includes(g));
+      if(!escalado)inativos.push(g);
+    }
+  });
+  return inativos;
+}
+
+function renderAlertaInativos(containerId='alerta-inativos-semana'){
+  const inativos=[];
+  const todosGs=todosGrupos();
+  const escaladosNaMes=new Set(cultos.flatMap(c=>c.grupos));
+  todosGs.forEach(g=>{if(g!==SH_LABEL&&!escaladosNaMes.has(g))inativos.push(g);});
+  const box=document.getElementById(containerId);
+  if(!box)return;
+  if(!inativos.length){box.innerHTML='';return;}
+  box.innerHTML=`<div class="alerta-inativo">
+    <strong>⚠️ Grupos não escalados este mês</strong>
+    ${inativos.map(g=>`<span class="grupo-alerta">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// VISUALIZAÇÃO SEMANAL
+// ═══════════════════════════════════════════════
+const MESES_MAP_SEM={Janeiro:0,Fevereiro:1,Março:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};
+let _semanaOffset=0;
+
+function navSemana(delta){
+  if(delta===0)_semanaOffset=0;
+  else _semanaOffset+=delta;
+  // Atualiza botões ativos
+  document.querySelectorAll('.semana-tab').forEach((b,i)=>{
+    b.classList.toggle('active',
+      (i===0&&_semanaOffset<0)||(i===1&&_semanaOffset===0)||(i===2&&_semanaOffset>0)
+    );
+  });
+  renderSemana(_semanaOffset);
+}
+
+function renderSemana(offset){
+  _semanaOffset=offset;
+  const grid=document.getElementById('semana-grid');
+  const sub=document.getElementById('semana-subtitulo');
+  if(!grid)return;
+
+  // Semana atual (Dom a Sáb) + offset em semanas
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const diaSem=hoje.getDay();
+  const inicioSem=new Date(hoje.getTime()-(diaSem*86400000)+(offset*7*86400000));
+
+  // Pega mês/ano da escala carregada
+  const partes=mesLabel.split(' ');
+  const mesNome=partes[0];const anoEsc=parseInt(partes[1])||hoje.getFullYear();
+  const mesNum=MESES_MAP_SEM[mesNome]??hoje.getMonth();
+
+  // Label da semana
+  const fimSem=new Date(inicioSem.getTime()+6*86400000);
+  sub.textContent=`${inicioSem.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${fimSem.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}`;
+
+  // Alerta inativos
+  renderAlertaInativos('alerta-inativos-semana');
+
+  // Monta 7 dias
+  grid.innerHTML='';
+  for(let d=0;d<7;d++){
+    const dia=new Date(inicioSem.getTime()+d*86400000);
+    const diaNum=String(dia.getDate()).padStart(2,'0');
+    const ehHoje=dia.toDateString()===hoje.toDateString();
+    const isDomDia=dia.getDay()===0;
+    const mesOk=dia.getMonth()===mesNum&&dia.getFullYear()===anoEsc;
+
+    // Cultos desse dia
+    const cultosDia=cultos.filter(c=>!c.oculto&&c.data===diaNum&&mesOk);
+
+    const card=document.createElement('div');
+    card.className='semana-card'+(isDomDia?' dom':'')+(ehHoje?' hoje':'');
+
+    if(cultosDia.length){
+      const cultosHTML=cultosDia.map(c=>{
+        const badges=sortGrupos(c.grupos).map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>`).join('');
+        return`<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)">
+          <div class="semana-hora">${c.hora}</div>
+          <div class="semana-culto">${c.culto}</div>
+          ${c.dirigente?`<div style="font-size:10px;color:var(--teal);margin-top:2px">${c.dirigente}</div>`:''}
+          ${badges?`<div class="semana-badges">${badges}</div>`:''}
+        </div>`;
+      }).join('');
+      card.innerHTML=`
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="semana-data">${diaNum}</span>
+          <span class="semana-dia">${abrevDia(dia.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''))}</span>
+          ${ehHoje?'<span style="font-size:10px;background:var(--teal);color:#061208;border-radius:8px;padding:1px 7px;font-weight:700">Hoje</span>':''}
+        </div>
+        ${cultosHTML}`;
+    } else {
+      card.innerHTML=`
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="semana-data" style="color:${mesOk?'var(--teal)':'var(--muted)'}">${diaNum}</span>
+          <span class="semana-dia">${abrevDia(dia.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''))}</span>
+          ${ehHoje?'<span style="font-size:10px;background:var(--teal);color:#061208;border-radius:8px;padding:1px 7px;font-weight:700">Hoje</span>':''}
+        </div>
+        <div class="semana-vazio">${mesOk?'Sem culto':'Fora do mês'}</div>`;
+    }
+    grid.appendChild(card);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CHART.JS — GRÁFICOS DO DASHBOARD
+// ═══════════════════════════════════════════════
+let _chartRanking=null,_chartEvolucao=null,_chartComp=null;
+
+function destroyChart(ref){if(ref){try{ref.destroy();}catch(e){}}}
+
+const CHART_COLORS=['#2ab482','#4a9eff','#b07ae8','#e06060','#d4a017','#e8934a','#3dbfb8','#9050dc','#c03030','#1a5fa0','#1a7a40','#c06018'];
+
+function renderCharts(){
+  const fm=document.getElementById('dash-periodo').value;
+  const ft=document.getElementById('dash-tipo').value;
+  const fg=document.getElementById('dash-grupo').value;
+  const {freq,detalhe}=contarEscalas(fm,ft,fg);
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length)return;
+
+  const labels=sorted.map(([g])=>g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. '));
+  const data=sorted.map(([,n])=>n);
+  const colors=sorted.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]);
+
+  // ── Gráfico de barras horizontal (ranking)
+  destroyChart(_chartRanking);
+  const ctxR=document.getElementById('chart-ranking');
+  if(ctxR){
+    _chartRanking=new Chart(ctxR,{
+      type:'bar',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
+      options:{
+        indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} escala(s)`}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#7a9aa8',font:{size:11}}},
+          y:{grid:{display:false},ticks:{color:'#edf4f4',font:{size:11}}}
+        }
+      }
+    });
+  }
+
+  // ── Gráfico de linha (evolução mensal por grupo)
+  destroyChart(_chartEvolucao);
+  const ctxE=document.getElementById('chart-evolucao');
+  if(!ctxE)return;
+  const idx=getIdx();
+  const meses=idx.map(id=>{try{return JSON.parse(localStorage.getItem(SK(id))).mesLabel;}catch{return null;}}).filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt'));
+  const topGrupos=sorted.slice(0,5).map(([g])=>g);
+  const datasets=topGrupos.map((g,i)=>({
+    label:g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. '),
+    data:meses.map(mes=>{
+      const seen={};
+      return getIdx().reduce((acc,id)=>{
+        try{
+          const d=JSON.parse(localStorage.getItem(SK(id)));
+          if(d.mesLabel!==mes)return acc;
+          d.cultos.filter(c=>!c.oculto&&c.grupos.includes(g)).forEach(c=>{
+            const isDom=/domingo/i.test(c.dia);
+            const key=`${g}||${c.data}`;
+            if(isDom&&seen[key])return;if(isDom)seen[key]=true;
+            acc++;
+          });
+        }catch{}return acc;
+      },0);
+    }),
+    borderColor:CHART_COLORS[i%CHART_COLORS.length],
+    backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'33',
+    tension:.3,fill:false,pointRadius:4,pointHoverRadius:6
+  }));
+  _chartEvolucao=new Chart(ctxE,{
+    type:'line',
+    data:{labels:meses.map(m=>m.split(' ')[0].substring(0,3)+'/'+m.split(' ')[1]?.slice(-2)),datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#edf4f4',font:{size:11},boxWidth:12}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#7a9aa8',font:{size:10}}},
+        y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#7a9aa8',font:{size:10},stepSize:1}}
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// COMPARATIVO ENTRE MESES
+// ═══════════════════════════════════════════════
+function populateComparativoSelects(){
+  const idx=getIdx();
+  const meses=idx.map(id=>{try{return JSON.parse(localStorage.getItem(SK(id))).mesLabel;}catch{return null;}}).filter(Boolean);
+  ['comp-mes-a','comp-mes-b'].forEach((selId,i)=>{
+    const sel=document.getElementById(selId);
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— Selecione —</option>';
+    meses.forEach(m=>sel.innerHTML+=`<option value="${m}">${m}</option>`);
+    if(meses.includes(cur))sel.value=cur;
+    else if(meses[meses.length-1-i])sel.value=meses[meses.length-1-i];
+  });
+}
+
+function renderComparativo(){
+  const mesA=document.getElementById('comp-mes-a')?.value;
+  const mesB=document.getElementById('comp-mes-b')?.value;
+  const ctxC=document.getElementById('chart-comparativo');
+  const insights=document.getElementById('comp-insights');
+  if(!ctxC||!mesA||!mesB||mesA===mesB){if(insights)insights.innerHTML='';return;}
+
+  const {freq:freqA}=contarEscalas(mesA,'all','all');
+  const {freq:freqB}=contarEscalas(mesB,'all','all');
+  const grupos=[...new Set([...Object.keys(freqA),...Object.keys(freqB)])].filter(g=>g!==SH_LABEL);
+
+  const labels=grupos.map(g=>g.replace(/^CORAL\s+/,'C. '));
+  const dataA=grupos.map(g=>freqA[g]||0);
+  const dataB=grupos.map(g=>freqB[g]||0);
+
+  destroyChart(_chartComp);
+  _chartComp=new Chart(ctxC,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:mesA,data:dataA,backgroundColor:'#2ab48299',borderColor:'#2ab482',borderWidth:1.5,borderRadius:4},
+        {label:mesB,data:dataB,backgroundColor:'#4a9eff99',borderColor:'#4a9eff',borderWidth:1.5,borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#edf4f4',font:{size:11},boxWidth:12}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#edf4f4',font:{size:10}}},
+        y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#7a9aa8',font:{size:10},stepSize:1}}
+      }
+    }
+  });
+
+  // Insights automáticos
+  if(!insights)return;
+  const ins=[];
+  grupos.forEach(g=>{
+    const a=freqA[g]||0,b=freqB[g]||0;
+    if(a===0&&b>0)ins.push({txt:`<strong>${g.replace(/^CORAL\s+/,'C. ')}</strong> estreou em ${mesB}`,tipo:'up'});
+    else if(b===0&&a>0)ins.push({txt:`<strong>${g.replace(/^CORAL\s+/,'C. ')}</strong> não foi escalado em ${mesB}`,tipo:'down'});
+    else if(b>a)ins.push({txt:`<strong>${g.replace(/^CORAL\s+/,'C. ')}</strong> subiu de ${a} para ${b} escalas`,tipo:'up'});
+    else if(b<a)ins.push({txt:`<strong>${g.replace(/^CORAL\s+/,'C. ')}</strong> caiu de ${a} para ${b} escalas`,tipo:'down'});
+  });
+  insights.innerHTML=ins.slice(0,6).map(({txt,tipo})=>`
+    <div class="insight-item">
+      <span class="insight-${tipo}">${tipo==='up'?'↑':tipo==='down'?'↓':'→'}</span>
+      <span>${txt}</span>
+    </div>`).join('')||'<p style="color:var(--muted);font-size:13px">Sem diferenças significativas entre os meses.</p>';
+}
+
+// ═══════════════════════════════════════════════
+// EXPORTAR GOOGLE SHEETS (via .xlsx com SheetJS)
+// ═══════════════════════════════════════════════
+async function exportarSheets(){
+  // Carrega SheetJS dinamicamente
+  if(!window.XLSX){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+  }
+  const wb=window.XLSX.utils.book_new();
+  const idx=getIdx();
+  if(!idx.length){toast('⚠️ Nenhuma escala salva');return;}
+
+  // Aba de resumo geral
+  const resumo=[['Mês','Total Cultos','Com Grupo','Sem Grupo']];
+  idx.forEach(id=>{
+    try{
+      const d=JSON.parse(localStorage.getItem(SK(id)));
+      const vis=d.cultos.filter(c=>!c.oculto);
+      resumo.push([d.mesLabel,vis.length,vis.filter(c=>c.grupos.length).length,vis.filter(c=>!c.grupos.length).length]);
+    }catch{}
+  });
+  window.XLSX.utils.book_append_sheet(wb,window.XLSX.utils.aoa_to_sheet(resumo),'Resumo');
+
+  // Uma aba por mês
+  idx.forEach(id=>{
+    try{
+      const d=JSON.parse(localStorage.getItem(SK(id)));
+      const rows=[['Data','Dia','Hora','Culto','Dirigente','Grupos','Nota']];
+      d.cultos.filter(c=>!c.oculto).forEach(c=>{
+        rows.push([c.data,c.dia,c.hora,c.culto,c.dirigente||'',c.grupos.map(g=>g===SH_LABEL?'S&H':g).join(', '),c.nota||'']);
+      });
+      const sheetName=d.mesLabel.substring(0,31);
+      window.XLSX.utils.book_append_sheet(wb,window.XLSX.utils.aoa_to_sheet(rows),sheetName);
+    }catch{}
+  });
+
+  // Aba de ranking geral
+  const {freq}=contarEscalas('all','all','all');
+  const rankRows=[['Grupo','Total de Escalas'],...Object.entries(freq).sort((a,b)=>b[1]-a[1]).map(([g,n])=>[g===SH_LABEL?'S&H':g,n])];
+  window.XLSX.utils.book_append_sheet(wb,window.XLSX.utils.aoa_to_sheet(rankRows),'Ranking');
+
+  window.XLSX.writeFile(wb,`escala-dml-${new Date().getFullYear()}.xlsx`);
+  toast('📊 Arquivo Excel exportado! Abra no Google Sheets.');
+}
+
+// ═══════════════════════════════════════════════
+// NOTIFICAÇÕES PUSH (via OneSignal)
+// ═══════════════════════════════════════════════
+function configurarPush(){
+  const modal=`<div style="position:fixed;inset:0;background:rgba(8,14,20,.9);z-index:400;display:flex;align-items:center;justify-content:center" id="push-modal">
+    <div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:500px;max-width:96vw">
+      <h3 style="color:var(--teal);margin-bottom:16px">🔔 Configurar Notificações Push</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+        Para enviar notificações aos integrantes do DML, você precisa configurar o <strong style="color:var(--white)">OneSignal</strong> (gratuito, até 10.000 notificações/mês).
+      </p>
+      <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;line-height:1.8;color:var(--muted)">
+        <strong style="color:var(--teal-light)">Passo a passo:</strong><br>
+        1. Acesse <a href="https://onesignal.com" target="_blank" style="color:var(--teal)">onesignal.com</a> e crie uma conta gratuita<br>
+        2. Crie um novo App → selecione <strong style="color:var(--white)">Web Push</strong><br>
+        3. Configure o domínio do seu Netlify (ex: escala-dml.netlify.app)<br>
+        4. Copie o <strong style="color:var(--white)">App ID</strong> e cole abaixo<br>
+        5. Me mande o App ID e eu integro o código na página pública
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px">OneSignal App ID (opcional — para registrar agora)</label>
+        <input type="text" id="onesignal-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font)">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="document.getElementById('push-modal').remove()">Fechar</button>
+        <button class="btn btn-primary" onclick="salvarPushId()">Salvar App ID</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',modal);
+  // Carrega ID salvo
+  const saved=localStorage.getItem('dml_onesignal_id');
+  if(saved)document.getElementById('onesignal-id').value=saved;
+}
+
+function salvarPushId(){
+  const id=document.getElementById('onesignal-id').value.trim();
+  if(id){localStorage.setItem('dml_onesignal_id',id);toast('✅ App ID salvo! Exporte a página para ativar as notificações.');}
+  document.getElementById('push-modal')?.remove();
+}
+
+// Atualiza o botão de push com status
+function atualizarStatusPush(){
+  const btn=document.getElementById('btn-push');
+  if(!btn)return;
+  const id=localStorage.getItem('dml_onesignal_id');
+  btn.textContent=id?'🔔 Push ✓':'🔔 Notificações';
+  btn.title=id?`OneSignal configurado: ${id}`:'Configurar notificações push';
+}
+
+// ═══════════════════════════════════════════════
+// NOTEPAD FLUTUANTE
+// ═══════════════════════════════════════════════
+const NP_KEY='dml_notepad';
+
+function toggleNotepad(){
+  const panel=document.getElementById('notepad-panel');
+  const isOpen=panel.classList.toggle('open');
+  if(isOpen){
+    carregarNotepad();
+    setTimeout(()=>document.getElementById('notepad-area')?.focus(),80);
+  }
+}
+
+function carregarNotepad(){
+  const area=document.getElementById('notepad-area');
+  if(area)area.value=localStorage.getItem(NP_KEY)||'';
+  atualizarToggleNotepad();
+}
+
+let _npTimer=null;
+function salvarNotepad(){
+  const txt=document.getElementById('notepad-area')?.value||'';
+  localStorage.setItem(NP_KEY,txt);
+  atualizarToggleNotepad();
+  // Feedback de salvo
+  const saved=document.getElementById('notepad-saved');
+  if(saved){
+    clearTimeout(_npTimer);
+    saved.textContent='Salvo ✓';
+    _npTimer=setTimeout(()=>{if(saved)saved.textContent='';},1800);
+  }
+}
+
+function atualizarToggleNotepad(){
+  const btn=document.getElementById('notepad-toggle');
+  if(!btn)return;
+  const temConteudo=!!(localStorage.getItem(NP_KEY)||'').trim();
+  btn.classList.toggle('has-note',temConteudo);
+  btn.title=temConteudo?'Anotações (tem conteúdo)':'Anotações rápidas';
+}
+
+function limparNotepad(){
+  if(!confirm('Limpar todas as anotações?'))return;
+  localStorage.removeItem(NP_KEY);
+  const area=document.getElementById('notepad-area');
+  if(area)area.value='';
+  atualizarToggleNotepad();
+  toast('🗑 Anotações limpas');
+}
+
+// ═══════════════════════════════════════════════
+// FIREBASE — AUTH & FIRESTORE
+// ═══════════════════════════════════════════════
+
+// Aguarda Firebase inicializar
+function fbReady(){ return !!window._fbDb && !!window._fbFns; }
+
+// ── Auth
+async function fazerLogin(){
+  const st=document.getElementById('login-status');
+  if(st)st.textContent='Aguardando...';
+  try{
+    await window._fbFns.signInWithPopup(window._fbAuth, window._fbGoogleProvider);
+  }catch(e){
+    if(st)st.textContent='Erro ao entrar. Tente novamente.';
+    console.error(e);
+  }
+}
+
+async function fazerLogout(){
+  if(!confirm('Sair da conta?'))return;
+  await window._fbFns.signOut(window._fbAuth);
+}
+
+function menuUsuario(){
+  const user=window._fbUser;
+  if(!user)return;
+  if(confirm(`Logado como ${user.displayName}\n\nDeseja sair?`)) fazerLogout();
+}
+
+// Callback quando auth muda
+window.onFbAuthReady=function(user){
+  const loginScreen=document.getElementById('login-screen');
+  const badge=document.getElementById('user-badge');
+  const syncSt=document.getElementById('sync-status');
+  if(user){
+    // Logado — esconde tela de login
+    loginScreen?.classList.add('hidden');
+    if(badge){
+      badge.style.display='flex';
+      document.getElementById('user-photo').src=user.photoURL||'';
+      document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
+    }
+    if(syncSt)syncSt.style.display='inline';
+    // Carrega dados do Firestore
+    carregarDadosFirebase();
+  } else {
+    // Deslogado — mostra tela de login
+    loginScreen?.classList.remove('hidden');
+    if(badge)badge.style.display='none';
+    if(syncSt)syncSt.style.display='none';
+  }
+};
+
+// ── Helpers de path
+function fbUserPath(sub){ return `usuarios/${window._fbUser?.uid}/${sub}`; }
+
+// ── Indicador de sync
+function setSyncStatus(s){
+  const el=document.getElementById('sync-status');
+  if(!el)return;
+  if(s==='ok'){el.textContent='☁️ Salvo';el.className='sync-indicator sync-ok';}
+  else if(s==='saving'){el.textContent='⏳ Salvando...';el.className='sync-indicator sync-saving';}
+  else{el.textContent='⚠️ Erro sync';el.className='sync-indicator sync-err';}
+}
+
+// ── Salvar sessão no Firestore
+async function salvarSessaoFirebase(id, dados){
+  if(!fbReady()||!window._fbUser)return;
+  setSyncStatus('saving');
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id), dados);
+    setSyncStatus('ok');
+  }catch(e){setSyncStatus('err');console.error(e);}
+}
+
+// ── Carregar índice de sessões
+async function getIdxFirebase(){
+  if(!fbReady()||!window._fbUser)return[];
+  try{
+    const {collection,getDocs}=window._fbFns;
+    const snap=await getDocs(collection(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`));
+    return snap.docs.map(d=>d.id);
+  }catch(e){console.error(e);return[];}
+}
+
+// ── Carregar sessão específica
+async function getSessaoFirebase(id){
+  if(!fbReady()||!window._fbUser)return null;
+  try{
+    const {doc,getDoc}=window._fbFns;
+    const snap=await getDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id));
+    return snap.exists()?snap.data():null;
+  }catch(e){console.error(e);return null;}
+}
+
+// ── Excluir sessão
+async function excluirSessaoFirebase(id){
+  if(!fbReady()||!window._fbUser)return;
+  try{
+    const {doc,deleteDoc}=window._fbFns;
+    await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id));
+  }catch(e){console.error(e);}
+}
+
+// ── Salvar configurações (grupos, templates, notepad)
+async function salvarConfigFirebase(){
+  if(!fbReady()||!window._fbUser)return;
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'dados'),{
+      grupos: GRUPOS,
+      templates: getTmpls(),
+      notepad: localStorage.getItem('dml_notepad')||'',
+      qrUrl: localStorage.getItem('dml_qr_url')||'',
+      updatedAt: Date.now()
+    });
+  }catch(e){console.error(e);}
+}
+
+// ── Carregar tudo do Firebase ao logar
+async function carregarDadosFirebase(){
+  if(!fbReady()||!window._fbUser)return;
+  setSyncStatus('saving');
+  try{
+    const {doc,getDoc}=window._fbFns;
+    // Carrega config
+    const cfgSnap=await getDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/config`,'dados'));
+    if(cfgSnap.exists()){
+      const cfg=cfgSnap.data();
+      if(cfg.grupos){GRUPOS=cfg.grupos;saveGrupos(GRUPOS);}
+      if(cfg.templates)localStorage.setItem('dml_templates',JSON.stringify(cfg.templates));
+      if(cfg.notepad){localStorage.setItem('dml_notepad',cfg.notepad);carregarNotepad();}
+      if(cfg.qrUrl)localStorage.setItem('dml_qr_url',cfg.qrUrl);
+    }
+    // Migra sessões locais para Firebase (primeira vez)
+    const localIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
+    for(const id of localIdx){
+      const raw=localStorage.getItem('dml_sess_'+id);
+      if(raw) await salvarSessaoFirebase(id,JSON.parse(raw));
+    }
+    setSyncStatus('ok');
+    renderHist();
+  }catch(e){setSyncStatus('err');console.error(e);}
+}
+
+// ═══════════════════════════════════════════════
+// OVERRIDE: salvarSessao usa Firebase
+// ═══════════════════════════════════════════════
+async function salvarSessao(){
+  if(!cultos.length){toast('⚠️ Nenhum culto para salvar');return;}
+  if(!sessaoId)sessaoId='s'+Date.now();
+  const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now()};
+
+  // Salva localmente (fallback)
+  const localIdx=getIdx();
+  if(!localIdx.includes(sessaoId)){localIdx.push(sessaoId);saveIdx(localIdx);}
+  localStorage.setItem(SK(sessaoId),JSON.stringify(dados));
+
+  // Salva no Firebase
+  if(window._fbUser) await salvarSessaoFirebase(sessaoId,dados);
+  else setSyncStatus('err');
+
+  // Salva config também
+  salvarConfigFirebase();
+  toast('✅ Escala salva na nuvem!');
+  renderHist();
+}
+
+// ═══════════════════════════════════════════════
+// OVERRIDE: getIdx usa Firebase + local
+// ═══════════════════════════════════════════════
+async function getIdxAsync(){
+  if(window._fbUser) return await getIdxFirebase();
+  return getIdx();
+}
+
+// ═══════════════════════════════════════════════
+// OVERRIDE: carregarSessao usa Firebase
+// ═══════════════════════════════════════════════
+async function carregarSessao(id){
+  mostrarLoad(true);
+  let dados=null;
+  if(window._fbUser){
+    dados=await getSessaoFirebase(id);
+  }
+  if(!dados){
+    // Fallback local
+    const raw=localStorage.getItem(SK(id));
+    if(raw)dados=JSON.parse(raw);
+  }
+  mostrarLoad(false);
+  if(!dados){toast('❌ Sessão não encontrada');return;}
+  sessaoId=dados.id||id;
+  mesLabel=dados.mesLabel||'';
+  cultos=(dados.cultos||[]).map(c=>({...c,id:c.id||uid()}));
+  abrirEditor();
+  toast(`✅ ${mesLabel} carregada`);
+}
+
+// ═══════════════════════════════════════════════
+// LIXEIRA
+// ═══════════════════════════════════════════════
+const LIXEIRA_KEY='dml_lixeira';
+const LIXEIRA_DIAS=30;
+
+function getLixeira(){return JSON.parse(localStorage.getItem(LIXEIRA_KEY)||'[]');}
+function saveLixeira(l){localStorage.setItem(LIXEIRA_KEY,JSON.stringify(l));}
+
+function moverParaLixeira(id,dados){
+  const lixeira=getLixeira();
+  // Remove se já estava
+  const sem=lixeira.filter(x=>x.id!==id);
+  sem.push({...dados,deletedAt:Date.now()});
+  saveLixeira(sem);
+  // Salva no Firebase também
+  if(window._fbUser&&window._fbFns){
+    const{doc,setDoc}=window._fbFns;
+    setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,id),{...dados,deletedAt:Date.now()}).catch(console.error);
+    // Remove da coleção principal
+    excluirSessaoFirebase(id).catch(console.error);
+  }
+}
+
+async function restaurarDaLixeira(id){
+  const lixeira=getLixeira();
+  const item=lixeira.find(x=>x.id===id);
+  if(!item)return;
+  // Restaura no histórico
+  const localIdx=getIdx();
+  if(!localIdx.includes(id)){localIdx.push(id);saveIdx(localIdx);}
+  localStorage.setItem(SK(id),JSON.stringify(item));
+  // Remove da lixeira local
+  saveLixeira(lixeira.filter(x=>x.id!==id));
+  // Firebase
+  if(window._fbUser&&window._fbFns){
+    const{doc,setDoc,deleteDoc}=window._fbFns;
+    await setDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/sessoes`,id),item).catch(console.error);
+    await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,id)).catch(console.error);
+  }
+  renderHist();renderLixeira();
+  toast(`✅ "${item.mesLabel}" restaurada!`);
+}
+
+async function excluirDefinitivo(id){
+  if(!confirm('Excluir definitivamente? Esta ação não pode ser desfeita.'))return;
+  saveLixeira(getLixeira().filter(x=>x.id!==id));
+  if(window._fbUser&&window._fbFns){
+    const{doc,deleteDoc}=window._fbFns;
+    await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,id)).catch(console.error);
+  }
+  renderLixeira();toast('🗑 Excluído definitivamente');
+}
+
+async function esvaziarLixeira(){
+  if(!confirm('Esvaziar a lixeira? Todas as escalas serão excluídas permanentemente.'))return;
+  const lixeira=getLixeira();
+  if(window._fbUser&&window._fbFns){
+    const{doc,deleteDoc}=window._fbFns;
+    for(const item of lixeira){
+      await deleteDoc(doc(window._fbDb,`usuarios/${window._fbUser.uid}/lixeira`,item.id)).catch(console.error);
+    }
+  }
+  saveLixeira([]);
+  renderLixeira();toast('🗑 Lixeira esvaziada');
+}
+
+// Limpa itens com mais de 30 dias automaticamente
+function limparLixeiraExpirada(){
+  const agora=Date.now();
+  const validos=getLixeira().filter(x=>(agora-(x.deletedAt||0))<LIXEIRA_DIAS*86400000);
+  saveLixeira(validos);
+}
+
+function renderLixeira(){
+  limparLixeiraExpirada();
+  const grid=document.getElementById('lixeira-grid');
+  const badge=document.getElementById('lixeira-count');
+  const lixeira=getLixeira();
+  if(badge){
+    badge.textContent=lixeira.length;
+    badge.style.display=lixeira.length?'inline':'none';
+  }
+  if(!grid)return;
+  if(!lixeira.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">🗑</div><p>Lixeira vazia.</p></div>`;
+    return;
+  }
+  const agora=Date.now();
+  grid.innerHTML=`<div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-bottom:4px">
+    <button class="btn btn-ghost btn-sm" style="color:#e06060;border-color:#7a2020" onclick="esvaziarLixeira()">🗑 Esvaziar lixeira</button>
+  </div>`+lixeira.map(d=>{
+    const diasRestantes=Math.max(0,LIXEIRA_DIAS-Math.floor((agora-(d.deletedAt||0))/86400000));
+    const top3=[...new Set((d.cultos||[]).flatMap(c=>c.grupos||[]))].filter(g=>g!==SH_LABEL).slice(0,3);
+    return`<div class="hist-card lixeira-card">
+      <div class="hist-mes">${d.mesLabel||'Sem título'}</div>
+      <div class="hist-meta">${(d.cultos||[]).length} cultos</div>
+      <div class="lixeira-expira">⏳ Expira em ${diasRestantes} dia${diasRestantes!==1?'s':''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">
+        ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
+      </div>
+      <div class="hist-actions">
+        <button class="btn btn-outline btn-sm" onclick="restaurarDaLixeira('${d.id}')">↩ Restaurar</button>
+        <button class="btn-danger" onclick="excluirDefinitivo('${d.id}')">✕ Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function mostrarTabHist(tab){
+  document.getElementById('hist-grid').style.display=tab==='hist'?'grid':'none';
+  document.getElementById('lixeira-grid').style.display=tab==='lixeira'?'grid':'none';
+  document.getElementById('tab-hist').classList.toggle('active',tab==='hist');
+  document.getElementById('tab-lixeira').classList.toggle('active',tab==='lixeira');
+  if(tab==='lixeira')renderLixeira();
+}
+
+// ═══════════════════════════════════════════════
+// OVERRIDE excluirSessao — move para lixeira
+// ═══════════════════════════════════════════════
+async function excluirSessao(id){
+  if(!confirm('Mover esta escala para a lixeira?'))return;
+  // Pega os dados antes de excluir
+  let dados=null;
+  if(window._fbUser)dados=await getSessaoFirebase(id);
+  if(!dados){const r=localStorage.getItem(SK(id));if(r)dados=JSON.parse(r);}
+  // Move para lixeira
+  if(dados)moverParaLixeira(id,dados);
+  // Remove do histórico local
+  const idx=getIdx().filter(x=>x!==id);saveIdx(idx);
+  localStorage.removeItem(SK(id));
+  renderHist();renderLixeira();
+  renderLixeira();
+  toast('🗑 Movido para a lixeira');
+}
+
+// ═══════════════════════════════════════════════
+// OVERRIDE: renderHist usa Firebase
+// ═══════════════════════════════════════════════
+async function renderHist(busca=''){
+  const grid=document.getElementById('hist-grid');
+  if(!grid)return;
+  grid.innerHTML=`<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>`;
+
+  let idx=[];
+  if(window._fbUser) idx=await getIdxFirebase();
+  else idx=getIdx();
+
+  const sessions=[];
+  for(const id of idx){
+    let d=null;
+    if(window._fbUser)d=await getSessaoFirebase(id);
+    if(!d){const r=localStorage.getItem(SK(id));if(r)d=JSON.parse(r);}
+    if(d)sessions.push(d);
+  }
+
+  const filtrados=sessions.filter(d=>!busca||d.mesLabel?.toLowerCase().includes(busca.toLowerCase())||d.cultos?.some(c=>c.grupos?.some(g=>g.toLowerCase().includes(busca.toLowerCase()))));
+
+  if(!filtrados.length){
+    grid.innerHTML=`<div class="empty-state"><div class="icon">📁</div><p>${busca?'Nenhum resultado.':'Nenhuma escala salva ainda.'}</p></div>`;return;
+  }
+
+  filtrados.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
+  grid.innerHTML=filtrados.map(d=>{
+    const id=d.id;
+    const top3=[...new Set((d.cultos||[]).flatMap(c=>c.grupos||[]))].filter(g=>g!==SH_LABEL).slice(0,3);
+    return`<div class="hist-card">
+      <div class="hist-mes">${d.mesLabel||'Sem título'}</div>
+      <div class="hist-meta">${(d.cultos||[]).filter(c=>!c.oculto).length} cultos</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">
+        ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
+      </div>
+      <div class="hist-actions">
+        <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')">✏️ Abrir</button>
+        <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')">📋 Duplicar</button>
+        <button class="btn-danger" onclick="excluirSessao('${id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// INIT
+atualizarStatusPush();
+carregarNotepad();
+// renderHist será chamado pelo onFbAuthReady quando o usuário logar
+// Pré-seleciona mês atual no select do calendário
+document.addEventListener('DOMContentLoaded',()=>{
+  const now=new Date();
+  const sel=document.getElementById('cal-mes');
+  if(sel)sel.value=now.getMonth();
+});
+</script>
+</body>
+</html>
