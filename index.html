@@ -103,6 +103,25 @@ main{padding:22px 26px;max-width:1440px;margin:0 auto;}
 
 /* ── EDITOR ── */
 .edit-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.dia-filtros{display:flex;gap:4px;flex-wrap:wrap;}
+.dia-filtro-btn{border:1.5px solid var(--border);background:transparent;color:var(--muted);
+  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:var(--font);transition:all .15s;letter-spacing:.5px;}
+.dia-filtro-btn:hover{border-color:var(--teal);color:var(--teal);}
+.dia-filtro-btn.ativo{color:#fff;}
+/* Cores ativas por dia */
+.dia-filtro-btn.ativo[data-dia="todos"]{background:var(--teal);border-color:var(--teal);color:#061208;}
+.dia-filtro-btn.ativo[data-dia="dom"]{background:#7a5000;border-color:#d4a017;color:#ffd060;}
+.dia-filtro-btn.ativo[data-dia="ter"]{background:#0f2d64;border-color:#2778dc;color:#4a9eff;}
+.dia-filtro-btn.ativo[data-dia="qui"]{background:#0a3726;border-color:#2ab482;color:#2ab482;}
+.dia-filtro-btn.ativo[data-dia="sab"]{background:#37145a;border-color:#9050dc;color:#b07ae8;}
+.dia-filtro-btn.ativo[data-dia="esp"]{background:#641414;border-color:#c03030;color:#e06060;}
+/* Cor inativa sutil por dia */
+.dia-filtro-btn.dom{border-color:rgba(180,130,30,.3);color:#7a6020;}
+.dia-filtro-btn.ter{border-color:rgba(39,120,220,.3);color:#2a5090;}
+.dia-filtro-btn.qui{border-color:rgba(42,180,130,.3);color:#1a6040;}
+.dia-filtro-btn.sab{border-color:rgba(150,80,220,.3);color:#6030a0;}
+.dia-filtro-btn.esp{border-color:rgba(200,60,60,.3);color:#902020;}
 .toggle-label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;}
 .toggle-label input{accent-color:var(--teal);}
 
@@ -636,6 +655,14 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-edit" class="page">
   <div class="edit-toolbar">
     <label class="toggle-label"><input type="checkbox" id="chk-ocultos" checked onchange="renderCultos()"> Mostrar ocultos</label>
+    <div class="dia-filtros">
+      <button class="dia-filtro-btn ativo" data-dia="todos" onclick="filtrarDia('todos')">Todos</button>
+      <button class="dia-filtro-btn dom" data-dia="dom" onclick="filtrarDia('dom')">DOM</button>
+      <button class="dia-filtro-btn ter" data-dia="ter" onclick="filtrarDia('ter')">TER</button>
+      <button class="dia-filtro-btn qui" data-dia="qui" onclick="filtrarDia('qui')">QUI</button>
+      <button class="dia-filtro-btn sab" data-dia="sab" onclick="filtrarDia('sab')">SÁB</button>
+      <button class="dia-filtro-btn esp" data-dia="esp" onclick="filtrarDia('esp')">ESP</button>
+    </div>
     <span style="flex:1"></span>
     <button class="btn btn-danger btn-sm" onclick="limparEscala()">🗑 Limpar</button>
     <button class="btn btn-outline btn-sm" onclick="abrirModalEsp()">+ Culto Especial</button>
@@ -985,7 +1012,7 @@ function sortGrupos(grupos){
 const IGNORAR=[/hora\s*nona/i,/reuni[aã]o\s*(de\s*)?(coordenadores?|oficial|administrativa|ejc|pastores?|di[aá]conos?)/i,/reuni[aã]o\s+com/i,/conselho/i,/vig[ií]lia/i];
 const DIAS_OK=/domingo|ter[cç]a|quinta|s[aá]b(ado)?/i;
 
-let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null;
+let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null,_filtroDia='todos';
 const uid=()=>'c'+(++_uid);
 const getCulto=id=>cultos.find(c=>c.id===id);
 
@@ -1066,11 +1093,34 @@ function abrirEditor(){
   irPara('edit');renderCultos();renderSidebar();
 }
 
+function filtrarDia(dia){
+  _filtroDia=dia;
+  document.querySelectorAll('.dia-filtro-btn').forEach(b=>{
+    b.classList.toggle('ativo',b.dataset.dia===dia);
+  });
+  renderCultos();
+}
+
+function matchFiltroDia(c){
+  if(_filtroDia==='todos')return true;
+  if(_filtroDia==='dom')return /domingo/i.test(c.dia);
+  if(_filtroDia==='ter')return /ter[cç]a/i.test(c.dia);
+  if(_filtroDia==='qui')return /quinta/i.test(c.dia);
+  if(_filtroDia==='sab')return /s[aá]b/i.test(c.dia);
+  if(_filtroDia==='esp')return !!c.especial;
+  return true;
+}
+
 function renderCultos(){
   const grid=document.getElementById('cultos-grid');
   grid.innerHTML='';
   const showOc=document.getElementById('chk-ocultos').checked;
-  cultos.forEach(c=>{
+  const filtrados=cultos.filter(c=>matchFiltroDia(c));
+  if(filtrados.length===0&&_filtroDia!=='todos'){
+    grid.innerHTML=`<div class="empty-state"><div class="icon">📅</div><p>Nenhum culto encontrado para este filtro.</p></div>`;
+    return;
+  }
+  filtrados.forEach(c=>{
     if(c.oculto&&!showOc)return;
     const isDom=/domingo/i.test(c.dia);
     const isTer=/ter[cç]a/i.test(c.dia);
