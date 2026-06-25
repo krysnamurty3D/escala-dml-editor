@@ -2036,9 +2036,45 @@ const NETLIFY_SITE_ID='584aff64-553e-4a7c-938b-b7dcfdf4f494';
 const GITHUB_REPO='escala-dml-public';
 const GITHUB_USER='krysnamurty3D';
 
+
+
 function getGithubToken(){return localStorage.getItem('dml_gh_token')||'';}
 function getNetlifyToken(){return localStorage.getItem('dml_nl_token')||'';}
 
+function configurarTokens(){
+  const existente=getGithubToken();
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:480px;max-width:96vw">
+    <h3 style="color:var(--teal);margin-bottom:16px">🔑 Configurar Publicação</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      Cole seu <strong style="color:var(--white)">GitHub Personal Access Token</strong> abaixo.<br>
+      Fica salvo apenas no seu navegador — nunca no código.
+    </p>
+    <div style="margin-bottom:14px">
+      <label style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px">GitHub Token (permissão: repo)</label>
+      <input type="password" id="cfg-gh-token" placeholder="ghp_..." value="${existente}"
+        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font);box-sizing:border-box">
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px">
+      Para gerar: github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → marque <strong style="color:var(--white)">repo</strong>
+    </p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTokens(this)">Salvar e Publicar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('cfg-gh-token')?.focus(),100);
+}
+
+async function salvarTokens(btn){
+  const gh=document.getElementById('cfg-gh-token').value.trim();
+  if(!gh){alert('Cole o token do GitHub');return;}
+  localStorage.setItem('dml_gh_token',gh);
+  btn.closest('div[style*="fixed"]').remove();
+  await publicarNetlify();
+}
 
 async function publicarNetlify(){
   if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
