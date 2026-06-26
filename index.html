@@ -621,14 +621,36 @@ tr.esp-row .td-dia{color:#c03030;}
 #notepad-toggle{position:fixed;bottom:80px;right:18px;z-index:300;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--teal-dim);color:var(--teal);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .2s;}
 #notepad-toggle:hover{background:var(--teal);color:#061208;border-color:var(--teal);}
 #notepad-toggle.has-note{border-color:#d4a017;color:#d4a017;}
-#notepad-panel{position:fixed;bottom:134px;right:18px;z-index:299;width:300px;background:var(--navy);border:1px solid var(--teal-dim);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden;}
+#notepad-toggle.has-task{border-color:#e06060;color:#e06060;}
+#notepad-panel{position:fixed;bottom:134px;right:18px;z-index:299;width:320px;background:var(--navy);border:1px solid var(--teal-dim);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden;max-height:520px;}
 #notepad-panel.open{display:flex;}
 #notepad-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);}
 #notepad-header span{font-size:13px;font-weight:700;color:var(--teal);}
 #notepad-header button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1;}
 #notepad-header button:hover{color:var(--white);}
-#notepad-area{width:100%;min-height:200px;max-height:360px;background:transparent;border:none;color:var(--white);font-size:13px;font-family:var(--font);line-height:1.7;padding:14px;resize:vertical;outline:none;box-sizing:border-box;}
+/* Abas do notepad */
+.np-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--border);}
+.np-tab{flex:1;padding:8px;font-size:11px;font-weight:700;text-align:center;cursor:pointer;
+  color:var(--muted);border:none;background:none;font-family:var(--font);transition:all .15s;}
+.np-tab.ativo{color:var(--teal);border-bottom:2px solid var(--teal);}
+/* Aba notas */
+#notepad-area{width:100%;min-height:200px;max-height:280px;background:transparent;border:none;color:var(--white);font-size:13px;font-family:var(--font);line-height:1.7;padding:14px;resize:vertical;outline:none;box-sizing:border-box;}
 #notepad-area::placeholder{color:var(--muted);}
+/* Aba checklist */
+.np-checklist{padding:10px 12px;overflow-y:auto;max-height:280px;flex:1;}
+.np-task{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.05);}
+.np-task:last-child{border-bottom:none;}
+.np-task input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.np-task-txt{flex:1;font-size:12px;line-height:1.4;word-break:break-word;}
+.np-task-txt.done{text-decoration:line-through;color:var(--muted);}
+.np-task-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 2px;opacity:0;transition:opacity .15s;}
+.np-task:hover .np-task-del{opacity:1;}
+.np-add-task{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);}
+.np-add-task input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:12px;padding:5px 9px;font-family:var(--font);outline:none;}
+.np-add-task input:focus{border-color:var(--teal-dim);}
+.np-add-task button{background:var(--teal);border:none;border-radius:6px;color:#061208;font-size:13px;font-weight:700;padding:5px 10px;cursor:pointer;}
+/* Nota do mês */
+.np-mes-label{font-size:10px;color:var(--muted);padding:6px 14px 0;font-style:italic;}
 #notepad-footer{padding:7px 14px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 #notepad-saved{font-size:10px;color:var(--muted);font-style:italic;}
 #notepad-clear{font-size:11px;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--font);padding:0;}
@@ -1071,10 +1093,31 @@ tr.esp-row .td-dia{color:#c03030;}
     <span>📝 Anotações</span>
     <button onclick="toggleNotepad()" title="Fechar">×</button>
   </div>
-  <textarea id="notepad-area" placeholder="Anote lembretes, observações entre meses, pendências..." oninput="salvarNotepad()"></textarea>
+  <div class="np-tabs">
+    <button class="np-tab ativo" id="np-tab-geral" onclick="npMostrarAba('geral')">📋 Geral</button>
+    <button class="np-tab" id="np-tab-mes" onclick="npMostrarAba('mes')">📅 Do Mês</button>
+    <button class="np-tab" id="np-tab-tasks" onclick="npMostrarAba('tasks')">✅ Tarefas</button>
+  </div>
+  <!-- Aba geral -->
+  <div id="np-aba-geral">
+    <textarea id="notepad-area" placeholder="Anote lembretes, observações entre meses, pendências..." oninput="salvarNotepad()"></textarea>
+  </div>
+  <!-- Aba do mês -->
+  <div id="np-aba-mes" style="display:none">
+    <div class="np-mes-label" id="np-mes-label">Notas de — (abra uma escala)</div>
+    <textarea id="notepad-mes-area" placeholder="Observações específicas deste mês..." oninput="salvarNotepadMes()" style="width:100%;min-height:200px;max-height:260px;background:transparent;border:none;color:var(--white);font-size:13px;font-family:var(--font);line-height:1.7;padding:14px;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+  </div>
+  <!-- Aba tarefas -->
+  <div id="np-aba-tasks" style="display:none;flex-direction:column;flex:1">
+    <div class="np-checklist" id="np-checklist"></div>
+    <div class="np-add-task">
+      <input type="text" id="np-task-input" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter')adicionarTask()">
+      <button onclick="adicionarTask()">+</button>
+    </div>
+  </div>
   <div id="notepad-footer">
     <span id="notepad-saved"></span>
-    <button id="notepad-clear" onclick="limparNotepad()">🗑 Limpar</button>
+    <button id="notepad-clear" onclick="limparNotepadAtual()">🗑 Limpar</button>
   </div>
 </div>
 <div id="toast"></div>
@@ -3905,54 +3948,155 @@ function atualizarStatusPush(){
 }
 
 // ═══════════════════════════════════════════════
-// NOTEPAD FLUTUANTE
+// NOTEPAD — GERAL + MÊS + CHECKLIST
 // ═══════════════════════════════════════════════
 const NP_KEY='dml_notepad';
+const NP_TASKS_KEY='dml_tasks';
+let _npAbaAtual='geral';
+let _npTimer=null;
 
+// ── Aba ativa
+function npMostrarAba(aba){
+  _npAbaAtual=aba;
+  ['geral','mes','tasks'].forEach(a=>{
+    document.getElementById(`np-aba-${a}`).style.display=a===aba?(a==='tasks'?'flex':'block'):'none';
+    document.getElementById(`np-tab-${a}`)?.classList.toggle('ativo',a===aba);
+  });
+  if(aba==='mes')carregarNotepadMes();
+  if(aba==='tasks')renderTasks();
+}
+
+// ── Toggle painel
 function toggleNotepad(){
   const panel=document.getElementById('notepad-panel');
   const isOpen=panel.classList.toggle('open');
   if(isOpen){
     carregarNotepad();
+    npMostrarAba(_npAbaAtual);
     setTimeout(()=>document.getElementById('notepad-area')?.focus(),80);
   }
 }
 
+// ── Aba GERAL
 function carregarNotepad(){
   const area=document.getElementById('notepad-area');
   if(area)area.value=localStorage.getItem(NP_KEY)||'';
   atualizarToggleNotepad();
 }
 
-let _npTimer=null;
 function salvarNotepad(){
   const txt=document.getElementById('notepad-area')?.value||'';
   localStorage.setItem(NP_KEY,txt);
   atualizarToggleNotepad();
-  // Feedback de salvo
-  const saved=document.getElementById('notepad-saved');
-  if(saved){
-    clearTimeout(_npTimer);
-    saved.textContent='Salvo ✓';
-    _npTimer=setTimeout(()=>{if(saved)saved.textContent='';},1800);
+  mostrarSalvoNp();
+  clearTimeout(_npSaveTimer);
+  _npSaveTimer=setTimeout(()=>{
+    if(window._fbUser&&window._fbFns){
+      const{doc,setDoc}=window._fbFns;
+      setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,'notepad'),{texto:txt,updatedAt:Date.now()}).catch(console.error);
+    }
+  },1500);
+}
+
+// ── Aba MÊS
+function npKeyMes(){ return mesLabel?`dml_np_mes_${mesLabel.replace(/\s/g,'_')}`:''; }
+
+function carregarNotepadMes(){
+  const lbl=document.getElementById('np-mes-label');
+  const area=document.getElementById('notepad-mes-area');
+  if(lbl)lbl.textContent=mesLabel?`📅 Notas de ${mesLabel}`:'(abra uma escala primeiro)';
+  const key=npKeyMes();
+  if(area&&key)area.value=localStorage.getItem(key)||'';
+}
+
+function salvarNotepadMes(){
+  const key=npKeyMes();if(!key)return;
+  const txt=document.getElementById('notepad-mes-area')?.value||'';
+  localStorage.setItem(key,txt);
+  mostrarSalvoNp();
+  // Firebase
+  clearTimeout(_npSaveTimer);
+  _npSaveTimer=setTimeout(()=>{
+    if(window._fbUser&&window._fbFns){
+      const{doc,setDoc}=window._fbFns;
+      setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,`np_mes_${mesLabel?.replace(/\s/g,'_')}`),{texto:txt,updatedAt:Date.now()}).catch(console.error);
+    }
+  },1500);
+}
+
+// ── Aba TAREFAS
+function getTasks(){ return JSON.parse(localStorage.getItem(NP_TASKS_KEY)||'[]'); }
+function saveTasks(t){ localStorage.setItem(NP_TASKS_KEY,JSON.stringify(t));atualizarToggleNotepad(); }
+
+function renderTasks(){
+  const el=document.getElementById('np-checklist');if(!el)return;
+  const tasks=getTasks();
+  if(!tasks.length){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma tarefa ainda.<br>Adicione abaixo! 👇</div>';
+    return;
   }
+  // Pendentes primeiro, concluídas depois
+  const sorted=[...tasks.filter(t=>!t.done),...tasks.filter(t=>t.done)];
+  el.innerHTML=sorted.map((t,i)=>`
+    <div class="np-task">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')">
+      <span class="np-task-txt${t.done?' done':''}">${t.txt}</span>
+      <button class="np-task-del" onclick="deletarTask('${t.id}')">✕</button>
+    </div>`).join('');
+}
+
+function adicionarTask(){
+  const input=document.getElementById('np-task-input');
+  const txt=input?.value.trim();if(!txt)return;
+  const tasks=getTasks();
+  tasks.push({id:'t'+Date.now(),txt,done:false,criadoEm:Date.now()});
+  saveTasks(tasks);input.value='';
+  renderTasks();
+}
+
+function toggleTask(id){
+  const tasks=getTasks();
+  const t=tasks.find(x=>x.id===id);if(t)t.done=!t.done;
+  saveTasks(tasks);renderTasks();
+}
+
+function deletarTask(id){
+  saveTasks(getTasks().filter(x=>x.id!==id));renderTasks();
+}
+
+// ── Utilitários
+function mostrarSalvoNp(){
+  const saved=document.getElementById('notepad-saved');
+  if(saved){clearTimeout(_npTimer);saved.textContent='Salvo ✓';_npTimer=setTimeout(()=>{if(saved)saved.textContent='';},1800);}
 }
 
 function atualizarToggleNotepad(){
-  const btn=document.getElementById('notepad-toggle');
-  if(!btn)return;
-  const temConteudo=!!(localStorage.getItem(NP_KEY)||'').trim();
-  btn.classList.toggle('has-note',temConteudo);
-  btn.title=temConteudo?'Anotações (tem conteúdo)':'Anotações rápidas';
+  const btn=document.getElementById('notepad-toggle');if(!btn)return;
+  const temNota=!!(localStorage.getItem(NP_KEY)||'').trim();
+  const temTask=getTasks().some(t=>!t.done);
+  btn.classList.toggle('has-task',temTask&&!temNota);
+  btn.classList.toggle('has-note',temNota&&!temTask);
+  btn.classList.toggle('has-note',temNota);
+  btn.title=temTask?`${getTasks().filter(t=>!t.done).length} tarefa(s) pendente(s)`:temNota?'Anotações (tem conteúdo)':'Anotações rápidas';
 }
 
-function limparNotepad(){
-  if(!confirm('Limpar todas as anotações?'))return;
-  localStorage.removeItem(NP_KEY);
-  const area=document.getElementById('notepad-area');
-  if(area)area.value='';
+function limparNotepadAtual(){
+  if(_npAbaAtual==='geral'){
+    if(!confirm('Limpar anotações gerais?'))return;
+    localStorage.removeItem(NP_KEY);
+    const area=document.getElementById('notepad-area');if(area)area.value='';
+  } else if(_npAbaAtual==='mes'){
+    const key=npKeyMes();if(!key)return;
+    if(!confirm(`Limpar notas de ${mesLabel}?`))return;
+    localStorage.removeItem(key);
+    const area=document.getElementById('notepad-mes-area');if(area)area.value='';
+  } else if(_npAbaAtual==='tasks'){
+    if(!confirm('Limpar todas as tarefas concluídas?'))return;
+    saveTasks(getTasks().filter(t=>!t.done));
+    renderTasks();
+  }
   atualizarToggleNotepad();
-  toast('🗑 Anotações limpas');
+  toast('🗑 Limpo!');
 }
 
 // ═══════════════════════════════════════════════
