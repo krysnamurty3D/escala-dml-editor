@@ -2774,73 +2774,62 @@ function gerarHTMLPublico(){
 // ═══════════════════════════════════════════════
 // EXPORTAR PÁGINA PÚBLICA (para Netlify/WhatsApp)
 // ═══════════════════════════════════════════════
-function exportarPagina(){
 
+function exportarPagina(){
   if(!cultos.length){toast('⚠️ Nenhum culto para exportar');return;}
   const vis=cultos.filter(c=>!c.oculto);
+  if(!vis.length){toast('⚠️ Nenhum culto visível');return;}
 
-  const logoSVG=`<svg viewBox="0 0 86.01 49.86" xmlns="http://www.w3.org/2000/svg" style="height:100%;width:auto"><path fill="#ffffff" d="M11.09,34.1c0-2.99,1.5-5.71,5.05-5.71,1.16,0,2,.22,2.77.61v9.53c0,.77-.63,1.4-1.4,1.4h-1.65c-3.16,0-4.77-2.5-4.77-5.82M52.54,0c-1.59,0-3.2.16-4.8.5-8.31,1.73-14.7,7.06-17.85,14.07V5.44h-5.44c-3.06,0-5.54,2.48-5.54,5.54v9.27l-.11.06c-1.28-.5-2.83-.83-4.44-.83-7.99,0-14.36,6.27-14.36,15.08s5.93,13.24,12.48,13.24c2.33,0,6.65.02,6.65.02h5.37c2.98,0,5.39-2.41,5.39-5.39v-7.42c1.02,2.24,2.4,4.31,4.12,6.21,1.53-1.92,1.58-1.95,4.74-2.78,0-.47,0-.96,0-1.45,0-6.4-.03-12.79.01-19.19.03-4.42,3.67-8.15,8.09-8.06,2.22.04,4.05,1,5.68,2.48.2-.17.36-.32.53-.47,2.6-2.19,5.53-2.69,8.6-1.31,3.08,1.38,4.62,3.91,4.62,7.33,0,1.63,0,3.25,0,4.88,0,4.7.02,9.4-.01,14.1-.01,1.94-.95,3.4-2.71,4.19-1.7.76-3.38.54-4.81-.71-1.42-1.24-1.97-2.83-1.42-4.64.7-2.32,2.42-3.35,4.87-3.39,0-4.95.02-9.82,0-14.7-.01-2.27-1.64-3.88-3.82-3.88-2.19,0-3.79,1.59-3.82,3.88-.03,3.07,0,6.15,0,9.22,0,1.63.04,3.25-.02,4.88-.05,1.38-.9,2.19-2.1,2.15-1.17-.04-1.87-.83-1.92-2.16-.02-.45,0-.9,0-1.36,0-4.25.03-8.5-.03-12.74-.03-2.48-2.01-4.15-4.39-3.83-1.93.26-3.27,1.83-3.29,4.01-.04,2.85,0,5.69,0,8.54,0,5.6.03,11.21-.01,16.81-.03,3.35-2.72,5.37-5.97,4.56-.43-.11-.85-.24-1.28-.37,2.11,1.87,4.46,1.68,6.91,1.05.68-.18,1.5-.21,2.17,0,4.23,1.3,8.52,1.63,12.84.69,8.2-1.78,14.49-7.11,17.57-14.11v12.98h5.78c2.87,0,5.2-2.33,5.2-5.2V5.44h-6.11c-2.69,0-4.87,2.18-4.87,4.87v4.38C71.12,5.92,62.18,0,52.54,0Z"/></svg>`;
-
-  const BADGE_COLORS={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
-  function getBadgeColorHex(g){
-    if(g===SH_LABEL)return BADGE_COLORS.sh;
-    const cat=Object.entries(GRUPOS).find(([,l])=>l.includes(g))?.[0]||'';
-    if(cat==='Grupos Musicais')return BADGE_COLORS.musical;
-    if(cat==='Corais')return BADGE_COLORS.coral;
-    if(cat==='Grupos Vocais')return BADGE_COLORS.vocal;
-    if(cat==='Grupos de Coreografia')return BADGE_COLORS.coreo;
-    if(cat==='Cantores')return BADGE_COLORS.cantor;
-    return BADGE_COLORS.musical;
+  /* ── helpers ── */
+  const BC={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
+  function gc(g){
+    if(g===SH_LABEL)return BC.sh;
+    const k=Object.entries(GRUPOS).find(([,l])=>l.includes(g));
+    if(!k)return BC.musical;
+    if(k[0]==='Grupos Musicais')return BC.musical;
+    if(k[0]==='Corais')return BC.coral;
+    if(k[0]==='Grupos Vocais')return BC.vocal;
+    if(k[0]==='Grupos de Coreografia')return BC.coreo;
+    if(k[0]==='Cantores')return BC.cantor;
+    return BC.musical;
   }
-  function labelG(g){return g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ');}
+  function lg(g){return g===SH_LABEL?'S&amp;H':g.replace(/^CORAL\s+/,'C. ');}
 
-  // Todos os grupos únicos presentes na escala
-  const todosGruposEscala=[...new Set(vis.flatMap(c=>c.grupos))].sort();
+  /* ── dados pré-calculados ── */
+  const DADOS=JSON.stringify(vis.map(c=>({data:c.data,dia:c.dia,hora:c.hora,culto:c.culto,dirigente:c.dirigente||'',grupos:c.grupos})));
+  const CORES=JSON.stringify(Object.fromEntries([...new Set(vis.flatMap(c=>c.grupos))].map(g=>[g,gc(g)])));
+  const MES_STR=JSON.stringify(mesLabel);
+  const DATA_ATU=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
-  // Dados serializados para o JS da página
-  const dadosJSON=JSON.stringify(vis.map(c=>({
-    id:c.id, data:c.data, dia:c.dia, hora:c.hora,
-    culto:c.culto, dirigente:c.dirigente, grupos:c.grupos
-  })));
-  const mesLabelJSON=JSON.stringify(mesLabel);
+  /* ── Logo SVG branco ── */
+  const LOGO='<svg viewBox="0 0 86.01 49.86" xmlns="http://www.w3.org/2000/svg" style="height:44px;width:auto"><path fill="#fff" d="M11.09,34.1c0-2.99,1.5-5.71,5.05-5.71,1.16,0,2,.22,2.77.61v9.53c0,.77-.63,1.4-1.4,1.4h-1.65c-3.16,0-4.77-2.5-4.77-5.82M52.54,0c-1.59,0-3.2.16-4.8.5-8.31,1.73-14.7,7.06-17.85,14.07V5.44h-5.44c-3.06,0-5.54,2.48-5.54,5.54v9.27l-.11.06c-1.28-.5-2.83-.83-4.44-.83-7.99,0-14.36,6.27-14.36,15.08s5.93,13.24,12.48,13.24c2.33,0,6.65.02,6.65.02h5.37c2.98,0,5.39-2.41,5.39-5.39v-7.42c1.02,2.24,2.4,4.31,4.12,6.21,1.53-1.92,1.58-1.95,4.74-2.78,0-.47,0-.96,0-1.45,0-6.4-.03-12.79.01-19.19.03-4.42,3.67-8.15,8.09-8.06,2.22.04,4.05,1,5.68,2.48.2-.17.36-.32.53-.47,2.6-2.19,5.53-2.69,8.6-1.31,3.08,1.38,4.62,3.91,4.62,7.33,0,1.63,0,3.25,0,4.88,0,4.7.02,9.4-.01,14.1-.01,1.94-.95,3.4-2.71,4.19-1.7.76-3.38.54-4.81-.71-1.42-1.24-1.97-2.83-1.42-4.64.7-2.32,2.42-3.35,4.87-3.39,0-4.95.02-9.82,0-14.7-.01-2.27-1.64-3.88-3.82-3.88-2.19,0-3.79,1.59-3.82,3.88-.03,3.07,0,6.15,0,9.22,0,1.63.04,3.25-.02,4.88-.05,1.38-.9,2.19-2.1,2.15-1.17-.04-1.87-.83-1.92-2.16-.02-.45,0-.9,0-1.36,0-4.25.03-8.5-.03-12.74-.03-2.48-2.01-4.15-4.39-3.83-1.93.26-3.27,1.83-3.29,4.01-.04,2.85,0,5.69,0,8.54,0,5.6.03,11.21-.01,16.81-.03,3.35-2.72,5.37-5.97,4.56-.43-.11-.85-.24-1.28-.37,2.11,1.87,4.46,1.68,6.91,1.05.68-.18,1.5-.21,2.17,0,4.23,1.3,8.52,1.63,12.84.69,8.2-1.78,14.49-7.11,17.57-14.11v12.98h5.78c2.87,0,5.2-2.33,5.2-5.2V5.44h-6.11c-2.69,0-4.87,2.18-4.87,4.87v4.38C71.12,5.92,62.18,0,52.54,0Z"/></svg>';
 
-  // Badge chips para filtro
-  const filtroBadges=todosGruposEscala.map(g=>
-    `<button class="filtro-btn" data-grupo="${g}" style="--bc:${getBadgeColorHex(g)}" onclick="filtrar('${g.replace(/'/g,"\\'")}')">
-      ${labelG(g)}
-    </button>`
-  ).join('');
-
-  function cardHTML(c,ano,mes){
-    const isDom=/domingo/i.test(c.dia);
-    const badges=sortGrupos(c.grupos).map(g=>
-      `<span class="badge" data-grupo="${g}" style="background:${getBadgeColorHex(g)}">${labelG(g)}</span>`
-    ).join('');
-    const dir=c.dirigente?`<div class="culto-dir">${c.dirigente}</div>`:'';
-    // Data para Google Calendar: ANO MES DIA
-    const [anoN,mesN]=mesLabel.split(' ');
-    const meses={Janeiro:'01',Fevereiro:'02',Março:'03',Abril:'04',Maio:'05',Junho:'06',Julho:'07',Agosto:'08',Setembro:'09',Outubro:'10',Novembro:'11',Dezembro:'12'};
-    const mesNum=meses[anoN]||'01';
-    const anoNum=mesN||new Date().getFullYear();
-    const dtStr=`${anoNum}${mesNum}${c.data.padStart(2,'0')}`;
+  /* ── Gera HTML dos cards ── */
+  function cardCulto(c){
+    const grupos=sortGrupos(c.grupos);
+    const MESES_N={Janeiro:'01',Fevereiro:'02',Marco:'03','Março':'03',Abril:'04',Maio:'05',Junho:'06',Julho:'07',Agosto:'08',Setembro:'09',Outubro:'10',Novembro:'11',Dezembro:'12'};
+    const pt=mesLabel.split(' ');
+    const mn=MESES_N[pt[0]]||'01',an=pt[1]||new Date().getFullYear();
+    const dt=an+mn+c.data.padStart(2,'0');
     const [hh,mm]=(c.hora||'00:00').split(':');
-    const dtStart=`${dtStr}T${hh}${mm||'00'}00`;
-    const dtEnd=`${dtStr}T${(parseInt(hh)+2).toString().padStart(2,'0')}${mm||'00'}00`;
-    const gcUrl=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(c.culto+' — DML')}&dates=${dtStart}/${dtEnd}&details=${encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+c.grupos.map(g=>labelG(g)).join(', '))}`;
-    const waText=encodeURIComponent(`📅 *${c.culto}*\n🗓 Dia ${c.data} — ${c.hora}\n${c.dirigente?'🎤 '+c.dirigente+'\n':''}🎵 ${c.grupos.map(g=>labelG(g)).join(' | ')}`);
-    return `<div class="culto-row${isDom?' dom':''}" data-grupos="${c.grupos.join(',')}" data-data="${c.data}">
-      <div class="col-hora">${c.hora}</div>
-      <div class="col-info">
-        <div class="culto-nome">${c.culto}</div>
-        ${dir}
-        <div class="culto-countdown" data-data="${c.data}"></div>
-        ${badges?`<div class="badges">${badges}</div>`:''}
-        <div class="culto-actions">
-          <a class="btn-acao" href="${gcUrl}" target="_blank" title="Adicionar ao Google Calendar">📅 Calendário</a>
-          <a class="btn-acao" href="https://wa.me/?text=${waText}" target="_blank" title="Compartilhar no WhatsApp">📤 Compartilhar</a>
-        </div>
-      </div>
-    </div>`;
+    const dtS=dt+'T'+hh+(mm||'00')+'00';
+    const dtE=dt+'T'+(parseInt(hh)+2).toString().padStart(2,'0')+(mm||'00')+'00';
+    const gcUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='
+      +encodeURIComponent(c.culto+' — DML')+'&dates='+dtS+'/'+dtE
+      +'&details='+encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(lg).join(', '));
+    const waT=encodeURIComponent('📅 *'+c.culto+'*\n🗓 Dia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'🎤 '+c.dirigente+'\n':'')+'🎵 '+grupos.map(lg).join(' | '));
+    const badges=grupos.map(g=>'<span class="badge" data-grupo="'+encodeURIComponent(g)+'" style="background:'+gc(g)+'">'+lg(g)+'</span>').join('');
+    return '<div class="culto-row" data-grupos="'+c.grupos.map(encodeURIComponent).join(',')+'" data-data="'+c.data+'">'
+      +'<div class="col-hora">'+c.hora+'</div>'
+      +'<div class="col-info">'
+      +'<div class="culto-nome">'+c.culto+'</div>'
+      +(c.dirigente?'<div class="culto-dir">'+c.dirigente+'</div>':'')
+      +'<div class="culto-countdown" data-data="'+c.data+'"></div>'
+      +(badges?'<div class="badges">'+badges+'</div>':'')
+      +'<div class="culto-actions">'
+      +'<a class="btn-acao" href="'+gcUrl+'" target="_blank">📅 Calendário</a>'
+      +'<a class="btn-acao" href="https://wa.me/?text='+waT+'" target="_blank">📤 Compartilhar</a>'
+      +'</div></div></div>';
   }
 
   function gerarCards(){
@@ -2851,583 +2840,405 @@ function exportarPagina(){
       const isTer=/ter[cç]a/i.test(c.dia);
       const isQui=/quinta/i.test(c.dia);
       const isSab=/s[aá]b/i.test(c.dia);
-      const blockClass=c.especial?'esp-block':isDom?'dom-block':isTer?'ter-block':isQui?'qui-block':isSab?'sab-block':'';
-      const headerClass=c.especial?'esp-header':isDom?'dom-header':isTer?'ter-header':isQui?'qui-header':isSab?'sab-header':'';
+      const bk=c.especial?'esp-block':isDom?'dom-block':isTer?'ter-block':isQui?'qui-block':isSab?'sab-block':'';
+      const hk=c.especial?'esp-header':isDom?'dom-header':isTer?'ter-header':isQui?'qui-header':isSab?'sab-header':'';
       const nxt=vis[i+1];
-      const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
-      const grupos=isDom&&hasNxt?[...c.grupos,...nxt.grupos].join(','):c.grupos.join(',');
+      const hasNxt=nxt&&nxt.data===c.data&&/domingo/i.test(nxt.dia);
+      const grps=(isDom&&hasNxt?[...c.grupos,...nxt.grupos]:c.grupos).map(encodeURIComponent).join(',');
       if(isDom&&hasNxt){
-        html+=`<div class="dia-block dom-block" data-grupos="${grupos}">
-          <div class="dia-header dom-header">
-            <div><span class="dia-num">${c.data}</span><span class="dia-abrev">DOM</span></div>
-          </div>
-          <div class="dia-cultos">${cardHTML(c)}${cardHTML(nxt)}</div>
-        </div>`;i+=2;
-      }else{
-        html+=`<div class="dia-block${blockClass?' '+blockClass:''}" data-grupos="${grupos}">
-          <div class="dia-header${headerClass?' '+headerClass:''}">
-            <div><span class="dia-num">${c.data}</span><span class="dia-abrev">${c.dia.substring(0,3).toUpperCase()}</span></div>
-          </div>
-          <div class="dia-cultos">${cardHTML(c)}</div>
-        </div>`;i++;
+        html+='<div class="dia-block dom-block" data-grupos="'+grps+'">'
+          +'<div class="dia-header dom-header"><span class="dia-num">'+c.data+'</span><span class="dia-abrev">DOM</span></div>'
+          +'<div class="dia-cultos">'+cardCulto(c)+cardCulto(nxt)+'</div></div>';
+        i+=2;
+      } else {
+        html+='<div class="dia-block'+(bk?' '+bk:'')+'" data-grupos="'+grps+'">'
+          +'<div class="dia-header'+(hk?' '+hk:'')+'">'
+          +'<span class="dia-num">'+c.data+'</span>'
+          +'<span class="dia-abrev">'+c.dia.substring(0,3).toUpperCase()+'</span>'
+          +'</div><div class="dia-cultos">'+cardCulto(c)+'</div></div>';
+        i++;
       }
     }
     return html;
   }
 
-  const paginaHTML=`<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#111820">
-<title>Escala DML — ${mesLabel}</title>
-<!-- OneSignal Push Notifications -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "4e65a3a9-4406-4845-8619-fa2376046d27",
-      safari_web_id: "web.onesignal.auto.4e65a3a9-4406-4845-8619-fa2376046d27",
-      notifyButton: { enable: false },
-      allowLocalhostAsSecureOrigin: true,
-    });
-  });
-<\/script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#0f1820;color:#edf4f4;font-family:'Montserrat',system-ui,sans-serif;min-height:100vh;padding-bottom:60px;transition:background .3s,color .3s;}
-body.light{background:#f0f4f8;color:#1a2535;}
+  /* ── CSS ── */
+  const CSS=[
+    "@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');",
+    "*{box-sizing:border-box;margin:0;padding:0;}",
+    "body{background:#0f1820;color:#edf4f4;font-family:'Montserrat',sans-serif;min-height:100vh;padding-bottom:60px;}",
+    "body.light{background:#f0f4f8;color:#1a2535;}",
+    // header
+    "header{background:#1e2d40;border-bottom:3px solid #2ab482;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 2px 20px rgba(0,0,0,.5);}",
+    ".logo-wrap{display:flex;align-items:center;gap:10px;}",
+    ".logo-txt .dept{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#7a9aa8;}",
+    ".logo-txt .nome{font-size:16px;font-weight:800;color:#3dbfb8;}",
+    ".logo-txt .igreja{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;}",
+    ".hdr-right{display:flex;align-items:center;gap:8px;}",
+    ".mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800;}",
+    ".btn-ico{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;}",
+    ".btn-ico:hover{border-color:#2ab482;color:#2ab482;}",
+    ".btn-notif.ativo{border-color:#2ab482;color:#2ab482;background:rgba(42,180,130,.1);}",
+    // busca
+    ".busca-barra{background:#162030;border-bottom:1px solid #1e2d38;padding:10px 14px;position:sticky;top:75px;z-index:9;}",
+    ".busca-inner{position:relative;max-width:600px;margin:0 auto;}",
+    ".busca-input{width:100%;background:#1a2535;border:1px solid #2a3a4a;border-radius:10px;color:#edf4f4;font-size:14px;padding:10px 36px 10px 14px;font-family:'Montserrat',sans-serif;outline:none;}",
+    ".busca-input:focus{border-color:#2ab482;}",
+    ".busca-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:16px;}",
+    // modo
+    ".modo-barra{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:7px 14px;background:#162030;border-bottom:1px solid #1e2d38;}",
+    ".modo-barra span{font-size:11px;color:#7a9aa8;}",
+    ".modo-toggle{display:flex;background:#1a2535;border-radius:20px;padding:3px;}",
+    ".modo-btn{border:none;background:none;color:#7a9aa8;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Montserrat',sans-serif;}",
+    ".modo-btn.ativo{background:#2ab482;color:#061208;}",
+    "body.compacto .culto-dir{display:none;}body.compacto .culto-countdown{display:none;}body.compacto .culto-actions{display:none;}body.compacto .culto-row{padding:8px 14px;}",
+    // próximo card
+    ".proximo-card{margin:14px 14px 0;border-radius:14px;padding:16px 18px;background:linear-gradient(135deg,#0f2820,#1a2d40);border:1.5px solid #2ab482;box-shadow:0 4px 24px rgba(42,180,130,.15);}",
+    ".proximo-card.dom{background:linear-gradient(135deg,#2a1800,#1e2030);border-color:#d4a017;}",
+    ".proximo-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;font-weight:700;margin-bottom:8px;}",
+    ".proximo-card.dom .proximo-tag{color:#d4a017;}",
+    ".proximo-nome{font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:4px;}",
+    ".proximo-meta{font-size:13px;color:#7a9aa8;margin-bottom:6px;}",
+    ".proximo-dir{font-size:13px;color:#2ab482;font-weight:600;margin-bottom:10px;}",
+    ".proximo-card.dom .proximo-dir{color:#d4a017;}",
+    ".proximo-countdown{font-size:28px;font-weight:900;color:#2ab482;}",
+    ".proximo-card.dom .proximo-countdown{color:#d4a017;}",
+    ".proximo-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}",
+    // escalado
+    ".escalado-banner{margin:10px 14px 0;background:rgba(42,180,130,.08);border:1px solid rgba(42,180,130,.25);border-radius:12px;padding:12px 16px;display:none;}",
+    ".escalado-banner.show{display:block;}",
+    ".escalado-titulo{font-size:13px;font-weight:800;color:#2ab482;margin-bottom:6px;}",
+    ".escalado-dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}",
+    ".escalado-dia{background:rgba(42,180,130,.15);border:1px solid rgba(42,180,130,.3);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#2ab482;}",
+    // semana
+    ".semana-sec{margin:14px 14px 0;background:#162030;border:1px solid #1e2d38;border-radius:14px;overflow:hidden;display:none;}",
+    ".semana-sec.show{display:block;}",
+    ".semana-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1e2d38;}",
+    ".semana-hdr span{font-size:11px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;}",
+    ".semana-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);}",
+    ".semana-row:last-child{border-bottom:none;}",
+    ".semana-num{font-size:22px;font-weight:900;color:#2ab482;min-width:36px;}",
+    ".sn{font-size:13px;font-weight:700;text-transform:uppercase;}",
+    ".sh{font-size:11px;color:#7a9aa8;}",
+    // compartilhar mês
+    ".comp-mes{display:none;align-items:center;justify-content:center;gap:8px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:10px;color:#25d366;padding:10px;font-size:13px;font-weight:700;cursor:pointer;margin:12px 14px 0;font-family:'Montserrat',sans-serif;}",
+    ".comp-mes:hover{background:rgba(37,211,102,.2);}",
+    // btn mostrar todos
+    ".btn-todos{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e2d40;border:1.5px solid #2ab482;color:#2ab482;border-radius:50px;padding:10px 22px;font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;z-index:20;opacity:0;transition:all .3s;pointer-events:none;}",
+    ".btn-todos.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}",
+    // main e blocos
+    "main{max-width:600px;margin:0 auto;padding:14px;}",
+    "@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}",
+    ".dia-block{background:#1a2535;border:1px solid #243040;border-radius:14px;margin-bottom:12px;overflow:hidden;animation:fadeUp .3s ease both;}",
+    ".dia-block:nth-child(1){animation-delay:.03s}.dia-block:nth-child(2){animation-delay:.06s}.dia-block:nth-child(3){animation-delay:.09s}.dia-block:nth-child(4){animation-delay:.12s}.dia-block:nth-child(5){animation-delay:.15s}.dia-block:nth-child(6){animation-delay:.18s}.dia-block:nth-child(7){animation-delay:.21s}.dia-block:nth-child(n+8){animation-delay:.24s}",
+    ".dia-block.oculto{display:none!important;}",
+    ".dia-block:hover{box-shadow:0 4px 20px rgba(0,0,0,.3);}",
+    "body.light .dia-block{background:#fff;border-color:#dce6f0;}",
+    ".dom-block{background:rgba(80,45,5,.35);border-color:rgba(180,130,30,.3);border-left:3px solid #d4a017;}",
+    ".ter-block{background:rgba(15,45,100,.30);border-color:rgba(39,120,220,.30);border-left:3px solid #2778dc;}",
+    ".qui-block{background:rgba(10,55,38,.30);border-color:rgba(42,180,130,.30);border-left:3px solid #2ab482;}",
+    ".sab-block{background:rgba(55,20,90,.28);border-color:rgba(150,80,220,.30);border-left:3px solid #9050dc;}",
+    ".esp-block{background:rgba(100,20,20,.28);border-color:rgba(200,60,60,.30);border-left:3px solid #c03030;}",
+    ".destaque{outline:2px solid #2ab482;outline-offset:1px;}",
+    ".dom-block.destaque{outline-color:#d4a017;}.ter-block.destaque{outline-color:#2778dc;}.qui-block.destaque{outline-color:#9050dc;}.sab-block.destaque{outline-color:#9050dc;}.esp-block.destaque{outline-color:#c03030;}",
+    // header do dia
+    ".dia-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid #243040;}",
+    ".dia-num{font-size:48px;font-weight:900;color:#2ab482;line-height:1;margin-right:8px;}",
+    ".dia-abrev{font-size:16px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;}",
+    ".dom-header{border-bottom-color:rgba(180,130,30,.2);}.dom-header .dia-num{color:#d4a017;}.dom-header .dia-abrev{color:#b8860b;}",
+    ".ter-header{border-bottom-color:rgba(39,120,220,.2);}.ter-header .dia-num{color:#4a9eff;}.ter-header .dia-abrev{color:#2778dc;}",
+    ".qui-header{border-bottom-color:rgba(42,180,130,.2);}.qui-header .dia-num{color:#2ab482;}.qui-header .dia-abrev{color:#1a8060;}",
+    ".sab-header{border-bottom-color:rgba(150,80,220,.2);}.sab-header .dia-num{color:#b07ae8;}.sab-header .dia-abrev{color:#9050dc;}",
+    ".esp-header{border-bottom-color:rgba(200,60,60,.2);}.esp-header .dia-num{color:#e06060;}.esp-header .dia-abrev{color:#c03030;}",
+    ".dias-faltam{font-size:11px;font-weight:700;color:#2ab482;background:rgba(42,180,130,.12);border:1px solid #1a6a50;border-radius:20px;padding:3px 10px;white-space:nowrap;}",
+    ".dias-faltam.passado{color:#7a9aa8;border-color:#2a3a4a;background:rgba(0,0,0,.15);}",
+    ".dom-block .dias-faltam{color:#d4a017;background:rgba(212,160,23,.12);border-color:rgba(212,160,23,.3);}",
+    ".ter-block .dias-faltam{color:#4a9eff;background:rgba(39,120,220,.12);border-color:rgba(39,120,220,.3);}",
+    ".sab-block .dias-faltam{color:#b07ae8;background:rgba(150,80,220,.12);border-color:rgba(150,80,220,.3);}",
+    ".esp-block .dias-faltam{color:#e06060;background:rgba(200,60,60,.12);border-color:rgba(200,60,60,.3);}",
+    // culto row
+    ".culto-row{display:flex;align-items:flex-start;gap:14px;padding:16px;border-bottom:1px solid #1e2d38;}",
+    ".culto-row:last-child{border-bottom:none;}",
+    ".col-hora{font-size:17px;font-weight:700;color:#7a9aa8;min-width:60px;padding-top:3px;flex-shrink:0;}",
+    ".col-info{flex:1;}",
+    ".culto-nome{font-size:19px;font-weight:800;text-transform:uppercase;line-height:1.2;margin-bottom:4px;}",
+    ".culto-dir{font-size:14px;color:#2ab482;font-weight:600;margin-bottom:8px;}",
+    ".dom-block .culto-dir{color:#d4a017;}.ter-block .culto-dir{color:#4a9eff;}.sab-block .culto-dir{color:#b07ae8;}.esp-block .culto-dir{color:#e06060;}",
+    ".culto-countdown{font-size:12px;color:#7a9aa8;margin-bottom:6px;font-weight:600;}",
+    ".badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}",
+    ".badge{display:inline-block;border-radius:50px;padding:5px 14px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;cursor:pointer;transition:opacity .15s,transform .1s;}",
+    ".badge:hover{transform:scale(1.05);}",
+    ".badge.dimmed{opacity:.2;}",
+    ".badge.ativo{outline:2px solid #fff;outline-offset:2px;}",
+    ".culto-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}",
+    ".btn-acao{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;padding:7px 13px;font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;text-decoration:none;transition:all .2s;}",
+    ".btn-acao:hover{background:rgba(42,180,130,.12);border-color:#2ab482;color:#2ab482;}",
+    "body.light .culto-nome{color:#1a2535;}body.light .col-hora{color:#4a6070;}body.light .btn-acao{color:#4a6070;}",
+    ".updated{text-align:center;padding:12px;font-size:11px;color:#4a6070;}",
+    "footer{text-align:center;padding:20px;color:#4a6070;font-size:11px;letter-spacing:1px;text-transform:uppercase;}",
+    "footer strong{display:block;color:#2ab482;font-size:13px;margin-bottom:4px;}"
+  ].join('\n');
 
-/* HEADER */
-header{background:#1e2d40;border-bottom:3px solid #2ab482;padding:14px 18px;
-  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;
-  box-shadow:0 2px 20px rgba(0,0,0,.5);}
-.logo-wrap{display:flex;align-items:center;gap:10px;}
-.logo-wrap svg{height:44px;width:auto;}
-.logo-txt .dept{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#7a9aa8;}
-.logo-txt .nome{font-size:16px;font-weight:800;color:#3dbfb8;}
-.logo-txt .igreja{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;}
-.hdr-right{display:flex;align-items:center;gap:8px;}
-.mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;
-  border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800;white-space:nowrap;}
-.btn-theme{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;
-  padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;}
-.btn-theme:hover{border-color:#2ab482;color:#2ab482;}
-.btn-notif{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;
-  padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;transition:all .2s;}
-.btn-notif:hover{border-color:#d4a017;color:#d4a017;}
-.btn-notif.ativo{border-color:#2ab482;color:#2ab482;background:rgba(42,180,130,.1);}
+  /* ── JS da página pública (var, sem template literals) ── */
+  const JS=[
+    'var CULTOS='+DADOS+';',
+    'var MES='+MES_STR+';',
+    'var CORES='+CORES+';',
+    'var MESES={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
+    'var filtroAtivo="todos";',
 
-/* FILTROS */
-.filtros-wrap{background:#162030;border-bottom:1px solid #1e2d38;padding:12px 14px;position:sticky;top:75px;z-index:9;}
-.filtros-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#7a9aa8;margin-bottom:8px;}
-.filtros-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
-.filtros-scroll::-webkit-scrollbar{display:none;}
-.filtro-btn{border:2px solid var(--bc,#2ab482);background:transparent;color:#edf4f4;
-  border-radius:50px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;
-  white-space:nowrap;font-family:'Montserrat',sans-serif;transition:all .2s;flex-shrink:0;}
-.filtro-btn.ativo{background:var(--bc,#2ab482);color:#fff;}
-.filtro-btn-todos{border-color:#2ab482;color:#2ab482;}
-.filtro-btn-todos.ativo{background:#2ab482;color:#061208;}
+    'function lg(g){return g==="S&H (SALMOS E HINOS)"?"S&H":g.replace(/^CORAL\\s+/,"C. ");}',
+    'function corG(g){return CORES[g]||"#1a7a40";}',
 
-/* BUSCA */
-.busca-wrap{background:#162030;border-bottom:1px solid #1e2d38;padding:10px 14px;position:sticky;top:75px;z-index:9;}
-.busca-inner{position:relative;max-width:600px;margin:0 auto;}
-.busca-input{width:100%;background:#1a2535;border:1px solid #2a3a4a;border-radius:10px;color:#edf4f4;font-size:14px;padding:10px 36px 10px 14px;font-family:Montserrat,sans-serif;outline:none;}
-.busca-input:focus{border-color:#2ab482;}
-.busca-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:16px;display:none;}
-/* CARD PRÓXIMO DESTAQUE */
-.proximo-card{margin:14px 14px 0;border-radius:14px;padding:16px 18px;background:linear-gradient(135deg,#0f2820,#1a2d40);border:1.5px solid #2ab482;box-shadow:0 4px 24px rgba(42,180,130,.15);}
-.proximo-card.dom{background:linear-gradient(135deg,#2a1800,#1e2030);border-color:#d4a017;box-shadow:0 4px 24px rgba(212,160,23,.15);}
-.proximo-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;font-weight:700;margin-bottom:8px;}
-.proximo-card.dom .proximo-tag{color:#d4a017;}
-.proximo-nome{font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:4px;}
-.proximo-meta{font-size:13px;color:#7a9aa8;margin-bottom:6px;}
-.proximo-dir{font-size:13px;color:#2ab482;font-weight:600;margin-bottom:10px;}
-.proximo-card.dom .proximo-dir{color:#d4a017;}
-.proximo-countdown{font-size:28px;font-weight:900;color:#2ab482;letter-spacing:-1px;}
-.proximo-card.dom .proximo-countdown{color:#d4a017;}
-.proximo-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
-/* INDICADOR ESTOU ESCALADO */
-.escalado-banner{margin:10px 14px 0;background:rgba(42,180,130,.08);border:1px solid rgba(42,180,130,.25);border-radius:12px;padding:12px 16px;display:none;}
-.escalado-banner.show{display:block;}
-.escalado-titulo{font-size:13px;font-weight:800;color:#2ab482;margin-bottom:6px;}
-.escalado-dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
-.escalado-dia{background:rgba(42,180,130,.15);border:1px solid rgba(42,180,130,.3);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#2ab482;}
-/* SEMANA ATUAL */
-.semana-section{margin:14px 14px 0;background:#162030;border:1px solid #1e2d38;border-radius:14px;overflow:hidden;display:none;}
-.semana-section.show{display:block;}
-.semana-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1e2d38;}
-.semana-hdr span{font-size:11px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;}
-.semana-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);}
-.semana-row:last-child{border-bottom:none;}
-.semana-data-mini{font-size:22px;font-weight:900;color:#2ab482;min-width:36px;}
-.semana-nome-mini{font-size:13px;font-weight:700;text-transform:uppercase;}
-.semana-hora-mini{font-size:11px;color:#7a9aa8;}
-/* MODO COMPACTO */
-.modo-wrap{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:6px 14px;background:#162030;border-bottom:1px solid #1e2d38;}
-.modo-wrap span{font-size:11px;color:#7a9aa8;}
-.modo-toggle{display:flex;background:#1a2535;border-radius:20px;padding:3px;}
-.modo-btn{border:none;background:none;color:#7a9aa8;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;font-family:Montserrat,sans-serif;}
-.modo-btn.ativo{background:#2ab482;color:#061208;}
-body.compacto .culto-dir{display:none;}body.compacto .culto-countdown{display:none;}body.compacto .culto-actions{display:none;}body.compacto .culto-row{padding:8px 14px;}
-/* ANIMAÇÕES */
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.dia-block{animation:fadeUp .3s ease both;}
-.dia-block:nth-child(1){animation-delay:.03s}.dia-block:nth-child(2){animation-delay:.06s}.dia-block:nth-child(3){animation-delay:.09s}.dia-block:nth-child(4){animation-delay:.12s}.dia-block:nth-child(5){animation-delay:.15s}.dia-block:nth-child(6){animation-delay:.18s}.dia-block:nth-child(7){animation-delay:.21s}.dia-block:nth-child(8){animation-delay:.24s}.dia-block:nth-child(n+9){animation-delay:.27s}
-/* COMPARTILHAR MÊS */
-.compartilhar-mes-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:10px;color:#25d366;padding:10px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;margin:12px 14px 0;font-family:Montserrat,sans-serif;}
-.compartilhar-mes-btn:hover{background:rgba(37,211,102,.2);}
-/* PRÓXIMO CULTO */
-.proximo-banner{background:linear-gradient(135deg,#1a3a2a,#1e2d40);border:1px solid #2ab482;
-  border-radius:12px;padding:14px 16px;margin:14px 14px 0;display:none;}
-.proximo-banner.show{display:block;}
-.proximo-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;margin-bottom:6px;}
-.proximo-info{font-size:16px;font-weight:800;}
-.proximo-dias{font-size:13px;color:#7a9aa8;margin-top:3px;}
+    'function calcDias(d){',
+    '  var p=MES.split(" ");',
+    '  var m=MESES[p[0]]!==undefined?MESES[p[0]]:new Date().getMonth();',
+    '  var a=parseInt(p[1])||new Date().getFullYear();',
+    '  var dt=new Date(a,m,parseInt(d));',
+    '  var hoje=new Date();hoje.setHours(0,0,0,0);',
+    '  return Math.round((dt-hoje)/86400000);',
+    '}',
 
-/* MAIN */
-main{max-width:600px;margin:0 auto;padding:14px 14px;}
+    'function dfTxt(d){',
+    '  var n=calcDias(d);',
+    '  if(n<0)return"Realizado";',
+    '  if(n===0)return"Hoje! \uD83D\uDD34";',
+    '  if(n===1)return"Amanh\u00E3! \u26A1";',
+    '  return"Faltam "+n+" dias";',
+    '}',
 
-/* BLOCOS */
-.dia-block{background:#1a2535;border:1px solid #243040;border-radius:14px;
-  margin-bottom:12px;overflow:hidden;transition:all .25s;}
-.dia-block.oculto{display:none;}
-.dia-block:hover{box-shadow:0 4px 20px rgba(0,0,0,.3);}
-/* Domingo — bronze */
-.dom-block{background:rgba(80,45,5,.35);border-color:rgba(180,130,30,.3);border-left:3px solid #d4a017;}
-.dom-block.destaque{box-shadow:0 0 0 2px #d4a017,0 4px 24px rgba(212,160,23,.2);}
-body.light .dom-block{background:rgba(212,160,23,.08);border-color:rgba(180,130,30,.3);}
-/* Terça — azul */
-.ter-block{background:rgba(15,45,100,.30);border-color:rgba(39,120,220,.30);border-left:3px solid #2778dc;}
-.ter-block.destaque{box-shadow:0 0 0 2px #2778dc,0 4px 24px rgba(39,120,220,.2);}
-body.light .ter-block{background:rgba(39,120,220,.06);border-color:rgba(39,120,220,.3);}
-/* Quinta — verde */
-.qui-block{background:rgba(10,55,38,.30);border-color:rgba(42,180,130,.30);border-left:3px solid #2ab482;}
-.qui-block.destaque{box-shadow:0 0 0 2px #2ab482,0 4px 24px rgba(42,180,130,.2);}
-body.light .qui-block{background:rgba(42,180,130,.06);border-color:rgba(42,180,130,.3);}
-/* Sábado — roxo */
-.sab-block{background:rgba(55,20,90,.28);border-color:rgba(150,80,220,.30);border-left:3px solid #9050dc;}
-.sab-block.destaque{box-shadow:0 0 0 2px #9050dc,0 4px 24px rgba(150,80,220,.2);}
-body.light .sab-block{background:rgba(150,80,220,.06);border-color:rgba(150,80,220,.3);}
-/* Especial — vermelho */
-.esp-block{background:rgba(100,20,20,.28);border-color:rgba(200,60,60,.30);border-left:3px solid #c03030;}
-.esp-block.destaque{box-shadow:0 0 0 2px #c03030,0 4px 24px rgba(200,60,60,.2);}
-body.light .esp-block{background:rgba(200,60,60,.06);border-color:rgba(200,60,60,.3);}
-.dia-block.destaque{box-shadow:0 0 0 2px #2ab482,0 4px 24px rgba(42,180,130,.2);}
-body.light .dia-block{background:#fff;border-color:#dce6f0;}
+    'function atualizarContagens(){',
+    '  document.querySelectorAll(".culto-countdown[data-data]").forEach(function(el){el.textContent=dfTxt(el.dataset.data);});',
+    '  document.querySelectorAll(".dias-faltam[data-data]").forEach(function(el){',
+    '    var n=calcDias(el.dataset.data);',
+    '    if(n<0){el.textContent="Realizado";el.classList.add("passado");}',
+    '    else if(n===0)el.textContent="Hoje \uD83D\uDD34";',
+    '    else if(n===1)el.textContent="Amanh\u00E3 \u26A1";',
+    '    else el.textContent="em "+n+" dias";',
+    '  });',
+    '}',
 
-/* HEADER DO DIA */
-.dia-header{display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px 10px;border-bottom:1px solid #243040;}
-/* Cores da data/dia por tipo */
-.dom-header{border-bottom-color:rgba(180,130,30,.2);}
-.dom-header .dia-num{color:#d4a017;}
-.dom-header .dia-abrev{color:#b8860b;}
-.ter-header{border-bottom-color:rgba(39,120,220,.2);}
-.ter-header .dia-num{color:#4a9eff;}
-.ter-header .dia-abrev{color:#2778dc;}
-.qui-header{border-bottom-color:rgba(42,180,130,.2);}
-.qui-header .dia-num{color:#2ab482;}
-.qui-header .dia-abrev{color:#1a8060;}
-.sab-header{border-bottom-color:rgba(150,80,220,.2);}
-.sab-header .dia-num{color:#b07ae8;}
-.sab-header .dia-abrev{color:#9050dc;}
-.esp-header{border-bottom-color:rgba(200,60,60,.2);}
-.esp-header .dia-num{color:#e06060;}
-.esp-header .dia-abrev{color:#c03030;}
-.dia-num{font-size:48px;font-weight:900;color:#2ab482;line-height:1;margin-right:8px;}
-.dia-abrev{font-size:16px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;}
-.dias-faltam{font-size:11px;font-weight:700;color:#2ab482;background:rgba(42,180,130,.12);
-  border:1px solid #1a6a50;border-radius:20px;padding:3px 10px;white-space:nowrap;}
-.dias-faltam.passado{color:#7a9aa8;border-color:#2a3a4a;background:rgba(0,0,0,.15);}
-/* Cores dias-faltam por tipo de dia */
-.dom-block .dias-faltam{color:#d4a017;background:rgba(212,160,23,.12);border-color:rgba(212,160,23,.3);}
-.ter-block .dias-faltam{color:#4a9eff;background:rgba(39,120,220,.12);border-color:rgba(39,120,220,.3);}
-.qui-block .dias-faltam{color:#2ab482;background:rgba(42,180,130,.12);border-color:rgba(42,180,130,.3);}
-.sab-block .dias-faltam{color:#b07ae8;background:rgba(150,80,220,.12);border-color:rgba(150,80,220,.3);}
-.esp-block .dias-faltam{color:#e06060;background:rgba(200,60,60,.12);border-color:rgba(200,60,60,.3);}
-/* Dirigente por tipo */
-.ter-block .culto-dir{color:#4a9eff;}
-.qui-block .culto-dir{color:#2ab482;}
-.sab-block .culto-dir{color:#b07ae8;}
-.esp-block .culto-dir{color:#e06060;}
+    // Insere dias-faltam nos headers
+    'document.querySelectorAll(".dia-header").forEach(function(h){',
+    '  var num=h.querySelector(".dia-num");if(!num)return;',
+    '  var s=document.createElement("span");s.className="dias-faltam";s.dataset.data=num.textContent.trim();',
+    '  h.appendChild(s);',
+    '});',
+    'atualizarContagens();setInterval(atualizarContagens,60000);',
 
-/* CULTO ROW */
-.culto-row{display:flex;align-items:flex-start;gap:14px;padding:16px 16px;border-bottom:1px solid #1e2d38;}
-.culto-row:last-child{border-bottom:none;}
-.col-hora{font-size:17px;font-weight:700;color:#7a9aa8;min-width:60px;padding-top:3px;flex-shrink:0;}
-.col-info{flex:1;}
-.culto-nome{font-size:19px;font-weight:800;text-transform:uppercase;line-height:1.2;margin-bottom:4px;}
-.culto-dir{font-size:14px;color:#2ab482;font-weight:600;margin-bottom:8px;}
-.dom .culto-dir{color:#d4a017;}
-.culto-countdown{font-size:12px;color:#7a9aa8;margin-bottom:6px;font-weight:600;}
+    // Card próximo culto
+    'function renderProximo(){',
+    '  var wrap=document.getElementById("proximo-wrap");if(!wrap)return;',
+    '  var fut=CULTOS.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
+    '  if(!fut.length){wrap.innerHTML="";return;}',
+    '  var p=fut[0];var n=calcDias(p.data);',
+    '  var isDom=/domingo/i.test(p.dia);',
+    '  var ct=n===0?"Hoje! \uD83D\uDD34":n===1?"Amanh\u00E3! \u26A1":"Faltam "+n+" dias";',
+    '  var bg=p.grupos.map(function(g){return"<span class=\\"badge\\" style=\\"background:"+corG(g)+"\\">"+lg(g)+"</span>";}).join("");',
+    '  wrap.innerHTML="<div class=\\"proximo-card"+(isDom?" dom":"")+"\\">"',
+    '    +"<div class=\\"proximo-tag\\">\u2B50 Pr\u00F3ximo culto</div>"',
+    '    +"<div class=\\"proximo-nome\\">"+p.culto+"</div>"',
+    '    +"<div class=\\"proximo-meta\\">Dia "+p.data+" \u00B7 "+p.hora+"</div>"',
+    '    +(p.dirigente?"<div class=\\"proximo-dir\\">\uD83C\uDFE4 "+p.dirigente+"</div>":"")',
+    '    +"<div class=\\"proximo-countdown\\">"+ct+"</div>"',
+    '    +(bg?"<div class=\\"proximo-badges\\">"+bg+"</div>":"")',
+    '    +"</div>";',
+    '}',
+    'renderProximo();',
 
-/* BADGES — clicáveis */
-.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-.badge{display:inline-block;border-radius:50px;padding:5px 14px;
-  font-size:13px;font-weight:700;color:#fff;white-space:nowrap;transition:all .2s;
-  cursor:pointer;user-select:none;}
-.badge:hover{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.3);}
-.badge.dimmed{opacity:.2;transform:scale(1);}
-.badge.ativo{outline:2px solid #fff;outline-offset:2px;}
+    // Semana
+    'function renderSemana(){',
+    '  var sec=document.getElementById("semana-sec");var cont=document.getElementById("semana-cont");',
+    '  if(!sec||!cont)return;',
+    '  var hoje=new Date();hoje.setHours(0,0,0,0);',
+    '  var fim=new Date(hoje.getTime()+7*86400000);',
+    '  var p=MES.split(" ");',
+    '  var m=MESES[p[0]]!==undefined?MESES[p[0]]:hoje.getMonth();',
+    '  var a=parseInt(p[1])||hoje.getFullYear();',
+    '  var da=CULTOS.filter(function(c){var d=new Date(a,m,parseInt(c.data));return d>=hoje&&d<=fim;});',
+    '  if(!da.length){sec.classList.remove("show");return;}',
+    '  sec.classList.add("show");',
+    '  cont.innerHTML=da.map(function(c){',
+    '    return"<div class=\\"semana-row\\"><div class=\\"semana-num\\">"+c.data+"</div><div><div class=\\"sn\\">"+c.culto+"</div><div class=\\"sh\\">"+c.hora+(c.dirigente?" \u00B7 "+c.dirigente:"")+"</div></div></div>";',
+    '  }).join("");',
+    '}',
+    'renderSemana();',
 
-/* BOTÃO MOSTRAR TODOS — flutuante */
-.btn-mostrar-todos{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
-  background:#1e2d40;border:1.5px solid #2ab482;color:#2ab482;border-radius:50px;
-  padding:10px 22px;font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;
-  cursor:pointer;z-index:20;opacity:0;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.4);}
-.btn-mostrar-todos.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.btn-mostrar-todos:hover{background:#2ab482;color:#061208;}
+    // Filtrar
+    'function filtrar(grupo){',
+    '  filtroAtivo=grupo;',
+    '  var bt=document.getElementById("btn-todos");if(bt)bt.classList.toggle("show",grupo!=="todos");',
+    '  document.querySelectorAll(".dia-block").forEach(function(blk){',
+    '    if(grupo==="todos"){blk.classList.remove("oculto","destaque");return;}',
+    '    var gs=(blk.dataset.grupos||"").split(",").map(decodeURIComponent);',
+    '    var tem=gs.indexOf(grupo)>=0;',
+    '    blk.classList.toggle("oculto",!tem);blk.classList.toggle("destaque",tem);',
+    '  });',
+    '  document.querySelectorAll(".badge[data-grupo]").forEach(function(b){',
+    '    if(grupo==="todos"){b.classList.remove("dimmed","ativo");return;}',
+    '    var isA=decodeURIComponent(b.dataset.grupo)===grupo;',
+    '    b.classList.toggle("dimmed",!isA);b.classList.toggle("ativo",isA);',
+    '  });',
+    // escalado
+    '  var ban=document.getElementById("escalado-banner");',
+    '  var tit=document.getElementById("escalado-titulo");',
+    '  var ded=document.getElementById("escalado-dias");',
+    '  if(!ban)return;',
+    '  if(grupo==="todos"){ban.classList.remove("show");}else{',
+    '    var cd=CULTOS.filter(function(c){return c.grupos.indexOf(grupo)>=0;});',
+    '    var fut=cd.filter(function(c){return calcDias(c.data)>=0;});',
+    '    var pas=cd.filter(function(c){return calcDias(c.data)<0;});',
+    '    if(cd.length){',
+    '      tit.textContent="Voc\u00EA tem "+fut.length+" culto"+(fut.length!==1?"s":"")+" restante"+(fut.length!==1?"s":"")+" este m\u00EAs"+(pas.length?" ("+pas.length+" realizado"+(pas.length!==1?"s":"")+")"  :"");',
+    '      ded.innerHTML=fut.map(function(c){return"<span class=\\"escalado-dia\\">Dia "+c.data+" \u00B7 "+c.hora+"</span>";}).join("");',
+    '      ban.classList.add("show");',
+    '    }else{ban.classList.remove("show");}',
+    '  }',
+    '  var cm=document.getElementById("comp-mes");if(cm)cm.style.display=grupo!=="todos"?"flex":"none";',
+    '}',
 
-/* AÇÕES */
-.culto-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
-.btn-acao{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);
-  border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;padding:7px 13px;
-  font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;text-decoration:none;
-  transition:all .2s;white-space:nowrap;}
-.btn-acao:hover{background:rgba(42,180,130,.12);border-color:#2ab482;color:#2ab482;}
-body.light .btn-acao{background:rgba(0,0,0,.04);border-color:#ccd8e8;color:#4a6070;}
+    // Badges clicáveis
+    'document.querySelectorAll(".badge[data-grupo]").forEach(function(b){',
+    '  b.addEventListener("click",function(e){',
+    '    e.stopPropagation();',
+    '    var g=decodeURIComponent(b.dataset.grupo);',
+    '    filtrar(filtroAtivo===g?"todos":g);',
+    '  });',
+    '});',
 
-/* PRÓXIMO CULTO */
-.proximo-banner{background:linear-gradient(135deg,#1a3a2a,#1e2d40);border:1px solid #2ab482;
-  border-radius:12px;padding:14px 16px;margin:14px 14px 0;display:none;}
-.proximo-banner.show{display:block;}
-.proximo-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;margin-bottom:6px;}
-.proximo-info{font-size:16px;font-weight:800;}
-.proximo-dias{font-size:13px;color:#7a9aa8;margin-top:3px;}
+    // Busca
+    'function buscarCulto(t){',
+    '  var v=t.trim().toLowerCase();',
+    '  var cl=document.getElementById("busca-clear");if(cl)cl.style.display=v?"block":"none";',
+    '  document.querySelectorAll(".dia-block").forEach(function(b){',
+    '    if(!v){b.classList.remove("oculto");return;}',
+    '    b.classList.toggle("oculto",b.textContent.toLowerCase().indexOf(v)<0);',
+    '  });',
+    '}',
+    'function limparBusca(){',
+    '  var inp=document.getElementById("busca-inp");if(inp)inp.value="";',
+    '  buscarCulto("");',
+    '}',
 
-/* FOOTER */
-footer{text-align:center;padding:24px 20px 0;color:#4a6070;font-size:11px;letter-spacing:1px;text-transform:uppercase;}
-footer strong{display:block;color:#2ab482;font-size:13px;margin-bottom:4px;}
-.updated{text-align:center;padding:12px;font-size:11px;color:#4a6070;}
+    // Modo compacto
+    'function setModo(m){',
+    '  document.body.classList.toggle("compacto",m==="comp");',
+    '  var det=document.getElementById("mb-det"),comp=document.getElementById("mb-comp");',
+    '  if(det)det.classList.toggle("ativo",m!=="comp");',
+    '  if(comp)comp.classList.toggle("ativo",m==="comp");',
+    '  try{localStorage.setItem("dml-modo",m);}catch(e){}',
+    '}',
+    'try{if(localStorage.getItem("dml-modo")==="comp")setModo("comp");}catch(e){}',
 
-/* LIGHT MODE */
-body.light header{background:#1e2d40;}
-body.light .culto-nome{color:#1a2535;}
-body.light .col-hora{color:#4a6070;}
-body.light .culto-dir{color:#1a8060;}
-body.light .btn-acao{color:#4a6070;}
-body.light .btn-mostrar-todos{background:#fff;}
-</style>
-</head>
-<body>
+    // Compartilhar mês
+    'function compartilharMes(){',
+    '  var g=filtroAtivo;',
+    '  var cd=g==="todos"?CULTOS:CULTOS.filter(function(c){return c.grupos.indexOf(g)>=0;});',
+    '  var fut=cd.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
+    '  if(!fut.length){alert("Nenhum culto futuro.");return;}',
+    '  var linhas=fut.map(function(c){return"\uD83D\uDCC5 Dia "+c.data+" \u00B7 "+c.hora+" \u2014 "+c.culto+(c.dirigente?" ("+c.dirigente+")":"");});',
+    '  var txt="*Escala DML \u2014 "+MES+"*"+(g!=="todos"?"\\n*Grupo: "+g+"*":"")+"\\n\\n"+linhas.join("\\n")+"\\n\\n\uD83D\uDD17 "+location.href;',
+    '  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");',
+    '}',
 
-<header>
-  <div class="logo-wrap">
-    ${logoSVG}
-    <div class="logo-txt">
-      <div class="dept">Departamento de</div>
-      <div class="nome">Música e Louvor</div>
-      <div class="igreja">Igreja Evangélica Congregacional Central</div>
-    </div>
-  </div>
-  <div class="hdr-right">
-    <div class="mes-badge">${mesLabel}</div>
-    <button class="btn-notif" id="btn-notif" onclick="toggleNotif()" title="Ativar notificações">🔔</button>
-    <button class="btn-theme" onclick="toggleTheme()" id="btn-theme" title="Alternar modo claro/escuro">🌙</button>
-  </div>
-</header>
+    // Tema
+    'function toggleTheme(){',
+    '  var l=document.body.classList.toggle("light");',
+    '  var b=document.getElementById("btn-theme");if(b)b.textContent=l?"\uD83C\uDF19":"\u2600\uFE0F";',
+    '  try{localStorage.setItem("dml-theme",l?"light":"dark");}catch(e){}',
+    '}',
+    'try{if(localStorage.getItem("dml-theme")==="light"){document.body.classList.add("light");var tb=document.getElementById("btn-theme");if(tb)tb.textContent="\uD83C\uDF19";}}catch(e){}',
 
-<!-- Busca -->
-<div class="busca-wrap">
-  <div class="busca-inner">
-    <input class="busca-input" id="busca-input" placeholder="🔍 Buscar culto..." oninput="buscarCulto(this.value)">
-    <button class="busca-clear" id="busca-clear" onclick="limparBusca()">✕</button>
-  </div>
-</div>
+    // OneSignal
+    'window.OneSignalDeferred=window.OneSignalDeferred||[];',
+    'OneSignalDeferred.push(function(OS){',
+    '  OS.init({appId:"4e65a3a9-4406-4845-8619-fa2376046d27",notifyButton:{enable:false}}).then(function(){',
+    '    return OS.User.PushSubscription.optedIn;',
+    '  }).then(function(on){',
+    '    var b=document.getElementById("btn-notif");',
+    '    if(b){b.textContent=on?"\uD83D\uDD14":"\uD83D\uDD55";b.classList.toggle("ativo",!!on);}',
+    '  }).catch(function(){});',
+    '});',
+    'function toggleNotif(){',
+    '  if(!window.OneSignal)return;',
+    '  OneSignal.User.PushSubscription.optedIn.then(function(on){',
+    '    return on?OneSignal.User.PushSubscription.optOut():OneSignal.Notifications.requestPermission();',
+    '  }).then(function(){return OneSignal.User.PushSubscription.optedIn;}).then(function(on){',
+    '    var b=document.getElementById("btn-notif");if(b){b.textContent=on?"\uD83D\uDD14":"\uD83D\uDD55";b.classList.toggle("ativo",!!on);}',
+    '  }).catch(function(){});',
+    '}'
+  ].join('\n');
 
-<!-- Modo compacto -->
-<div class="modo-wrap">
-  <span>Visualização:</span>
-  <div class="modo-toggle">
-    <button class="modo-btn ativo" id="modo-det" onclick="setModo('det')">Detalhado</button>
-    <button class="modo-btn" id="modo-comp" onclick="setModo('comp')">Compacto</button>
-  </div>
-</div>
+  /* ── Monta HTML ── */
+  const H='<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n'
+    +'<meta charset="UTF-8">\n'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">\n'
+    +'<meta name="theme-color" content="#111820">\n'
+    +'<title>Escala DML \u2014 '+mesLabel+'</title>\n'
+    +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
+    +'<style>\n'+CSS+'\n</style>\n'
+    +'</head>\n<body>\n'
 
-<!-- Card próximo culto em destaque -->
-<div id="proximo-card-wrap"></div>
+    // header
+    +'<header>'
+    +'<div class="logo-wrap">'+LOGO
+    +'<div class="logo-txt"><div class="dept">Departamento de</div><div class="nome">M\u00FAsica e Louvor</div><div class="igreja">Igreja Evang\u00E9lica Congregacional Central</div></div>'
+    +'</div>'
+    +'<div class="hdr-right">'
+    +'<div class="mes-badge">'+mesLabel+'</div>'
+    +'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()">\uD83D\uDD55</button>'
+    +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()">\uD83C\uDF19</button>'
+    +'</div>'
+    +'</header>\n'
 
-<!-- Indicador estou escalado -->
-<div class="escalado-banner" id="escalado-banner">
-  <div class="escalado-titulo" id="escalado-titulo"></div>
-  <div class="escalado-dias" id="escalado-dias"></div>
-</div>
+    // busca
+    +'<div class="busca-barra"><div class="busca-inner">'
+    +'<input class="busca-input" id="busca-inp" placeholder="\uD83D\uDD0D Buscar culto..." oninput="buscarCulto(this.value)">'
+    +'<button class="busca-clear" id="busca-clear" onclick="limparBusca()" style="display:none">\u2715</button>'
+    +'</div></div>\n'
 
-<!-- Semana atual -->
-<div class="semana-section" id="semana-section">
-  <div class="semana-hdr">
-    <span>📅 Esta semana</span>
-    <button onclick="document.getElementById('semana-section').classList.remove('show')" style="background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:14px">✕</button>
-  </div>
-  <div id="semana-cultos"></div>
-</div>
+    // modo
+    +'<div class="modo-barra"><span>Visualiza\u00E7\u00E3o:</span>'
+    +'<div class="modo-toggle">'
+    +'<button class="modo-btn ativo" id="mb-det" onclick="setModo(\'det\')">Detalhado</button>'
+    +'<button class="modo-btn" id="mb-comp" onclick="setModo(\'comp\')">Compacto</button>'
+    +'</div></div>\n'
 
-<!-- Compartilhar mês -->
-<a class="compartilhar-mes-btn" id="btn-compartilhar-mes" href="#" onclick="compartilharMes(event)" style="display:none">
-  📤 Compartilhar escala do mês no WhatsApp
-</a>
+    // card próximo
+    +'<div id="proximo-wrap"></div>\n'
 
-<div class="proximo-banner" id="proximo-banner" style="display:none">
-  <div class="proximo-label">⭐ Seu próximo culto</div>
-  <div class="proximo-info" id="proximo-info"></div>
-  <div class="proximo-dias" id="proximo-dias"></div>
-</div>
+    // escalado
+    +'<div class="escalado-banner" id="escalado-banner">'
+    +'<div class="escalado-titulo" id="escalado-titulo"></div>'
+    +'<div class="escalado-dias" id="escalado-dias"></div>'
+    +'</div>\n'
 
-<button class="btn-mostrar-todos" id="btn-todos" onclick="filtrar('todos')">✕ Mostrar todos</button>
+    // semana
+    +'<div class="semana-sec" id="semana-sec">'
+    +'<div class="semana-hdr"><span>\uD83D\uDCC5 Esta semana</span>'
+    +'<button onclick="document.getElementById(\'semana-sec\').classList.remove(\'show\')" style="background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:14px">\u2715</button>'
+    +'</div><div id="semana-cont"></div></div>\n'
 
-<main id="main-content">
-  ${gerarCards()}
-</main>
+    // compartilhar mês
+    +'<button class="comp-mes" id="comp-mes" onclick="compartilharMes()">\uD83D\uDCE4 Compartilhar escala do m\u00EAs no WhatsApp</button>\n'
 
-<div class="updated">Atualizado em ${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</div>
-<footer>
-  <strong>Departamento de Música e Louvor</strong>
-  Igreja Evangélica Congregacional Central
-</footer>
+    // btn mostrar todos
+    +'<button class="btn-todos" id="btn-todos" onclick="filtrar(\'todos\')">\u2715 Mostrar todos</button>\n'
 
-<script>
-// ── Dados
-const CULTOS=${dadosJSON};
-const MES_LABEL=${mesLabelJSON};
-const MESES_MAP={Janeiro:0,Fevereiro:1,Março:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};
+    // cards
+    +'<main>\n'+gerarCards()+'\n</main>\n'
+    +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
+    +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
+    +'<script>\n'+JS+'\n<\/script>\n'
+    +'</body>\n</html>';
 
-// Mapa de cores dos badges (injetado pelo editor)
-const BADGE_COLORS_MAP=${JSON.stringify(Object.fromEntries(
-  vis.map(c=>c.grupos).flat().filter((g,i,a)=>a.indexOf(g)===i).map(g=>[g,getBadgeColorHex(g)])
-))};
-
-function labelG(g){return g==='S&H (SALMOS E HINOS)'?'S&H':g.replace(/^CORAL\\s+/,'C. ');}
-function getBadgeColorHex(g){return BADGE_COLORS_MAP[g]||'#1a7a40';}
-
-function calcDias(diaNum){
-  const partes=MES_LABEL.split(' ');
-  const mes=MESES_MAP[partes[0]]??new Date().getMonth();
-  const ano=parseInt(partes[1])||new Date().getFullYear();
-  const d=new Date(ano,mes,parseInt(diaNum));
-  const hoje=new Date();hoje.setHours(0,0,0,0);
-  return Math.round((d-hoje)/(1000*60*60*24));
-}
-
-// ── Contagem regressiva
-function atualizarContagens(){
-  document.querySelectorAll('.culto-countdown[data-data]').forEach(el=>{
-    const diff=calcDias(el.dataset.data);
-    if(diff<0)el.textContent='Realizado';
-    else if(diff===0)el.textContent='🔴 Hoje!';
-    else if(diff===1)el.textContent='⚡ Amanhã!';
-    else el.textContent='Faltam '+diff+' dias';
-  });
-  document.querySelectorAll('.dias-faltam[data-data]').forEach(el=>{
-    const diff=calcDias(el.dataset.data);
-    if(diff<0){el.textContent='Realizado';el.classList.add('passado');}
-    else if(diff===0)el.textContent='Hoje! 🔴';
-    else if(diff===1)el.textContent='Amanhã ⚡';
-    else el.textContent='em '+diff+' dias';
-  });
-}
-
-// Insere contagem nos headers
-document.querySelectorAll('.dia-header').forEach(hdr=>{
-  const num=hdr.querySelector('.dia-num');if(!num)return;
-  const span=document.createElement('span');
-  span.className='dias-faltam';span.dataset.data=num.textContent.trim();
-  hdr.appendChild(span);
-});
-atualizarContagens();
-setInterval(atualizarContagens,60000);
-
-// ── Card próximo culto em destaque
-function renderProximoCard(){
-  const wrap=document.getElementById('proximo-card-wrap');if(!wrap)return;
-  const futuros=CULTOS.filter(c=>calcDias(c.data)>=0).sort((a,b)=>parseInt(a.data)-parseInt(b.data));
-  if(!futuros.length){wrap.innerHTML='';return;}
-  const p=futuros[0];
-  const diff=calcDias(p.data);
-  const isDom=/domingo/i.test(p.dia);
-  const countdownTxt=diff===0?'Hoje! 🔴':diff===1?'Amanhã ⚡':'Faltam '+diff+' dias';
-  const badges=p.grupos.map(g=>'<span class="badge" style="background:'+BADGE_COLORS_MAP[g]+'">'+labelG(g)+'</span>').join('');
-  wrap.innerHTML='<div class="proximo-card '+(isDom?'dom':'')+'">'+
-    '<div class="proximo-tag">⭐ Próximo culto</div>'+
-    '<div class="proximo-nome">'+p.culto+'</div>'+
-    '<div class="proximo-meta">Dia '+p.data+' · '+p.hora+'</div>'+
-    (p.dirigente?'<div class="proximo-dir">🎤 '+p.dirigente+'</div>':'')+
-    '<div class="proximo-countdown">'+countdownTxt+'</div>'+
-    (badges?'<div class="proximo-badges">'+badges+'</div>':'')+
-  '</div>';
-}
-renderProximoCard();
-
-// ── Semana atual
-function renderSemanaAtual(){
-  const section=document.getElementById('semana-section');
-  const cont=document.getElementById('semana-cultos');
-  if(!section||!cont)return;
-  const hoje=new Date();hoje.setHours(0,0,0,0);
-  const fimSem=new Date(hoje.getTime()+7*86400000);
-  const partes=MES_LABEL.split(' ');
-  const mes=MESES_MAP[partes[0]]??hoje.getMonth();
-  const ano=parseInt(partes[1])||hoje.getFullYear();
-  const daSemana=CULTOS.filter(c=>{
-    const d=new Date(ano,mes,parseInt(c.data));
-    return d>=hoje&&d<=fimSem;
-  });
-  if(!daSemana.length){section.classList.remove('show');return;}
-  section.classList.add('show');
-  cont.innerHTML=daSemana.map(c=>
-    '<div class="semana-row">'+
-    '<div class="semana-data-mini">'+c.data+'</div>'+
-    '<div><div class="semana-nome-mini">'+c.culto+'</div>'+
-    '<div class="semana-hora-mini">'+c.hora+(c.dirigente?' · '+c.dirigente:'')+'</div></div>'+
-    '</div>'
-  ).join('');
-}
-renderSemanaAtual();
-
-// ── Badges clicáveis
-document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
-  b.addEventListener('click',e=>{e.stopPropagation();const g=b.dataset.grupo;filtroAtivo===g?filtrar('todos'):filtrar(g);});
-});
-
-// ── Filtro
-let filtroAtivo='todos';
-function filtrar(grupo){
-  filtroAtivo=grupo;
-  const btnTodos=document.getElementById('btn-todos');
-  if(btnTodos)btnTodos.classList.toggle('show',grupo!=='todos');
-  document.querySelectorAll('.dia-block').forEach(blk=>{
-    if(grupo==='todos'){blk.classList.remove('oculto','destaque');return;}
-    const gs=blk.dataset.grupos||'';
-    const tem=gs.split(',').includes(grupo);
-    blk.classList.toggle('oculto',!tem);
-    blk.classList.toggle('destaque',tem);
-  });
-  document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
-    if(grupo==='todos'){b.classList.remove('dimmed','ativo');return;}
-    b.classList.toggle('dimmed',b.dataset.grupo!==grupo);
-    b.classList.toggle('ativo',b.dataset.grupo===grupo);
-  });
-  atualizarProximo(grupo);
-  atualizarEscalado(grupo);
-  // Mostra botão compartilhar mês
-  const btnComp=document.getElementById('btn-compartilhar-mes');
-  if(btnComp)btnComp.style.display=grupo!=='todos'?'flex':'none';
-}
-
-// ── Indicador estou escalado
-function atualizarEscalado(grupo){
-  const banner=document.getElementById('escalado-banner');
-  const titulo=document.getElementById('escalado-titulo');
-  const diasEl=document.getElementById('escalado-dias');
-  if(!banner)return;
-  if(grupo==='todos'){banner.classList.remove('show');return;}
-  const cultosDo=CULTOS.filter(c=>c.grupos.includes(grupo));
-  const futuros=cultosDo.filter(c=>calcDias(c.data)>=0);
-  const passados=cultosDo.filter(c=>calcDias(c.data)<0);
-  if(!cultosDo.length){banner.classList.remove('show');return;}
-  titulo.textContent='Você tem '+futuros.length+' culto'+(futuros.length!==1?'s':'')+' restante'+(futuros.length!==1?'s':'')+' este mês'+(passados.length?' ('+passados.length+' realizado'+(passados.length!==1?'s':'')+')'  :'');
-  diasEl.innerHTML=futuros.map(c=>'<span class="escalado-dia">Dia '+c.data+' · '+c.hora+'</span>').join('');
-  banner.classList.add('show');
-}
-
-// ── Próximo culto do grupo
-function atualizarProximo(grupo){
-  const banner=document.getElementById('proximo-banner');
-  if(!banner)return;
-  if(grupo==='todos'){banner.classList.remove('show');return;}
-  const futuros=CULTOS.filter(c=>c.grupos.includes(grupo)&&calcDias(c.data)>=0);
-  futuros.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
-  if(!futuros.length){banner.classList.remove('show');return;}
-  const p=futuros[0];const diff=calcDias(p.data);
-  document.getElementById('proximo-info').textContent=p.data+' — '+p.hora+' — '+p.culto;
-  document.getElementById('proximo-dias').textContent=diff===0?'Hoje!':diff===1?'Amanhã!':'Faltam '+diff+' dias';
-  banner.classList.add('show');
-}
-
-// ── Busca
-function buscarCulto(termo){
-  const t=termo.trim().toLowerCase();
-  const clear=document.getElementById('busca-clear');
-  if(clear)clear.style.display=t?'block':'none';
-  document.querySelectorAll('.dia-block').forEach(blk=>{
-    if(!t){blk.classList.remove('oculto');return;}
-    const txt=blk.textContent.toLowerCase();
-    blk.classList.toggle('oculto',!txt.includes(t));
-  });
-}
-function limparBusca(){
-  const input=document.getElementById('busca-input');
-  if(input)input.value='';
-  buscarCulto('');
-}
-
-// ── Modo compacto
-function setModo(modo){
-  document.body.classList.toggle('compacto',modo==='comp');
-  document.getElementById('modo-det')?.classList.toggle('ativo',modo==='det');
-  document.getElementById('modo-comp')?.classList.toggle('ativo',modo==='comp');
-  localStorage.setItem('dml-modo',modo);
-}
-if(localStorage.getItem('dml-modo')==='comp')setModo('comp');
-
-// ── Compartilhar mês inteiro
-function compartilharMes(e){
-  e.preventDefault();
-  const grupo=filtroAtivo;
-  const cultosDo=grupo==='todos'?CULTOS:CULTOS.filter(c=>c.grupos.includes(grupo));
-  const futuros=cultosDo.filter(c=>calcDias(c.data)>=0).sort((a,b)=>parseInt(a.data)-parseInt(b.data));
-  if(!futuros.length){alert('Nenhum culto futuro encontrado.');return;}
-  const linhas=futuros.map(c=>'📅 Dia '+c.data+' · '+c.hora+' — '+c.culto+(c.dirigente?' ('+c.dirigente+')':''));
-  const txt='*Escala DML — '+MES_LABEL+'*'+(grupo!=='todos'?'\n*Grupo: '+grupo+'*':'')+'\n\n'+linhas.join('\n')+'\n\n🔗 Acesse: '+location.href;
-  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
-}
-
-// ── Modo claro/escuro
-function toggleTheme(){
-  const isLight=document.body.classList.toggle('light');
-  document.getElementById('btn-theme').textContent=isLight?'🌙':'☀️';
-  localStorage.setItem('dml-theme',isLight?'light':'dark');
-}
-if(localStorage.getItem('dml-theme')==='light'){
-  document.body.classList.add('light');
-  document.getElementById('btn-theme').textContent='🌙';
-}
-
-// ── OneSignal
-async function toggleNotif(){
-  if(!window.OneSignal){alert('OneSignal carregando, tente em instantes.');return;}
-  try{
-    const isEnabled=await OneSignal.User.PushSubscription.optedIn;
-    if(isEnabled){await OneSignal.User.PushSubscription.optOut();atualizarBtnNotif(false);}
-    else{await OneSignal.Notifications.requestPermission();await new Promise(r=>setTimeout(r,800));atualizarBtnNotif(!!(await OneSignal.User.PushSubscription.optedIn));}
-  }catch(e){console.error(e);}
-}
-function atualizarBtnNotif(ativo){
-  const btn=document.getElementById('btn-notif');if(!btn)return;
-  btn.textContent=ativo?'🔔':'🔕';btn.classList.toggle('ativo',!!ativo);
-}
-OneSignalDeferred.push(async function(OneSignal){
-  try{await new Promise(r=>setTimeout(r,1000));atualizarBtnNotif(!!(await OneSignal.User.PushSubscription.optedIn));
-  OneSignal.User.PushSubscription.addEventListener('change',e=>atualizarBtnNotif(!!e.current?.optedIn));}catch(e){}
-});
-
-<\/script>
-</body>
-</html>`;
-
-  const blob=new Blob([paginaHTML],{type:'text/html;charset=utf-8'});
+  const blob=new Blob([H],{type:'text/html;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=`escala-dml-${mesLabel.toLowerCase().replace(/\s/g,'-')}.html`;
+  a.download='escala-dml-'+mesLabel.toLowerCase().replace(/\s/g,'-')+'.html';
   a.click();
-  toast('🌐 Página exportada com interatividade!');
+  toast('\uD83C\uDF10 P\u00E1gina exportada!');
 }
-
-function exportarPDF(){irPara('preview');renderPreview();setTimeout(()=>window.print(),300);}
 
 // ═══════════════════════════════════════════════
 // UTILS
