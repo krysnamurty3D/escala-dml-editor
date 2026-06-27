@@ -3196,6 +3196,14 @@ const CULTOS=${dadosJSON};
 const MES_LABEL=${mesLabelJSON};
 const MESES_MAP={Janeiro:0,Fevereiro:1,Março:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};
 
+// Mapa de cores dos badges (injetado pelo editor)
+const BADGE_COLORS_MAP=${JSON.stringify(Object.fromEntries(
+  vis.map(c=>c.grupos).flat().filter((g,i,a)=>a.indexOf(g)===i).map(g=>[g,getBadgeColorHex(g)])
+))};
+
+function labelG(g){return g==='S&H (SALMOS E HINOS)'?'S&H':g.replace(/^CORAL\\s+/,'C. ');}
+function getBadgeColorHex(g){return BADGE_COLORS_MAP[g]||'#1a7a40';}
+
 function calcDias(diaNum){
   const partes=MES_LABEL.split(' ');
   const mes=MESES_MAP[partes[0]]??new Date().getMonth();
@@ -3241,16 +3249,16 @@ function renderProximoCard(){
   const p=futuros[0];
   const diff=calcDias(p.data);
   const isDom=/domingo/i.test(p.dia);
-  const countdownTxt=diff===0?'Hoje! 🔴':diff===1?'Amanhã ⚡':'${diff} dias'.replace('\${diff}',diff);
-  const badges=p.grupos.map(g=>\`<span class="badge" style="background:\${getBadgeColorHex(g)}">\${labelG(g)}</span>\`).join('');
-  wrap.innerHTML=\`<div class="proximo-card \${isDom?'dom':''}">
-    <div class="proximo-tag">⭐ Próximo culto</div>
-    <div class="proximo-nome">\${p.culto}</div>
-    <div class="proximo-meta">Dia \${p.data} · \${p.hora}</div>
-    \${p.dirigente?\`<div class="proximo-dir">🎤 \${p.dirigente}</div>\`:''}
-    <div class="proximo-countdown">\${countdownTxt}</div>
-    \${badges?\`<div class="proximo-badges">\${badges}</div>\`:''}
-  </div>\`;
+  const countdownTxt=diff===0?'Hoje! 🔴':diff===1?'Amanhã ⚡':'Faltam '+diff+' dias';
+  const badges=p.grupos.map(g=>'<span class="badge" style="background:'+BADGE_COLORS_MAP[g]+'">'+labelG(g)+'</span>').join('');
+  wrap.innerHTML='<div class="proximo-card '+(isDom?'dom':'')+'">'+
+    '<div class="proximo-tag">⭐ Próximo culto</div>'+
+    '<div class="proximo-nome">'+p.culto+'</div>'+
+    '<div class="proximo-meta">Dia '+p.data+' · '+p.hora+'</div>'+
+    (p.dirigente?'<div class="proximo-dir">🎤 '+p.dirigente+'</div>':'')+
+    '<div class="proximo-countdown">'+countdownTxt+'</div>'+
+    (badges?'<div class="proximo-badges">'+badges+'</div>':'')+
+  '</div>';
 }
 renderProximoCard();
 
@@ -3270,14 +3278,13 @@ function renderSemanaAtual(){
   });
   if(!daSemana.length){section.classList.remove('show');return;}
   section.classList.add('show');
-  cont.innerHTML=daSemana.map(c=>\`
-    <div class="semana-row">
-      <div class="semana-data-mini">\${c.data}</div>
-      <div>
-        <div class="semana-nome-mini">\${c.culto}</div>
-        <div class="semana-hora-mini">\${c.hora}\${c.dirigente?' · '+c.dirigente:''}</div>
-      </div>
-    </div>\`).join('');
+  cont.innerHTML=daSemana.map(c=>
+    '<div class="semana-row">'+
+    '<div class="semana-data-mini">'+c.data+'</div>'+
+    '<div><div class="semana-nome-mini">'+c.culto+'</div>'+
+    '<div class="semana-hora-mini">'+c.hora+(c.dirigente?' · '+c.dirigente:'')+'</div></div>'+
+    '</div>'
+  ).join('');
 }
 renderSemanaAtual();
 
@@ -3322,8 +3329,8 @@ function atualizarEscalado(grupo){
   const futuros=cultosDo.filter(c=>calcDias(c.data)>=0);
   const passados=cultosDo.filter(c=>calcDias(c.data)<0);
   if(!cultosDo.length){banner.classList.remove('show');return;}
-  titulo.textContent=\`Você tem \${futuros.length} culto\${futuros.length!==1?'s':''} restante\${futuros.length!==1?'s':''} este mês\${passados.length?' ('+passados.length+' realizado'+(passados.length!==1?'s':'')+')'  :''}\`;
-  diasEl.innerHTML=futuros.map(c=>\`<span class="escalado-dia">Dia \${c.data} · \${c.hora}</span>\`).join('');
+  titulo.textContent='Você tem '+futuros.length+' culto'+(futuros.length!==1?'s':'')+' restante'+(futuros.length!==1?'s':'')+' este mês'+(passados.length?' ('+passados.length+' realizado'+(passados.length!==1?'s':'')+')'  :'');
+  diasEl.innerHTML=futuros.map(c=>'<span class="escalado-dia">Dia '+c.data+' · '+c.hora+'</span>').join('');
   banner.classList.add('show');
 }
 
@@ -3374,8 +3381,8 @@ function compartilharMes(e){
   const cultosDo=grupo==='todos'?CULTOS:CULTOS.filter(c=>c.grupos.includes(grupo));
   const futuros=cultosDo.filter(c=>calcDias(c.data)>=0).sort((a,b)=>parseInt(a.data)-parseInt(b.data));
   if(!futuros.length){alert('Nenhum culto futuro encontrado.');return;}
-  const linhas=futuros.map(c=>\`📅 Dia \${c.data} · \${c.hora} — \${c.culto}\${c.dirigente?' ('+c.dirigente+')':''}\`);
-  const txt=\`*Escala DML — \${MES_LABEL}*\${grupo!=='todos'?'\\n*Grupo: '+grupo+'*':''}\n\n\${linhas.join('\\n')}\\n\\n🔗 Acesse: \${location.href}\`;
+  const linhas=futuros.map(c=>'📅 Dia '+c.data+' · '+c.hora+' — '+c.culto+(c.dirigente?' ('+c.dirigente+')':''));
+  const txt='*Escala DML — '+MES_LABEL+'*'+(grupo!=='todos'?'\n*Grupo: '+grupo+'*':'')+'\n\n'+linhas.join('\n')+'\n\n🔗 Acesse: '+location.href;
   window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 }
 
