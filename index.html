@@ -2933,6 +2933,54 @@ header{background:#1e2d40;border-bottom:3px solid #2ab482;padding:14px 18px;
 .filtro-btn-todos{border-color:#2ab482;color:#2ab482;}
 .filtro-btn-todos.ativo{background:#2ab482;color:#061208;}
 
+/* BUSCA */
+.busca-wrap{background:#162030;border-bottom:1px solid #1e2d38;padding:10px 14px;position:sticky;top:75px;z-index:9;}
+.busca-inner{position:relative;max-width:600px;margin:0 auto;}
+.busca-input{width:100%;background:#1a2535;border:1px solid #2a3a4a;border-radius:10px;color:#edf4f4;font-size:14px;padding:10px 36px 10px 14px;font-family:Montserrat,sans-serif;outline:none;}
+.busca-input:focus{border-color:#2ab482;}
+.busca-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:16px;display:none;}
+/* CARD PRÓXIMO DESTAQUE */
+.proximo-card{margin:14px 14px 0;border-radius:14px;padding:16px 18px;background:linear-gradient(135deg,#0f2820,#1a2d40);border:1.5px solid #2ab482;box-shadow:0 4px 24px rgba(42,180,130,.15);}
+.proximo-card.dom{background:linear-gradient(135deg,#2a1800,#1e2030);border-color:#d4a017;box-shadow:0 4px 24px rgba(212,160,23,.15);}
+.proximo-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#2ab482;font-weight:700;margin-bottom:8px;}
+.proximo-card.dom .proximo-tag{color:#d4a017;}
+.proximo-nome{font-size:20px;font-weight:900;text-transform:uppercase;margin-bottom:4px;}
+.proximo-meta{font-size:13px;color:#7a9aa8;margin-bottom:6px;}
+.proximo-dir{font-size:13px;color:#2ab482;font-weight:600;margin-bottom:10px;}
+.proximo-card.dom .proximo-dir{color:#d4a017;}
+.proximo-countdown{font-size:28px;font-weight:900;color:#2ab482;letter-spacing:-1px;}
+.proximo-card.dom .proximo-countdown{color:#d4a017;}
+.proximo-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+/* INDICADOR ESTOU ESCALADO */
+.escalado-banner{margin:10px 14px 0;background:rgba(42,180,130,.08);border:1px solid rgba(42,180,130,.25);border-radius:12px;padding:12px 16px;display:none;}
+.escalado-banner.show{display:block;}
+.escalado-titulo{font-size:13px;font-weight:800;color:#2ab482;margin-bottom:6px;}
+.escalado-dias{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.escalado-dia{background:rgba(42,180,130,.15);border:1px solid rgba(42,180,130,.3);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#2ab482;}
+/* SEMANA ATUAL */
+.semana-section{margin:14px 14px 0;background:#162030;border:1px solid #1e2d38;border-radius:14px;overflow:hidden;display:none;}
+.semana-section.show{display:block;}
+.semana-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1e2d38;}
+.semana-hdr span{font-size:11px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;}
+.semana-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);}
+.semana-row:last-child{border-bottom:none;}
+.semana-data-mini{font-size:22px;font-weight:900;color:#2ab482;min-width:36px;}
+.semana-nome-mini{font-size:13px;font-weight:700;text-transform:uppercase;}
+.semana-hora-mini{font-size:11px;color:#7a9aa8;}
+/* MODO COMPACTO */
+.modo-wrap{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:6px 14px;background:#162030;border-bottom:1px solid #1e2d38;}
+.modo-wrap span{font-size:11px;color:#7a9aa8;}
+.modo-toggle{display:flex;background:#1a2535;border-radius:20px;padding:3px;}
+.modo-btn{border:none;background:none;color:#7a9aa8;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;font-family:Montserrat,sans-serif;}
+.modo-btn.ativo{background:#2ab482;color:#061208;}
+body.compacto .culto-dir{display:none;}body.compacto .culto-countdown{display:none;}body.compacto .culto-actions{display:none;}body.compacto .culto-row{padding:8px 14px;}
+/* ANIMAÇÕES */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.dia-block{animation:fadeUp .3s ease both;}
+.dia-block:nth-child(1){animation-delay:.03s}.dia-block:nth-child(2){animation-delay:.06s}.dia-block:nth-child(3){animation-delay:.09s}.dia-block:nth-child(4){animation-delay:.12s}.dia-block:nth-child(5){animation-delay:.15s}.dia-block:nth-child(6){animation-delay:.18s}.dia-block:nth-child(7){animation-delay:.21s}.dia-block:nth-child(8){animation-delay:.24s}.dia-block:nth-child(n+9){animation-delay:.27s}
+/* COMPARTILHAR MÊS */
+.compartilhar-mes-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:10px;color:#25d366;padding:10px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;margin:12px 14px 0;font-family:Montserrat,sans-serif;}
+.compartilhar-mes-btn:hover{background:rgba(37,211,102,.2);}
 /* PRÓXIMO CULTO */
 .proximo-banner{background:linear-gradient(135deg,#1a3a2a,#1e2d40);border:1px solid #2ab482;
   border-radius:12px;padding:14px 16px;margin:14px 14px 0;display:none;}
@@ -3084,7 +3132,47 @@ body.light .btn-mostrar-todos{background:#fff;}
   </div>
 </header>
 
-<div class="proximo-banner" id="proximo-banner">
+<!-- Busca -->
+<div class="busca-wrap">
+  <div class="busca-inner">
+    <input class="busca-input" id="busca-input" placeholder="🔍 Buscar culto..." oninput="buscarCulto(this.value)">
+    <button class="busca-clear" id="busca-clear" onclick="limparBusca()">✕</button>
+  </div>
+</div>
+
+<!-- Modo compacto -->
+<div class="modo-wrap">
+  <span>Visualização:</span>
+  <div class="modo-toggle">
+    <button class="modo-btn ativo" id="modo-det" onclick="setModo('det')">Detalhado</button>
+    <button class="modo-btn" id="modo-comp" onclick="setModo('comp')">Compacto</button>
+  </div>
+</div>
+
+<!-- Card próximo culto em destaque -->
+<div id="proximo-card-wrap"></div>
+
+<!-- Indicador estou escalado -->
+<div class="escalado-banner" id="escalado-banner">
+  <div class="escalado-titulo" id="escalado-titulo"></div>
+  <div class="escalado-dias" id="escalado-dias"></div>
+</div>
+
+<!-- Semana atual -->
+<div class="semana-section" id="semana-section">
+  <div class="semana-hdr">
+    <span>📅 Esta semana</span>
+    <button onclick="document.getElementById('semana-section').classList.remove('show')" style="background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:14px">✕</button>
+  </div>
+  <div id="semana-cultos"></div>
+</div>
+
+<!-- Compartilhar mês -->
+<a class="compartilhar-mes-btn" id="btn-compartilhar-mes" href="#" onclick="compartilharMes(event)" style="display:none">
+  📤 Compartilhar escala do mês no WhatsApp
+</a>
+
+<div class="proximo-banner" id="proximo-banner" style="display:none">
   <div class="proximo-label">⭐ Seu próximo culto</div>
   <div class="proximo-info" id="proximo-info"></div>
   <div class="proximo-dias" id="proximo-dias"></div>
@@ -3103,88 +3191,140 @@ body.light .btn-mostrar-todos{background:#fff;}
 </footer>
 
 <script>
-// ── Dados da escala
+// ── Dados
 const CULTOS=${dadosJSON};
 const MES_LABEL=${mesLabelJSON};
-
-// ── Mapa de cores dos grupos
 const MESES_MAP={Janeiro:0,Fevereiro:1,Março:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};
 
-// ── Contagem regressiva
 function calcDias(diaNum){
   const partes=MES_LABEL.split(' ');
   const mes=MESES_MAP[partes[0]]??new Date().getMonth();
   const ano=parseInt(partes[1])||new Date().getFullYear();
-  const cultoDate=new Date(ano,mes,parseInt(diaNum));
+  const d=new Date(ano,mes,parseInt(diaNum));
   const hoje=new Date();hoje.setHours(0,0,0,0);
-  const diff=Math.round((cultoDate-hoje)/(1000*60*60*24));
-  return diff;
+  return Math.round((d-hoje)/(1000*60*60*24));
 }
 
+// ── Contagem regressiva
 function atualizarContagens(){
-  document.querySelectorAll('[data-data]').forEach(el=>{
-    if(!el.classList.contains('culto-countdown'))return;
+  document.querySelectorAll('.culto-countdown[data-data]').forEach(el=>{
     const diff=calcDias(el.dataset.data);
     if(diff<0)el.textContent='Realizado';
     else if(diff===0)el.textContent='🔴 Hoje!';
     else if(diff===1)el.textContent='⚡ Amanhã!';
     else el.textContent='Faltam '+diff+' dias';
   });
-  // dias-faltam no header do bloco
   document.querySelectorAll('.dias-faltam[data-data]').forEach(el=>{
     const diff=calcDias(el.dataset.data);
     if(diff<0){el.textContent='Realizado';el.classList.add('passado');}
-    else if(diff===0){el.textContent='Hoje! 🔴';}
-    else if(diff===1){el.textContent='Amanhã ⚡';}
-    else{el.textContent='em '+diff+' dias';}
+    else if(diff===0)el.textContent='Hoje! 🔴';
+    else if(diff===1)el.textContent='Amanhã ⚡';
+    else el.textContent='em '+diff+' dias';
   });
 }
 
-// Insere contagem no header de cada bloco
+// Insere contagem nos headers
 document.querySelectorAll('.dia-header').forEach(hdr=>{
-  const num=hdr.querySelector('.dia-num');
-  if(!num)return;
+  const num=hdr.querySelector('.dia-num');if(!num)return;
   const span=document.createElement('span');
-  span.className='dias-faltam';
-  span.dataset.data=num.textContent.trim();
+  span.className='dias-faltam';span.dataset.data=num.textContent.trim();
   hdr.appendChild(span);
 });
 atualizarContagens();
+setInterval(atualizarContagens,60000);
 
-// ── Badges clicáveis — click filtra o grupo
-document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
-  b.addEventListener('click',e=>{
-    e.stopPropagation();
-    const g=b.dataset.grupo;
-    if(filtroAtivo===g)filtrar('todos');
-    else filtrar(g);
+// ── Card próximo culto em destaque
+function renderProximoCard(){
+  const wrap=document.getElementById('proximo-card-wrap');if(!wrap)return;
+  const futuros=CULTOS.filter(c=>calcDias(c.data)>=0).sort((a,b)=>parseInt(a.data)-parseInt(b.data));
+  if(!futuros.length){wrap.innerHTML='';return;}
+  const p=futuros[0];
+  const diff=calcDias(p.data);
+  const isDom=/domingo/i.test(p.dia);
+  const countdownTxt=diff===0?'Hoje! 🔴':diff===1?'Amanhã ⚡':'${diff} dias'.replace('\${diff}',diff);
+  const badges=p.grupos.map(g=>\`<span class="badge" style="background:\${getBadgeColorHex(g)}">\${labelG(g)}</span>\`).join('');
+  wrap.innerHTML=\`<div class="proximo-card \${isDom?'dom':''}">
+    <div class="proximo-tag">⭐ Próximo culto</div>
+    <div class="proximo-nome">\${p.culto}</div>
+    <div class="proximo-meta">Dia \${p.data} · \${p.hora}</div>
+    \${p.dirigente?\`<div class="proximo-dir">🎤 \${p.dirigente}</div>\`:''}
+    <div class="proximo-countdown">\${countdownTxt}</div>
+    \${badges?\`<div class="proximo-badges">\${badges}</div>\`:''}
+  </div>\`;
+}
+renderProximoCard();
+
+// ── Semana atual
+function renderSemanaAtual(){
+  const section=document.getElementById('semana-section');
+  const cont=document.getElementById('semana-cultos');
+  if(!section||!cont)return;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const fimSem=new Date(hoje.getTime()+7*86400000);
+  const partes=MES_LABEL.split(' ');
+  const mes=MESES_MAP[partes[0]]??hoje.getMonth();
+  const ano=parseInt(partes[1])||hoje.getFullYear();
+  const daSemana=CULTOS.filter(c=>{
+    const d=new Date(ano,mes,parseInt(c.data));
+    return d>=hoje&&d<=fimSem;
   });
+  if(!daSemana.length){section.classList.remove('show');return;}
+  section.classList.add('show');
+  cont.innerHTML=daSemana.map(c=>\`
+    <div class="semana-row">
+      <div class="semana-data-mini">\${c.data}</div>
+      <div>
+        <div class="semana-nome-mini">\${c.culto}</div>
+        <div class="semana-hora-mini">\${c.hora}\${c.dirigente?' · '+c.dirigente:''}</div>
+      </div>
+    </div>\`).join('');
+}
+renderSemanaAtual();
+
+// ── Badges clicáveis
+document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
+  b.addEventListener('click',e=>{e.stopPropagation();const g=b.dataset.grupo;filtroAtivo===g?filtrar('todos'):filtrar(g);});
 });
 
-// ── Filtro por grupo
+// ── Filtro
 let filtroAtivo='todos';
 function filtrar(grupo){
   filtroAtivo=grupo;
   const btnTodos=document.getElementById('btn-todos');
-  // Botão flutuante
   if(btnTodos)btnTodos.classList.toggle('show',grupo!=='todos');
-  // Mostra/oculta blocos
   document.querySelectorAll('.dia-block').forEach(blk=>{
     if(grupo==='todos'){blk.classList.remove('oculto','destaque');return;}
     const gs=blk.dataset.grupos||'';
-    const temGrupo=gs.split(',').includes(grupo);
-    blk.classList.toggle('oculto',!temGrupo);
-    blk.classList.toggle('destaque',temGrupo);
+    const tem=gs.split(',').includes(grupo);
+    blk.classList.toggle('oculto',!tem);
+    blk.classList.toggle('destaque',tem);
   });
-  // Dimmer e destaque dos badges
   document.querySelectorAll('.badge[data-grupo]').forEach(b=>{
     if(grupo==='todos'){b.classList.remove('dimmed','ativo');return;}
-    const isAtivo=b.dataset.grupo===grupo;
-    b.classList.toggle('dimmed',!isAtivo);
-    b.classList.toggle('ativo',isAtivo);
+    b.classList.toggle('dimmed',b.dataset.grupo!==grupo);
+    b.classList.toggle('ativo',b.dataset.grupo===grupo);
   });
-  // Próximo culto
   atualizarProximo(grupo);
+  atualizarEscalado(grupo);
+  // Mostra botão compartilhar mês
+  const btnComp=document.getElementById('btn-compartilhar-mes');
+  if(btnComp)btnComp.style.display=grupo!=='todos'?'flex':'none';
+}
+
+// ── Indicador estou escalado
+function atualizarEscalado(grupo){
+  const banner=document.getElementById('escalado-banner');
+  const titulo=document.getElementById('escalado-titulo');
+  const diasEl=document.getElementById('escalado-dias');
+  if(!banner)return;
+  if(grupo==='todos'){banner.classList.remove('show');return;}
+  const cultosDo=CULTOS.filter(c=>c.grupos.includes(grupo));
+  const futuros=cultosDo.filter(c=>calcDias(c.data)>=0);
+  const passados=cultosDo.filter(c=>calcDias(c.data)<0);
+  if(!cultosDo.length){banner.classList.remove('show');return;}
+  titulo.textContent=\`Você tem \${futuros.length} culto\${futuros.length!==1?'s':''} restante\${futuros.length!==1?'s':''} este mês\${passados.length?' ('+passados.length+' realizado'+(passados.length!==1?'s':'')+')'  :''}\`;
+  diasEl.innerHTML=futuros.map(c=>\`<span class="escalado-dia">Dia \${c.data} · \${c.hora}</span>\`).join('');
+  banner.classList.add('show');
 }
 
 // ── Próximo culto do grupo
@@ -3195,51 +3335,49 @@ function atualizarProximo(grupo){
   const futuros=CULTOS.filter(c=>c.grupos.includes(grupo)&&calcDias(c.data)>=0);
   futuros.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
   if(!futuros.length){banner.classList.remove('show');return;}
-  const p=futuros[0];
-  const diff=calcDias(p.data);
+  const p=futuros[0];const diff=calcDias(p.data);
   document.getElementById('proximo-info').textContent=p.data+' — '+p.hora+' — '+p.culto;
   document.getElementById('proximo-dias').textContent=diff===0?'Hoje!':diff===1?'Amanhã!':'Faltam '+diff+' dias';
   banner.classList.add('show');
 }
 
-// ── Notificações Push (OneSignal)
-async function toggleNotif(){
-  if(!window.OneSignal){alert('OneSignal ainda carregando, tente em instantes.');return;}
-  try{
-    const isEnabled=await OneSignal.User.PushSubscription.optedIn;
-    if(isEnabled){
-      await OneSignal.User.PushSubscription.optOut();
-      atualizarBtnNotif(false);
-    }else{
-      await OneSignal.Notifications.requestPermission();
-      await new Promise(r=>setTimeout(r,800));
-      const optedIn=await OneSignal.User.PushSubscription.optedIn;
-      atualizarBtnNotif(!!optedIn);
-    }
-  }catch(e){console.error('OneSignal:',e);}
+// ── Busca
+function buscarCulto(termo){
+  const t=termo.trim().toLowerCase();
+  const clear=document.getElementById('busca-clear');
+  if(clear)clear.style.display=t?'block':'none';
+  document.querySelectorAll('.dia-block').forEach(blk=>{
+    if(!t){blk.classList.remove('oculto');return;}
+    const txt=blk.textContent.toLowerCase();
+    blk.classList.toggle('oculto',!txt.includes(t));
+  });
+}
+function limparBusca(){
+  const input=document.getElementById('busca-input');
+  if(input)input.value='';
+  buscarCulto('');
 }
 
-function atualizarBtnNotif(ativo){
-  const btn=document.getElementById('btn-notif');
-  if(!btn)return;
-  btn.textContent=ativo?'🔔':'🔕';
-  btn.title=ativo?'Notificações ativas — clique para desativar':'Ativar notificações';
-  btn.classList.toggle('ativo',!!ativo);
+// ── Modo compacto
+function setModo(modo){
+  document.body.classList.toggle('compacto',modo==='comp');
+  document.getElementById('modo-det')?.classList.toggle('ativo',modo==='det');
+  document.getElementById('modo-comp')?.classList.toggle('ativo',modo==='comp');
+  localStorage.setItem('dml-modo',modo);
 }
+if(localStorage.getItem('dml-modo')==='comp')setModo('comp');
 
-// Inicializa estado do botão quando OneSignal carregar
-OneSignalDeferred.push(async function(OneSignal){
-  try{
-    // Aguarda subscrição estabilizar
-    await new Promise(r=>setTimeout(r,1000));
-    const optedIn=await OneSignal.User.PushSubscription.optedIn;
-    atualizarBtnNotif(!!optedIn);
-    // Listener para mudanças futuras
-    OneSignal.User.PushSubscription.addEventListener('change',e=>{
-      atualizarBtnNotif(!!e.current?.optedIn);
-    });
-  }catch(e){console.error('OneSignal init:',e);}
-});
+// ── Compartilhar mês inteiro
+function compartilharMes(e){
+  e.preventDefault();
+  const grupo=filtroAtivo;
+  const cultosDo=grupo==='todos'?CULTOS:CULTOS.filter(c=>c.grupos.includes(grupo));
+  const futuros=cultosDo.filter(c=>calcDias(c.data)>=0).sort((a,b)=>parseInt(a.data)-parseInt(b.data));
+  if(!futuros.length){alert('Nenhum culto futuro encontrado.');return;}
+  const linhas=futuros.map(c=>\`📅 Dia \${c.data} · \${c.hora} — \${c.culto}\${c.dirigente?' ('+c.dirigente+')':''}\`);
+  const txt=\`*Escala DML — \${MES_LABEL}*\${grupo!=='todos'?'\\n*Grupo: '+grupo+'*':''}\n\n\${linhas.join('\\n')}\\n\\n🔗 Acesse: \${location.href}\`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
 
 // ── Modo claro/escuro
 function toggleTheme(){
@@ -3251,6 +3389,25 @@ if(localStorage.getItem('dml-theme')==='light'){
   document.body.classList.add('light');
   document.getElementById('btn-theme').textContent='🌙';
 }
+
+// ── OneSignal
+async function toggleNotif(){
+  if(!window.OneSignal){alert('OneSignal carregando, tente em instantes.');return;}
+  try{
+    const isEnabled=await OneSignal.User.PushSubscription.optedIn;
+    if(isEnabled){await OneSignal.User.PushSubscription.optOut();atualizarBtnNotif(false);}
+    else{await OneSignal.Notifications.requestPermission();await new Promise(r=>setTimeout(r,800));atualizarBtnNotif(!!(await OneSignal.User.PushSubscription.optedIn));}
+  }catch(e){console.error(e);}
+}
+function atualizarBtnNotif(ativo){
+  const btn=document.getElementById('btn-notif');if(!btn)return;
+  btn.textContent=ativo?'🔔':'🔕';btn.classList.toggle('ativo',!!ativo);
+}
+OneSignalDeferred.push(async function(OneSignal){
+  try{await new Promise(r=>setTimeout(r,1000));atualizarBtnNotif(!!(await OneSignal.User.PushSubscription.optedIn));
+  OneSignal.User.PushSubscription.addEventListener('change',e=>atualizarBtnNotif(!!e.current?.optedIn));}catch(e){}
+});
+
 <\/script>
 </body>
 </html>`;
