@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2846,12 +2846,12 @@ function exportarPagina(){
       const hasNxt=nxt&&nxt.data===c.data&&/domingo/i.test(nxt.dia);
       const grps=(isDom&&hasNxt?[...c.grupos,...nxt.grupos]:c.grupos).map(encodeURIComponent).join(',');
       if(isDom&&hasNxt){
-        html+='<div class="dia-block dom-block" data-grupos="'+grps+'">'
+        html+='<div class="dia-block dom-block" data-grupos="'+grps+'" data-data="'+c.data+'">'
           +'<div class="dia-header dom-header"><span class="dia-num">'+c.data+'</span><span class="dia-abrev">DOM</span></div>'
           +'<div class="dia-cultos">'+cardCulto(c)+cardCulto(nxt)+'</div></div>';
         i+=2;
       } else {
-        html+='<div class="dia-block'+(bk?' '+bk:'')+'" data-grupos="'+grps+'">'
+        html+='<div class="dia-block'+(bk?' '+bk:'')+'" data-grupos="'+grps+'" data-data="'+c.data+'">'
           +'<div class="dia-header'+(hk?' '+hk:'')+'">'
           +'<span class="dia-num">'+c.data+'</span>'
           +'<span class="dia-abrev">'+c.dia.substring(0,3).toUpperCase()+'</span>'
@@ -2977,6 +2977,15 @@ function exportarPagina(){
     ".updated{text-align:center;padding:12px;font-size:11px;color:#4a6070;}",
     "footer{text-align:center;padding:20px;color:#4a6070;font-size:11px;letter-spacing:1px;text-transform:uppercase;}",
     "footer strong{display:block;color:#2ab482;font-size:13px;margin-bottom:4px;}"
+    ".realizados-sec{margin:0 0 8px;padding:0 14px;}",
+    ".realizados-toggle{width:100%;background:rgba(42,180,130,.06);border:1px solid #1a6a50;border-radius:12px;color:#2ab482;font-size:13px;font-weight:700;padding:13px 16px;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;font-family:inherit;}",
+    ".realizados-toggle:hover{background:rgba(42,180,130,.12);}",
+    ".realizados-toggle .arrow{transition:transform .25s;font-size:14px;}",
+    ".realizados-toggle.aberto .arrow{transform:rotate(180deg);}",
+    ".realizados-body{margin-top:8px;}",
+    ".realizados-body .dia-block{opacity:.55;filter:grayscale(.3);}",
+    ".realizados-body .dia-block:hover{opacity:.85;filter:none;}",
+    ".realizados-body .culto-countdown::before{content:'Realizado ';}",
   ].join('\n');
 
   /* ── JS da página pública (var, sem template literals) ── */
@@ -3029,19 +3038,26 @@ function exportarPagina(){
     // Card próximo culto
     'function renderProximo(){',
     '  var wrap=document.getElementById("proximo-wrap");if(!wrap)return;',
-    '  var fut=CULTOS.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
+    '  var fut=CULTOS.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data)||a.hora.localeCompare(b.hora);});',
     '  if(!fut.length){wrap.innerHTML="";return;}',
     '  var p=fut[0];var n=calcDias(p.data);',
     '  var isDom=/domingo/i.test(p.dia);',
+    '  var cultosDia=isDom?fut.filter(function(c){return c.data===p.data&&/domingo/i.test(c.dia);}):null;',
     '  var ct=n===0?"Hoje! \uD83D\uDD34":n===1?"Amanh\u00E3! \u26A1":"Faltam "+n+" dias";',
     '  var bg=p.grupos.map(function(g){return"<span class=\\"badge\\" style=\\"background:"+corG(g)+"\\">"+lg(g)+"</span>";}).join("");',
+    '  var cultosHtml="";',
+    '  if(isDom&&cultosDia&&cultosDia.length>1){',
+    '    cultosHtml=cultosDia.map(function(c){var cbg=c.grupos.map(function(g){return"<span class=\\"badge\\" style=\\"background:"+corG(g)+"\\">"+lg(g)+"</span>";}).join("");return"<div style=\\"margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)\\">"+"<div style=\\"font-size:12px;font-weight:700;color:#d4a017\\">"+c.hora+"</div>"+"<div style=\\"font-size:13px;font-weight:700\\">"+c.culto+"</div>"+(c.dirigente?"<div style=\\"font-size:11px;color:#2ab482\\">"+c.dirigente+"</div>":"")+(cbg?"<div style=\\"margin-top:4px\\">"+cbg+"</div>":"")+"</div>";}).join("");',
+    '  }',
     '  wrap.innerHTML="<div class=\\"proximo-card"+(isDom?" dom":"")+"\\">"',
-    '    +"<div class=\\"proximo-tag\\">\u2B50 Pr\u00F3ximo culto</div>"',
-    '    +"<div class=\\"proximo-nome\\">"+p.culto+"</div>"',
-    '    +"<div class=\\"proximo-meta\\">Dia "+p.data+" \u00B7 "+p.hora+"</div>"',
-    '    +(p.dirigente?"<div class=\\"proximo-dir\\">\uD83C\uDFE4 "+p.dirigente+"</div>":"")',
+    '    +"<div class=\\"proximo-tag\\">⭐ Próximo culto</div>"',
+    '    +(isDom&&cultosDia&&cultosDia.length>1',
+    '      ?"<div class=\\"proximo-nome\\">"+cultosDia.length+" cultos neste domingo</div><div class=\\"proximo-meta\\">Dia "+p.data+"</div>"+cultosHtml',
+    '      :"<div class=\\"proximo-nome\\">"+p.culto+"</div>"',
+    '       +"<div class=\\"proximo-meta\\">Dia "+p.data+" · "+p.hora+"</div>"',
+    '       +(p.dirigente?"<div class=\\"proximo-dir\\">🏤 "+p.dirigente+"</div>":"")',
+    '       +(bg?"<div class=\\"proximo-badges\\">"+bg+"</div>":""))',
     '    +"<div class=\\"proximo-countdown\\">"+ct+"</div>"',
-    '    +(bg?"<div class=\\"proximo-badges\\">"+bg+"</div>":"")',
     '    +"</div>";',
     '}',
     'renderProximo();',
@@ -3167,6 +3183,29 @@ function exportarPagina(){
     '    var b=document.getElementById("btn-notif");if(b){b.textContent=on?"\uD83D\uDD14":"\uD83D\uDD55";b.classList.toggle("ativo",!!on);}',
     '  }).catch(function(){});',
     '}'
+
+    // Seção realizados colapsável
+    'function iniciarRealizados(){',
+    '  var sec=document.getElementById("realizados-body");',
+    '  var tog=document.getElementById("realizados-toggle");',
+    '  var cnt=document.getElementById("realizados-count");',
+    '  if(!sec||!tog)return;',
+    '  var passados=[];',
+    '  document.querySelectorAll("main .dia-block").forEach(function(b){',
+    '    if(b.dataset.data&&calcDias(b.dataset.data)<0)passados.push(b);',
+    '  });',
+    '  if(!passados.length){tog.style.display="none";return;}',
+    '  passados.forEach(function(b){sec.appendChild(b);});',
+    '  cnt.textContent=passados.length;',
+    '}',
+    'function toggleRealizados(){',
+    '  var body=document.getElementById("realizados-body");',
+    '  var tog=document.getElementById("realizados-toggle");',
+    '  var open=body.style.display!=="none";',
+    '  body.style.display=open?"none":"block";',
+    '  tog.classList.toggle("aberto",!open);',
+    '}',
+    'iniciarRealizados();',
   ].join('\n');
 
   /* ── Monta HTML ── */
@@ -3227,6 +3266,7 @@ function exportarPagina(){
 
     // cards
     +'<main>\n'+gerarCards()+'\n</main>\n'
+    +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span>📄 Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
     +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
     +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
     +'<script>\n'+JS+'\n<\/script>\n'
