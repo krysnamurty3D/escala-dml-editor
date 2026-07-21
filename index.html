@@ -1598,14 +1598,14 @@ function renderPreview(){
   };
 
   let i=0;
-  while(i<vis.length){
-    const c=vis[i];
+  while(i<(_lista||vis).length){
+    const c=(_lista||vis)[i];
     const isDom=/domingo/i.test(c.dia);
     const isTer=/ter[cç]a/i.test(c.dia);
     const isQui=/quinta/i.test(c.dia);
     const isSab=/s[aá]b/i.test(c.dia);
     const rowClass=c.especial?'esp-row':isDom?'dom-row':isTer?'ter-row':isQui?'qui-row':isSab?'sab-row':'';
-    const nxt=vis[i+1];
+    const nxt=(_lista||vis)[i+1];
     const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
 
     if(isDom&&hasNxt){
@@ -2395,6 +2395,13 @@ async function exportarImagem(){
   try{
     const vis=cultos.filter(c=>!c.oculto);
     if(!vis.length){toast('⚠️ Nenhum culto visível');mostrarLoad(false);return;}
+  /* -- Proximo mes -- */
+  var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
+  var _mli=_MPAR.findIndex(function(m){return m.toLowerCase()===_mln;});
+  var mesProxLabel=_mli>=0?(_mli===11?'Janeiro '+(parseInt(_mlp[1])+1):_MPAR[_mli+1]+' '+_mlp[1]):null;
+  var visProx=null;
+  if(mesProxLabel){var _idx2=getIdx();for(var _i2=0;_i2<_idx2.length;_i2++){try{var _d2=JSON.parse(localStorage.getItem(SK(_idx2[_i2])));var _ln=(_d2.mesLabel||'').toLowerCase().replace(/ç/g,'c');var _pn=mesProxLabel.toLowerCase().replace(/ç/g,'c');if(_ln.trim()===_pn.trim()){visProx=(_d2.cultos||[]).filter(function(c){return !c.oculto;});break;}}catch(e){}}}
 
     // ── Carregar fontes via FontFace API
     const fontsLoaded=await Promise.allSettled([
@@ -2507,10 +2514,10 @@ async function exportarImagem(){
 
     // Pré-calcular linhas
     const rows=[];let i=0;
-    while(i<vis.length){
-      const c=vis[i];
+    while(i<(_lista||vis).length){
+      const c=(_lista||vis)[i];
       const isDom=/domingo/i.test(c.dia);
-      const nxt=vis[i+1];
+      const nxt=(_lista||vis)[i+1];
       const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
       if(isDom&&hasNxt){rows.push({type:'dom',c,nxt});i+=2;}
       else{rows.push({type:'single',c,isDom});i++;}
@@ -2779,6 +2786,13 @@ function exportarPagina(){
   if(!cultos.length){toast('⚠️ Nenhum culto para exportar');return;}
   const vis=cultos.filter(c=>!c.oculto);
   if(!vis.length){toast('⚠️ Nenhum culto visível');return;}
+  /* -- Proximo mes -- */
+  var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
+  var _mli=_MPAR.findIndex(function(m){return m.toLowerCase()===_mln;});
+  var mesProxLabel=_mli>=0?(_mli===11?'Janeiro '+(parseInt(_mlp[1])+1):_MPAR[_mli+1]+' '+_mlp[1]):null;
+  var visProx=null;
+  if(mesProxLabel){var _idx2=getIdx();for(var _i2=0;_i2<_idx2.length;_i2++){try{var _d2=JSON.parse(localStorage.getItem(SK(_idx2[_i2])));var _ln=(_d2.mesLabel||'').toLowerCase().replace(/ç/g,'c');var _pn=mesProxLabel.toLowerCase().replace(/ç/g,'c');if(_ln.trim()===_pn.trim()){visProx=(_d2.cultos||[]).filter(function(c){return !c.oculto;});break;}}catch(e){}}}
 
   /* ── helpers ── */
   const BC={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
@@ -2799,16 +2813,18 @@ function exportarPagina(){
   const DADOS=JSON.stringify(vis.map(c=>({data:c.data,dia:c.dia,hora:c.hora,culto:c.culto,dirigente:c.dirigente||'',grupos:c.grupos})));
   const CORES=JSON.stringify(Object.fromEntries([...new Set(vis.flatMap(c=>c.grupos))].map(g=>[g,gc(g)])));
   const MES_STR=JSON.stringify(mesLabel);
+  var DADOS_PROX=visProx?JSON.stringify(visProx.map(function(c){return{data:c.data,dia:c.dia,hora:c.hora,culto:c.culto,dirigente:c.dirigente||'',grupos:c.grupos};})):null;
+  var MES_STR_PROX=visProx?JSON.stringify(mesProxLabel):null;
   const DATA_ATU=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
   /* ── Logo SVG branco ── */
   const LOGO='<svg viewBox="0 0 86.01 49.86" xmlns="http://www.w3.org/2000/svg" style="height:44px;width:auto"><path fill="#fff" d="M11.09,34.1c0-2.99,1.5-5.71,5.05-5.71,1.16,0,2,.22,2.77.61v9.53c0,.77-.63,1.4-1.4,1.4h-1.65c-3.16,0-4.77-2.5-4.77-5.82M52.54,0c-1.59,0-3.2.16-4.8.5-8.31,1.73-14.7,7.06-17.85,14.07V5.44h-5.44c-3.06,0-5.54,2.48-5.54,5.54v9.27l-.11.06c-1.28-.5-2.83-.83-4.44-.83-7.99,0-14.36,6.27-14.36,15.08s5.93,13.24,12.48,13.24c2.33,0,6.65.02,6.65.02h5.37c2.98,0,5.39-2.41,5.39-5.39v-7.42c1.02,2.24,2.4,4.31,4.12,6.21,1.53-1.92,1.58-1.95,4.74-2.78,0-.47,0-.96,0-1.45,0-6.4-.03-12.79.01-19.19.03-4.42,3.67-8.15,8.09-8.06,2.22.04,4.05,1,5.68,2.48.2-.17.36-.32.53-.47,2.6-2.19,5.53-2.69,8.6-1.31,3.08,1.38,4.62,3.91,4.62,7.33,0,1.63,0,3.25,0,4.88,0,4.7.02,9.4-.01,14.1-.01,1.94-.95,3.4-2.71,4.19-1.7.76-3.38.54-4.81-.71-1.42-1.24-1.97-2.83-1.42-4.64.7-2.32,2.42-3.35,4.87-3.39,0-4.95.02-9.82,0-14.7-.01-2.27-1.64-3.88-3.82-3.88-2.19,0-3.79,1.59-3.82,3.88-.03,3.07,0,6.15,0,9.22,0,1.63.04,3.25-.02,4.88-.05,1.38-.9,2.19-2.1,2.15-1.17-.04-1.87-.83-1.92-2.16-.02-.45,0-.9,0-1.36,0-4.25.03-8.5-.03-12.74-.03-2.48-2.01-4.15-4.39-3.83-1.93.26-3.27,1.83-3.29,4.01-.04,2.85,0,5.69,0,8.54,0,5.6.03,11.21-.01,16.81-.03,3.35-2.72,5.37-5.97,4.56-.43-.11-.85-.24-1.28-.37,2.11,1.87,4.46,1.68,6.91,1.05.68-.18,1.5-.21,2.17,0,4.23,1.3,8.52,1.63,12.84.69,8.2-1.78,14.49-7.11,17.57-14.11v12.98h5.78c2.87,0,5.2-2.33,5.2-5.2V5.44h-6.11c-2.69,0-4.87,2.18-4.87,4.87v4.38C71.12,5.92,62.18,0,52.54,0Z"/></svg>';
 
   /* ── Gera HTML dos cards ── */
-  function cardCulto(c){
+  function cardCulto(c,_mes){
     const grupos=sortGrupos(c.grupos);
     const MESES_N={Janeiro:'01',Fevereiro:'02',Marco:'03','Março':'03',Abril:'04',Maio:'05',Junho:'06',Julho:'07',Agosto:'08',Setembro:'09',Outubro:'10',Novembro:'11',Dezembro:'12'};
-    const pt=mesLabel.split(' ');
+    const pt=(_mes||mesLabel).split(' ');
     const mn=MESES_N[pt[0]]||'01',an=pt[1]||new Date().getFullYear();
     const dt=an+mn+c.data.padStart(2,'0');
     const [hh,mm]=(c.hora||'00:00').split(':');
@@ -2832,35 +2848,37 @@ function exportarPagina(){
       +'</div></div></div>';
   }
 
-  function gerarCards(){
+  function gerarCards(_lista,_mes){
     let html='',i=0;
-    while(i<vis.length){
-      const c=vis[i];
+    while(i<(_lista||vis).length){
+      const c=(_lista||vis)[i];
       const isDom=/domingo/i.test(c.dia);
       const isTer=/ter[cç]a/i.test(c.dia);
       const isQui=/quinta/i.test(c.dia);
       const isSab=/s[aá]b/i.test(c.dia);
       const bk=c.especial?'esp-block':isDom?'dom-block':isTer?'ter-block':isQui?'qui-block':isSab?'sab-block':'';
       const hk=c.especial?'esp-header':isDom?'dom-header':isTer?'ter-header':isQui?'qui-header':isSab?'sab-header':'';
-      const nxt=vis[i+1];
+      const nxt=(_lista||vis)[i+1];
       const hasNxt=nxt&&nxt.data===c.data&&/domingo/i.test(nxt.dia);
       const grps=(isDom&&hasNxt?[...c.grupos,...nxt.grupos]:c.grupos).map(encodeURIComponent).join(',');
       if(isDom&&hasNxt){
         html+='<div class="dia-block dom-block" data-grupos="'+grps+'" data-data="'+c.data+'">'
           +'<div class="dia-header dom-header"><span class="dia-num">'+c.data+'</span><span class="dia-abrev">DOM</span></div>'
-          +'<div class="dia-cultos">'+cardCulto(c)+cardCulto(nxt)+'</div></div>';
+          +'<div class="dia-cultos">'+cardCulto(c,_mes)+cardCulto(nxt,_mes)+'</div></div>';
         i+=2;
       } else {
         html+='<div class="dia-block'+(bk?' '+bk:'')+'" data-grupos="'+grps+'" data-data="'+c.data+'">'
           +'<div class="dia-header'+(hk?' '+hk:'')+'">'
           +'<span class="dia-num">'+c.data+'</span>'
           +'<span class="dia-abrev">'+c.dia.substring(0,3).toUpperCase()+'</span>'
-          +'</div><div class="dia-cultos">'+cardCulto(c)+'</div></div>';
+          +'</div><div class="dia-cultos">'+cardCulto(c,_mes)+'</div></div>';
         i++;
       }
     }
     return html;
   }
+  var CARDS_PROX=visProx?gerarCards(visProx,mesProxLabel):'';
+
 
   /* ── CSS ── */
   const CSS=[
@@ -2986,12 +3004,20 @@ function exportarPagina(){
     ".realizados-body .dia-block{opacity:.55;filter:grayscale(.3);}",
     ".realizados-body .dia-block:hover{opacity:.85;filter:none;}",
     ".realizados-body .culto-countdown::before{content:'Realizado ';}",
+    ".mes-tabs{display:flex;gap:4px;}",
+    ".mes-tab{background:rgba(255,255,255,.08);border:none;border-radius:20px;color:#7a9aa8;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;}",
+    ".mes-tab.ativa{background:#2ab482;color:#fff;}",
+    ".mes-tab:hover:not(.ativa){background:rgba(255,255,255,.15);}",
   ].join('\n');
 
   /* ── JS da página pública (var, sem template literals) ── */
   const JS=[
-    'var CULTOS='+DADOS+';',
-    'var MES='+MES_STR+';',
+    'var CULTOS_ATUAL='+DADOS+';',
+    'var CULTOS_PROX='+(DADOS_PROX||'null')+';',
+    'var MES_ATUAL='+MES_STR+';',
+    'var MES_PROX='+(MES_STR_PROX||'null')+';',
+    'var CULTOS=CULTOS_ATUAL;',
+    'var MES=MES_ATUAL;',
     'var CORES='+CORES+';',
     'var MESES={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
     'var filtroAtivo="todos";',
@@ -3191,7 +3217,7 @@ function exportarPagina(){
     '  var cnt=document.getElementById("realizados-count");',
     '  if(!sec||!tog)return;',
     '  var passados=[];',
-    '  document.querySelectorAll("main .dia-block").forEach(function(b){',
+    '  document.querySelectorAll(".aba-vis .dia-block").forEach(function(b){',
     '    if(b.dataset.data&&calcDias(b.dataset.data)<0)passados.push(b);',
     '  });',
     '  if(!passados.length){tog.style.display="none";return;}',
@@ -3204,6 +3230,17 @@ function exportarPagina(){
     '  var open=body.style.display!=="none";',
     '  body.style.display=open?"none":"block";',
     '  tog.classList.toggle("aberto",!open);',
+    '}',
+    'function trocarAba(qual){',
+    '  var mA=document.getElementById("main-atual");var mP=document.getElementById("main-prox");',
+    '  if(!mA||!mP)return;',
+    '  CULTOS=qual==="prox"?CULTOS_PROX:CULTOS_ATUAL;MES=qual==="prox"?MES_PROX:MES_ATUAL;',
+    '  mA.style.display=qual==="atual"?"":"none";mP.style.display=qual==="prox"?"":"none";',
+    '  mA.classList.toggle("aba-vis",qual==="atual");mP.classList.toggle("aba-vis",qual==="prox");',
+    '  document.querySelectorAll(".mes-tab").forEach(function(t){t.classList.toggle("ativa",t.dataset.qual===qual);});',
+    '  var rb=document.getElementById("realizados-body");if(rb){rb.innerHTML="";rb.style.display="none";}',
+    '  var rt=document.getElementById("realizados-toggle");if(rt)rt.classList.remove("aberto");',
+    '  atualizarContagens();renderProximo();renderSemana();iniciarRealizados();',
     '}',
     'iniciarRealizados();',
   ].join('\n');
@@ -3224,8 +3261,12 @@ function exportarPagina(){
     +'<div class="logo-txt"><div class="dept">Departamento de</div><div class="nome">M\u00FAsica e Louvor</div><div class="igreja">Igreja Evang\u00E9lica Congregacional Central</div></div>'
     +'</div>'
     +'<div class="hdr-right">'
-    +'<div class="mes-badge">'+mesLabel+'</div>'
-    +'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()">\uD83D\uDD55</button>'
+    +(visProx
+      ?'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\'atual\')">'
+        +mesLabel+'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\'prox\')">'
+        +mesProxLabel+'</button></div>'
+      :'<div class="mes-badge">'+mesLabel+'</div>')
+    +(visProx?'':'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()">&#128565;</button>')
     +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()">\uD83C\uDF19</button>'
     +'</div>'
     +'</header>\n'
@@ -3265,7 +3306,8 @@ function exportarPagina(){
     +'<button class="btn-todos" id="btn-todos" onclick="filtrar(\'todos\')">\u2715 Mostrar todos</button>\n'
 
     // cards
-    +'<main>\n'+gerarCards()+'\n</main>\n'
+    +'<main id="main-atual" class="aba-vis">\n'+gerarCards()+'\n</main>\n'
+    +(visProx?'<main id="main-prox" style="display:none">\n'+CARDS_PROX+'\n</main>\n':'')
     +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span>📄 Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
     +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
     +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
