@@ -3092,6 +3092,7 @@ function exportarPagina(){
     // Card próximo culto
     'function renderProximo(){',
     '  var wrap=document.getElementById("proximo-wrap");if(!wrap)return;',
+    '  var _mp=MES.split(" ");var _mi=MESES[_mp[0]]!==undefined?MESES[_mp[0]]:(MESES[_mp[0].replace(/ç/g,"c")]||0);var _ma=parseInt(_mp[1]);var _td=new Date();if(_ma>_td.getFullYear()||(_ma===_td.getFullYear()&&_mi>_td.getMonth())){wrap.innerHTML="";return;}',
     '  var _hm=function(h){var p=(h||"00:00").split(":");return parseInt(p[0])*60+(parseInt(p[1])||0);};',
     '  var fut=CULTOS.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data)||_hm(a.hora)-_hm(b.hora);});',
     '  if(!fut.length){wrap.innerHTML="";return;}',
