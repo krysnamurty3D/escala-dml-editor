@@ -1598,14 +1598,14 @@ function renderPreview(){
   };
 
   let i=0;
-  while(i<(_lista||vis).length){
-    const c=(_lista||vis)[i];
+  while(i<vis.length){
+    const c=vis[i];
     const isDom=/domingo/i.test(c.dia);
     const isTer=/ter[cç]a/i.test(c.dia);
     const isQui=/quinta/i.test(c.dia);
     const isSab=/s[aá]b/i.test(c.dia);
     const rowClass=c.especial?'esp-row':isDom?'dom-row':isTer?'ter-row':isQui?'qui-row':isSab?'sab-row':'';
-    const nxt=(_lista||vis)[i+1];
+    const nxt=vis[i+1];
     const hasNxt=nxt&&nxt.data===c.data&&nxt.dia===c.dia;
 
     if(isDom&&hasNxt){
