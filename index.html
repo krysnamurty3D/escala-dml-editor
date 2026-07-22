@@ -2356,6 +2356,18 @@ function removerGrupo(cat,nome){
 }
 
 // ═══════════════════════════════════════════════
+// EXPORTAR PDF
+// ═══════════════════════════════════════════════
+function exportarPDF(){
+  if(document.getElementById('page-preview').classList.contains('active')){
+    window.print();
+  }else{
+    irPara('preview');
+    setTimeout(()=>window.print(),200);
+  }
+}
+
+// ═══════════════════════════════════════════════
 // BACKUP / RESTAURAR JSON
 // ═══════════════════════════════════════════════
 function exportarJSON(){
