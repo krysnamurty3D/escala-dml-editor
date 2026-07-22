@@ -2706,6 +2706,20 @@ async function publicarNetlify(){
   if(!ghToken){configurarTokens();return;}
   mostrarLoad(true);
   try{
+    // Busca próximo mês no Firestore antes de gerar HTML
+    const _MPNF=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const _mlpF=mesLabel.split(' ');const _mlnF=_mlpF[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
+    const _mliF=_MPNF.findIndex(function(m){return m.toLowerCase()===_mlnF;});
+    const _proxLbl=_mliF>=0?(_mliF===11?'Janeiro '+(parseInt(_mlpF[1])+1):_MPNF[_mliF+1]+' '+_mlpF[1]):null;
+    window._visProxData=null;window._mesProxLabel=_proxLbl;
+    if(_proxLbl&&window._fbDb&&window._fbFns){
+      try{
+        const {collection,getDocs}=window._fbFns;
+        const _snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
+        const _pn=_proxLbl.toLowerCase().replace(/ç/g,'c');
+        _snap.forEach(function(d){var dd=d.data();if((dd.mesLabel||'').toLowerCase().replace(/ç/g,'c').trim()===_pn.trim()){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}});
+      }catch(e){console.error('prox mes firestore:',e);}
+    }
     console.log('Gerando HTML...');
     const html=await gerarHTMLPublico();
     console.log('HTML gerado:', html?html.length+' chars':'vazio');
@@ -2790,9 +2804,10 @@ function exportarPagina(){
   var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
   var _mli=_MPAR.findIndex(function(m){return m.toLowerCase()===_mln;});
-  var mesProxLabel=_mli>=0?(_mli===11?'Janeiro '+(parseInt(_mlp[1])+1):_MPAR[_mli+1]+' '+_mlp[1]):null;
-  var visProx=null;
-  if(mesProxLabel){var _idx2=getIdx();for(var _i2=0;_i2<_idx2.length;_i2++){try{var _d2=JSON.parse(localStorage.getItem(SK(_idx2[_i2])));var _ln=(_d2.mesLabel||'').toLowerCase().replace(/ç/g,'c');var _pn=mesProxLabel.toLowerCase().replace(/ç/g,'c');if(_ln.trim()===_pn.trim()){visProx=(_d2.cultos||[]).filter(function(c){return !c.oculto;});break;}}catch(e){}}}
+  var visProx=window._visProxData||null;
+  var mesProxLabel=window._mesProxLabel||null;
+  // fallback: localStorage
+  if(!visProx&&mesProxLabel){var _idx2=getIdx();for(var _i2=0;_i2<_idx2.length;_i2++){try{var _d2=JSON.parse(localStorage.getItem(SK(_idx2[_i2])));var _ln=(_d2.mesLabel||'').toLowerCase().replace(/ç/g,'c');var _pn=mesProxLabel.toLowerCase().replace(/ç/g,'c');if(_ln.trim()===_pn.trim()){visProx=(_d2.cultos||[]).filter(function(c){return !c.oculto;});break;}}catch(e){}}}
 
   /* ── helpers ── */
   const BC={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
