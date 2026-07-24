@@ -2842,6 +2842,7 @@ async function carregarAvisoAtual(){
     if(st)st.textContent=dados.ativo?'🟢 Aviso ativo na página pública':'⚫ Aviso desativado';
     atualizarPainelAviso();
   }catch(e){if(st)st.textContent='';}
+}
 
 async function salvarAviso(){
   const ghToken=getGithubToken();
