@@ -2827,7 +2827,7 @@ async function carregarAvisoAtual(){
     });
     if(!r.ok)return;
     const f=await r.json();
-    const dados=JSON.parse(atob(f.content.replace(/\n/g,'')));
+    const dados=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
     document.getElementById('aviso-ativo').checked=!!dados.ativo;
     document.getElementById('aviso-titulo').value=dados.titulo||'';
     document.getElementById('aviso-texto').value=dados.mensagem||'';
