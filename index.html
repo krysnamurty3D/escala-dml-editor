@@ -4448,9 +4448,9 @@ async function salvarConfigFirebase(){
 async function carregarDadosFirebase(){
   if(!fbReady()||!window._fbUser)return;
   setSyncStatus('saving');
+  // Carrega config
   try{
     const {doc,getDoc}=window._fbFns;
-    // Carrega config
     const cfgSnap=await getDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/config`,'dados'));
     if(cfgSnap.exists()){
       const cfg=cfgSnap.data();
@@ -4459,26 +4459,28 @@ async function carregarDadosFirebase(){
       if(cfg.notepad){localStorage.setItem('dml_notepad',cfg.notepad);carregarNotepad();}
       if(cfg.qrUrl)localStorage.setItem('dml_qr_url',cfg.qrUrl);
     }
-    // Migra sessões locais para Firebase (primeira vez)
+  }catch(e){console.warn('carregar config:',e);}
+  // Migra sessões locais para Firebase (best-effort)
+  try{
     const localIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
     for(const id of localIdx){
-      const raw=localStorage.getItem('dml_sess_'+id);
+      const raw=localStorage.getItem(SK(id));
       if(raw) await salvarSessaoFirebase(id,JSON.parse(raw));
     }
-    setSyncStatus('ok');
-    renderHist();
-    // Baixa todas as sessões do Firestore para localStorage (para dashboard e histórico)
-    try{
-      const {collection:col2,getDocs:gd2}=window._fbFns;
-      const snap2=await gd2(col2(window._fbDb,`usuarios/${getDonoUid()}/sessoes`));
-      const fbIdx=[];
-      snap2.forEach(d=>{fbIdx.push(d.id);localStorage.setItem('dml_sess_'+d.id,JSON.stringify(d.data()));});
-      if(fbIdx.length){
-        const cur=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
-        localStorage.setItem('dml_sessions',JSON.stringify([...new Set([...cur,...fbIdx])]));
-      }
-    }catch(e2){console.warn('sync local cache:',e2);}
-  }catch(e){setSyncStatus('err');console.error(e);}
+  }catch(e){console.warn('migrar sessoes:',e);}
+  // Baixa sessões do Firestore para localStorage (best-effort)
+  try{
+    const {collection:col2,getDocs:gd2}=window._fbFns;
+    const snap2=await gd2(col2(window._fbDb,`usuarios/${getDonoUid()}/sessoes`));
+    const fbIdx=[];
+    snap2.forEach(d=>{fbIdx.push(d.id);localStorage.setItem(SK(d.id),JSON.stringify(d.data()));});
+    if(fbIdx.length){
+      const cur=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
+      localStorage.setItem('dml_sessions',JSON.stringify([...new Set([...cur,...fbIdx])]));
+    }
+  }catch(e){console.warn('sync local cache:',e);}
+  setSyncStatus('ok');
+  renderHist();
 }
 
 // ═══════════════════════════════════════════════
