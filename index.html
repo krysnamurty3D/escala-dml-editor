@@ -2799,14 +2799,19 @@ async function publicarNetlify(){
         ...(sha?{sha}:{})
       })
     });
-    if(!putRes.ok){const t=await putRes.text();throw new Error(`GitHub ${putRes.status}: ${t}`);}
+    if(!putRes.ok){
+      const status=putRes.status;
+      if(status===401||status===403){localStorage.removeItem('dml_gh_token');mostrarLoad(false);toast('🔑 Token GitHub expirado ou inválido — reconfigure');configurarTokens();return;}
+      const t=await putRes.text();throw new Error(`GitHub ${status}: ${t}`);
+    }
 
     mostrarLoad(false);
     toast('🌐 Publicado! escala-dml.netlify.app atualiza em instantes...');
   }catch(e){
     mostrarLoad(false);
     console.error('Publish erro:',e);
-    alert('❌ Erro:\n\n'+e.message);
+    if(e.message.includes('401')||e.message.includes('403')){localStorage.removeItem('dml_gh_token');toast('🔑 Token GitHub expirado — reconfigure');configurarTokens();}
+    else toast('❌ Erro ao publicar: '+e.message);
   }
 }
 
@@ -2819,22 +2824,24 @@ function atualizarPainelAviso(){
 }
 
 async function carregarAvisoAtual(){
+  const st=document.getElementById('aviso-status');
   const ghToken=getGithubToken();
-  if(!ghToken)return;
+  if(!ghToken){if(st)st.textContent='⚠️ Token GitHub não configurado';return;}
+  if(st)st.textContent='Carregando...';
   try{
     const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
       headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
     });
-    if(!r.ok)return;
+    if(r.status===401||r.status===403){if(st)st.textContent='⚠️ Token expirado — reconfigure';return;}
+    if(!r.ok){if(st)st.textContent='';return;}
     const f=await r.json();
     const dados=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
     document.getElementById('aviso-ativo').checked=!!dados.ativo;
     document.getElementById('aviso-titulo').value=dados.titulo||'';
     document.getElementById('aviso-texto').value=dados.mensagem||'';
-    document.getElementById('aviso-status').textContent='Aviso atual carregado';
+    if(st)st.textContent=dados.ativo?'🟢 Aviso ativo na página pública':'⚫ Aviso desativado';
     atualizarPainelAviso();
-  }catch(e){}
-}
+  }catch(e){if(st)st.textContent='';}
 
 async function salvarAviso(){
   const ghToken=getGithubToken();
@@ -2855,11 +2862,15 @@ async function salvarAviso(){
       method:'PUT',headers,
       body:JSON.stringify({message:'Aviso atualizado',content,...(sha?{sha}:{})})
     });
-    if(!putR.ok)throw new Error((await putR.text()));
-    const status=ativo?'✅ Aviso ativado':'✅ Aviso desativado';
-    document.getElementById('aviso-status').textContent=status;
-    toast(status);
-  }catch(e){toast('❌ Erro: '+e.message);}
+    if(!putR.ok){
+      const s=putR.status;
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').textContent='⚠️ Token expirado — reconfigure';configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
+    const statusTxt=ativo?'🟢 Aviso ativo na página pública':'⚫ Aviso desativado';
+    document.getElementById('aviso-status').textContent=statusTxt;
+    toast(ativo?'✅ Aviso ativado':'✅ Aviso desativado');
+  }catch(e){toast('❌ Erro ao salvar aviso: '+e.message);}
 }
 
 // Carrega aviso ao entrar na página inicial
