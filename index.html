@@ -4694,7 +4694,9 @@ async function renderHist(busca=''){
 
   let idx=[];
   if(window._fbUser) idx=await getIdxFirebase();
-  else idx=getIdx();
+  // Sempre inclui IDs locais como fallback
+  const localIdx=getIdx();
+  idx=[...new Set([...idx,...localIdx])];
 
   const sessions=[];
   for(const id of idx){
