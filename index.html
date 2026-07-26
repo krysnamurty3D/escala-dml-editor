@@ -2765,8 +2765,19 @@ async function publicarNetlify(){
         });
       }catch(e){console.error('fetch meses firestore:',e);}
     }
-    // fallback: usa o que esta carregado no editor
+    // fallback: busca no localStorage
+    if(!window._cultosParaPublicar){
+      var _lsIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
+      for(var _li=0;_li<_lsIdx.length;_li++){
+        try{var _ld=JSON.parse(localStorage.getItem('dml_sess_'+_lsIdx[_li]));
+          if(_ld&&_norm(_ld.mesLabel)===_norm(_curLbl)){window._cultosParaPublicar=(_ld.cultos||[]).filter(function(c){return !c.oculto;});break;}
+        }catch(e){}
+      }
+    }
+    // fallback final: usa o que esta carregado no editor
     if(!window._cultosParaPublicar){window._cultosParaPublicar=cultos.filter(function(c){return !c.oculto;});window._mesParaPublicar=mesLabel;}
+    // evita abas duplicadas se o fallback resultou no mesmo mes que o proximo
+    if(_norm(window._mesParaPublicar)===_norm(_nxtLbl)){window._visProxData=null;}
     // Troca temporaria de cultos/mesLabel para publicar o mes correto
     const _origCultos=cultos,_origMes=mesLabel;
     if(window._cultosParaPublicar){cultos=window._cultosParaPublicar;mesLabel=window._mesParaPublicar;}
