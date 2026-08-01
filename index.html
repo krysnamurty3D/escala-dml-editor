@@ -2760,8 +2760,8 @@ async function publicarNetlify(){
         const _snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
         _snap.forEach(function(d){
           var dd=d.data();var lbl=_norm(dd.mesLabel);
-          if(lbl===_norm(_curLbl)){window._cultosParaPublicar=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
-          if(lbl===_norm(_nxtLbl)){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
+          if(lbl===_norm(_curLbl)){var _cp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_cp.length)window._cultosParaPublicar=_cp;}
+          if(lbl===_norm(_nxtLbl)){var _vp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_vp.length)window._visProxData=_vp;}
         });
       }catch(e){console.error('fetch meses firestore:',e);}
     }
@@ -2933,7 +2933,7 @@ function exportarPagina(){
   var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
   var _mli=_MPAR.findIndex(function(m){return m.toLowerCase()===_mln;});
-  var visProx=window._visProxData||null;
+  var visProx=(window._visProxData&&window._visProxData.length)?window._visProxData:null;
   var mesProxLabel=window._mesProxLabel||null;
   // fallback: localStorage
   if(!visProx&&mesProxLabel){var _idx2=getIdx();for(var _i2=0;_i2<_idx2.length;_i2++){try{var _d2=JSON.parse(localStorage.getItem(SK(_idx2[_i2])));var _ln=(_d2.mesLabel||'').toLowerCase().replace(/ç/g,'c');var _pn=mesProxLabel.toLowerCase().replace(/ç/g,'c');if(_ln.trim()===_pn.trim()){visProx=(_d2.cultos||[]).filter(function(c){return !c.oculto;});break;}}catch(e){}}}
