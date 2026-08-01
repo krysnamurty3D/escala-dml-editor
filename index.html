@@ -2752,7 +2752,7 @@ async function publicarNetlify(){
     const _curLbl=_MPCAL[_curIdx]+' '+_curAno;
     const _nxtLbl=_MPCAL[_nxtIdx]+' '+_nxtAno;
     const _norm=function(s){return (s||'').toLowerCase().replace(/ç/g,'c').trim();};
-    window._visProxData=null;window._mesProxLabel=_nxtLbl;
+    window._visProxData=[];window._mesProxLabel=_nxtLbl;
     window._cultosParaPublicar=null;window._mesParaPublicar=_curLbl;
     if(window._fbDb&&window._fbFns){
       try{
@@ -2761,7 +2761,7 @@ async function publicarNetlify(){
         _snap.forEach(function(d){
           var dd=d.data();var lbl=_norm(dd.mesLabel);
           if(lbl===_norm(_curLbl)){var _cp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_cp.length)window._cultosParaPublicar=_cp;}
-          if(lbl===_norm(_nxtLbl)){var _vp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_vp.length)window._visProxData=_vp;}
+          if(lbl===_norm(_nxtLbl)){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
         });
       }catch(e){console.error('fetch meses firestore:',e);}
     }
@@ -2777,7 +2777,7 @@ async function publicarNetlify(){
     // fallback final: usa o que esta carregado no editor
     if(!window._cultosParaPublicar){window._cultosParaPublicar=cultos.filter(function(c){return !c.oculto;});window._mesParaPublicar=mesLabel;}
     // evita abas duplicadas se o fallback resultou no mesmo mes que o proximo
-    if(_norm(window._mesParaPublicar)===_norm(_nxtLbl)){window._visProxData=null;}
+    if(_norm(window._mesParaPublicar)===_norm(_nxtLbl)){window._visProxData=null;window._mesProxLabel=null;}
     // Troca temporaria de cultos/mesLabel para publicar o mes correto
     const _origCultos=cultos,_origMes=mesLabel;
     if(window._cultosParaPublicar){cultos=window._cultosParaPublicar;mesLabel=window._mesParaPublicar;}
@@ -2933,7 +2933,7 @@ function exportarPagina(){
   var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
   var _mli=_MPAR.findIndex(function(m){return m.toLowerCase()===_mln;});
-  var visProx=(window._visProxData&&window._visProxData.length)?window._visProxData:null;
+  var visProx=(window._visProxData!==null&&window._visProxData!==undefined)?window._visProxData:null;
   var mesProxLabel=window._mesProxLabel||null;
   // fallback: localStorage
   if(!visProx&&mesProxLabel){var _idx2=getIdx();for(var _i2=0;_i2<_idx2.length;_i2++){try{var _d2=JSON.parse(localStorage.getItem(SK(_idx2[_i2])));var _ln=(_d2.mesLabel||'').toLowerCase().replace(/ç/g,'c');var _pn=mesProxLabel.toLowerCase().replace(/ç/g,'c');if(_ln.trim()===_pn.trim()){visProx=(_d2.cultos||[]).filter(function(c){return !c.oculto;});break;}}catch(e){}}}
@@ -3021,7 +3021,8 @@ function exportarPagina(){
     }
     return html;
   }
-  var CARDS_PROX=visProx?gerarCards(visProx,mesProxLabel):'';
+  var CARDS_PROX=visProx?(visProx.length?gerarCards(visProx,mesProxLabel):'<div class="aguardando-escala"><div class="aguardando-icone">📋</div><div class="aguardando-titulo">Aguardando escala</div><div class="aguardando-sub">A escala de '+mesProxLabel+' ainda não foi definida.</div></div>'):'';
+
 
 
   /* ── CSS ── */
@@ -3162,6 +3163,11 @@ function exportarPagina(){
     ".aviso-btn-ok{background:#2ab482;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}",
     ".aviso-btn-ok:hover{background:#22a070;}",
     "body.light .aviso-box{background:#f0f6ff;border-color:#1a9068;}body.light .aviso-titulo{color:#1a7050;}body.light .aviso-msg{color:#2a3a4a;}body.light .aviso-fechar{color:#4a6070;}",
+    ".aguardando-escala{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;}",
+    ".aguardando-icone{font-size:48px;margin-bottom:16px;opacity:.5;}",
+    ".aguardando-titulo{font-size:18px;font-weight:800;color:#7a9aa8;margin-bottom:8px;}",
+    ".aguardando-sub{font-size:13px;color:#4a6070;}",
+    "body.light .aguardando-titulo{color:#4a6070;}body.light .aguardando-sub{color:#7a9aa8;}",
     "@media(max-width:480px){header{padding:10px 12px;}",
     ".logo-txt{display:none;}",
     ".logo-wrap svg{height:28px;}",
