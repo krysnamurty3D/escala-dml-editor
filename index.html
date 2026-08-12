@@ -324,6 +324,18 @@ tr.esp-row .td-dia{color:#c03030;}
   border-radius:12px;padding:2px 8px;font-size:10px;}
 .hist-actions{display:flex;gap:5px;margin-top:12px;flex-wrap:wrap;}
 
+/* ── RIDERS ── */
+.riders-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
+.riders-desc{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;max-width:560px;}
+.riders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px;}
+.rider-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.rider-card-nome{font-size:13px;font-weight:800;color:var(--teal);margin-bottom:10px;}
+.rider-pin-row{display:flex;align-items:center;gap:8px;}
+.rider-pin-inp{background:var(--navy);border:1px solid var(--border);border-radius:7px;color:var(--white);font-size:20px;padding:6px 10px;width:88px;letter-spacing:5px;font-family:monospace;text-align:center;}
+.rider-pin-inp:focus{outline:none;border-color:var(--teal);}
+.rider-sub-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
+.rider-sub-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;}
+
 /* ── DASHBOARD ── */
 .dash-hdr{margin-bottom:16px;}
 .dash-hdr h2{color:var(--teal);font-size:17px;}
@@ -691,6 +703,7 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('config')">⚙️ Grupos</button>
       <button class="nav-pill" onclick="irPara('tmpl')">📋 Templates</button>
       <button class="nav-pill" onclick="irPara('colab')">👥 Colaboradores</button>
+      <button class="nav-pill" onclick="irPara('riders')">🎛 Riders</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none">📆 Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
@@ -1010,6 +1023,18 @@ tr.esp-row .td-dia{color:#c03030;}
   </div>
   <div id="alerta-inativos-semana"></div>
   <div class="semana-grid" id="semana-grid"></div>
+</div>
+<!-- RIDERS -->
+<div id="page-riders" class="page">
+  <div class="riders-header">
+    <div>
+      <h2 style="color:var(--teal);font-size:17px">🎛 Riders Técnicos</h2>
+      <p class="riders-desc">Configure o PIN de acesso de cada grupo. Compartilhe com o líder — ele usa na página pública para preencher o rider técnico do culto.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="salvarRiderConfig()">💾 Salvar PINs</button>
+  </div>
+  <div class="riders-grid" id="riders-grid"><div class="empty-state"><div class="icon">⏳</div><p>Carregando grupos...</p></div></div>
+  <div id="riders-submissions"></div>
 </div>
 <!-- QR CODE -->
 <div id="page-qr" class="page">
@@ -2888,6 +2913,142 @@ async function salvarAviso(){
 // Carrega aviso ao entrar na página inicial
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(carregarAvisoAtual,1500);});
 
+// ═══════════════════════════════════════════════
+// RIDERS TÉCNICOS
+// ═══════════════════════════════════════════════
+const _RIDER_PROJ='escala-dml';
+const _RIDER_KEY='AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc';
+let _riderCfg={};
+
+function grupoSlug(nome){
+  return(nome||'').toLowerCase()
+    .replace(/[àáâãäâ]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
+    .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/ç/g,'c')
+    .replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+
+function _fsParse(v){
+  if(!v)return null;
+  if(v.stringValue!==undefined)return v.stringValue;
+  if(v.integerValue!==undefined)return parseInt(v.integerValue);
+  if(v.doubleValue!==undefined)return v.doubleValue;
+  if(v.booleanValue!==undefined)return v.booleanValue;
+  if(v.nullValue!==undefined)return null;
+  if(v.arrayValue)return(v.arrayValue.values||[]).map(_fsParse);
+  if(v.mapValue){const out={};Object.entries(v.mapValue.fields||{}).forEach(([k,fv])=>{out[k]=_fsParse(fv);});return out;}
+  return null;
+}
+
+function _fsEncode(v){
+  if(v===null||v===undefined)return{nullValue:null};
+  if(typeof v==='boolean')return{booleanValue:v};
+  if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};
+  if(typeof v==='string')return{stringValue:v};
+  if(Array.isArray(v))return{arrayValue:{values:v.map(_fsEncode)}};
+  if(typeof v==='object'){const f={};Object.entries(v).forEach(([k,fv])=>{f[k]=_fsEncode(fv);});return{mapValue:{fields:f}};}
+  return{stringValue:String(v)};
+}
+
+async function renderRiders(){
+  const grid=document.getElementById('riders-grid');
+  if(!grid)return;
+  _riderCfg={};
+  const ghToken=getGithubToken();
+  if(ghToken){
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
+        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
+      });
+      if(r.ok){const f=await r.json();_riderCfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));}
+    }catch(e){}
+  }
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  if(!todos.length){
+    grid.innerHTML=`<div class="empty-state"><div class="icon">⚙️</div><p>Nenhum grupo cadastrado em ⚙️ Grupos.</p></div>`;
+    return;
+  }
+  grid.innerHTML=todos.map(g=>{
+    const slug=grupoSlug(g);
+    const pin=_riderCfg.grupos?.[slug]?.pin||'';
+    return`<div class="rider-card">
+      <div class="rider-card-nome">${g}</div>
+      <div class="rider-pin-row">
+        <label style="font-size:11px;color:var(--muted);flex-shrink:0">PIN:</label>
+        <input class="rider-pin-inp" type="text" maxlength="6" value="${pin}" id="pin-${slug}" placeholder="——" oninput="this.value=this.value.replace(/[^0-9a-zA-Z]/g,'')">
+      </div>
+    </div>`;
+  }).join('');
+  renderRiderSubmissions();
+}
+
+async function salvarRiderConfig(){
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  const grupos={};
+  todos.forEach(g=>{
+    const slug=grupoSlug(g);
+    const pin=(document.getElementById('pin-'+slug)?.value||'').trim();
+    grupos[slug]={nome:g,pin};
+  });
+  _riderCfg={grupos};
+  const json=JSON.stringify(_riderCfg,null,2);
+  const content=btoa(unescape(encodeURIComponent(json)));
+  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
+  try{
+    let sha=null;
+    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{headers});
+    if(getR.ok){const f=await getR.json();sha=f.sha;}
+    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
+      method:'PUT',headers,
+      body:JSON.stringify({message:'Rider config atualizado',content,...(sha?{sha}:{})})
+    });
+    if(!putR.ok){
+      const st=putR.status;
+      if(st===401||st===403){localStorage.removeItem('dml_gh_token');configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
+    toast('✅ PINs salvos com sucesso!');
+  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+}
+
+async function renderRiderSubmissions(){
+  const wrap=document.getElementById('riders-submissions');
+  if(!wrap)return;
+  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Buscando riders enviados...</p>';
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Riders Preenchidos</h3>';
+  let hasAny=false;
+  for(const g of todos){
+    const slug=grupoSlug(g);
+    try{
+      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
+      const res=await fetch(url);
+      if(!res.ok)continue;
+      const fdoc=await res.json();
+      if(!fdoc.fields?.cultos)continue;
+      const cultos=_fsParse(fdoc.fields.cultos);
+      const keys=Object.keys(cultos||{});
+      if(!keys.length)continue;
+      hasAny=true;
+      html+=`<div class="rider-sub-section"><div class="rider-sub-title">${g}</div>`;
+      keys.sort().reverse().slice(0,5).forEach(k=>{
+        const rd=cultos[k]||{};
+        const inpCount=(rd.inputList||[]).length;
+        const setCount=(rd.setList||[]).length;
+        const dt=k.replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px">
+          <span style="color:var(--white);font-weight:600">${dt}</span>
+          <span style="color:var(--muted)">${inpCount} inputs · ${setCount} músicas</span>
+        </div>`;
+      });
+      html+='</div>';
+    }catch(e){}
+  }
+  if(!hasAny)html+='<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum rider enviado ainda. Os líderes preenchem pela página pública.</p>';
+  wrap.innerHTML=html;
+}
+
 // Gera o HTML público como string (sem baixar)
 
 function gerarHTMLPublico(){
@@ -3175,6 +3336,42 @@ function exportarPagina(){
     ".mes-tab{font-size:11px;padding:5px 9px;}",
     ".mes-badge{font-size:12px;padding:5px 10px;}",
     ".btn-ico{padding:5px 8px;font-size:16px;}}",
+    // rider panel
+    ".rp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;display:flex;align-items:flex-end;justify-content:center;}",
+    ".rp-panel{background:#1e2d40;border-top:3px solid #2ab482;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;padding:22px 20px 32px;position:relative;border-radius:14px 14px 0 0;}",
+    "@media(min-width:640px){.rp-overlay{align-items:center;}.rp-panel{border-radius:14px;max-height:88vh;margin:20px;}}",
+    ".rp-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#7a9aa8;font-size:22px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px;}",
+    ".rp-close:hover{color:#fff;background:rgba(255,255,255,.1);}",
+    ".rp-title{font-size:15px;font-weight:800;color:#2ab482;margin-bottom:2px;}",
+    ".rp-sub{font-size:11px;color:#7a9aa8;margin-bottom:18px;}",
+    ".rp-label{display:block;font-size:11px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}",
+    ".rp-inp{width:100%;background:#162030;border:1px solid #2a3a4a;border-radius:8px;color:#edf4f4;font-size:14px;padding:10px 12px;font-family:inherit;outline:none;margin-bottom:14px;}",
+    ".rp-inp:focus{border-color:#2ab482;}",
+    ".rp-sel{width:100%;background:#162030;border:1px solid #2a3a4a;border-radius:8px;color:#edf4f4;font-size:14px;padding:10px 12px;font-family:inherit;outline:none;margin-bottom:14px;cursor:pointer;}",
+    ".rp-btn{background:#2ab482;color:#061208;border:none;border-radius:9px;padding:11px 20px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;margin-bottom:8px;}",
+    ".rp-btn:hover{background:#22a070;}",
+    ".rp-btn-out{background:rgba(42,180,130,.1);color:#2ab482;border:1px solid #2ab482;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}",
+    ".rp-btn-out:hover{background:rgba(42,180,130,.2);}",
+    ".rp-err{font-size:12px;color:#e06060;margin-bottom:10px;}",
+    ".rp-culto-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#162030;border:1px solid #2a3a4a;border-radius:9px;margin-bottom:8px;cursor:pointer;}",
+    ".rp-culto-item:hover{border-color:#2ab482;}",
+    ".rp-culto-nome{font-size:13px;font-weight:700;color:#edf4f4;}",
+    ".rp-culto-sub{font-size:11px;color:#7a9aa8;margin-top:2px;}",
+    ".rp-sec{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;margin:16px 0 10px;}",
+    ".rp-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;}",
+    ".rp-tbl th{color:#7a9aa8;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 5px;text-align:left;border-bottom:1px solid #2a3a4a;}",
+    ".rp-tbl td{padding:3px 3px;}",
+    ".rp-cell{width:100%;background:#162030;border:1px solid #2a3a4a;border-radius:5px;color:#edf4f4;font-size:12px;padding:5px 6px;font-family:inherit;outline:none;}",
+    ".rp-cell:focus{border-color:#2ab482;}",
+    ".rp-rm{background:none;border:none;color:#e06060;cursor:pointer;font-size:15px;padding:3px 5px;}",
+    ".rp-add{background:none;border:1px dashed #2a3a4a;color:#7a9aa8;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;width:100%;margin-bottom:12px;}",
+    ".rp-add:hover{border-color:#2ab482;color:#2ab482;}",
+    ".rp-footer-link{background:none;border:none;color:#5a7a8a;font-size:11px;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline;}",
+    ".rp-footer-link:hover{color:#2ab482;}",
+    "body.light .rp-panel{background:#f0f6ff;border-top-color:#1a9068;}",
+    "body.light .rp-inp,.body.light .rp-sel{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
+    "body.light .rp-cell{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
+    "body.light .rp-culto-item{background:#e8f0f8;border-color:#b0c8d8;}",
   ].join('\n');
 
   /* ── JS da página pública (var, sem template literals) ── */
@@ -3434,6 +3631,135 @@ function exportarPagina(){
     '    try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
     '  };',
     '})();',
+
+    // Rider Panel
+    'var _RP={state:"login",slug:null,nome:null,cultoKey:null,cfg:null,fsDoc:null};',
+    'var _RP_PROJ="escala-dml",_RP_KEY="AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
+    'var _RP_CFG_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/rider-config.json";',
+    'function _rpSlug(n){return(n||"").toLowerCase().replace(/[àáâãä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ìíîï]/g,"i").replace(/[òóôõö]/g,"o").replace(/[ùúûü]/g,"u").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"");}',
+    'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
+    'function _rpFsEnc(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==="boolean")return{booleanValue:v};if(typeof v==="number")return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==="string")return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_rpFsEnc)}};if(typeof v==="object"){var f={};Object.entries(v).forEach(function(e){f[e[0]]=_rpFsEnc(e[1]);});return{mapValue:{fields:f}};}return{stringValue:String(v)};}',
+    'function abrirRiderPanel(){document.getElementById("rp-overlay").style.display="flex";_rpMostrarLogin();}',
+    'function fecharRiderPanel(){document.getElementById("rp-overlay").style.display="none";}',
+    'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
+    'function _rpMostrarLogin(){',
+    '  _RP.state="login";',
+    '  fetch(_RP_CFG_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(cfg){',
+    '    _RP.cfg=cfg;',
+    '    var grupos=cfg&&cfg.grupos?Object.values(cfg.grupos).filter(function(g){return g.pin;}).sort(function(a,b){return a.nome.localeCompare(b.nome);}):[];',
+    '    if(!grupos.length){_rpHtml(\'<div class="rp-title">🎛 Acesso Líderes</div><p class="rp-sub">Nenhum grupo configurado pelo administrador ainda.</p>\');return;}',
+    '    var opts=grupos.map(function(g){return\'<option value="\'+_rpSlug(g.nome)+\'">\'+g.nome+\'</option>\';}).join("");',
+    '    _rpHtml(\'<div class="rp-title">🎛 Acesso Líderes</div><p class="rp-sub">Selecione seu grupo e digite o PIN de acesso</p>\'',
+    '      +\'<label class="rp-label">Grupo</label>\'',
+    '      +\'<select class="rp-sel" id="rp-grupo">\'+opts+\'</select>\'',
+    '      +\'<label class="rp-label">PIN</label>\'',
+    '      +\'<input class="rp-inp" type="password" id="rp-pin" maxlength="6" placeholder="••••••" onkeydown="if(event.key===\\'Enter\\')_rpLogin()">\'',
+    '      +\'<div class="rp-err" id="rp-err">PIN incorreto.</div>\'',
+    '      +\'<button class="rp-btn" onclick="_rpLogin()">Entrar</button>\');',
+    '  }).catch(function(){_rpHtml(\'<p class="rp-err" style="display:block">Erro ao carregar configuração. Tente novamente.</p>\');});',
+    '}',
+    'function _rpLogin(){',
+    '  var slug=document.getElementById("rp-grupo").value;',
+    '  var pin=document.getElementById("rp-pin").value;',
+    '  var grupos=_RP.cfg&&_RP.cfg.grupos?_RP.cfg.grupos:{};',
+    '  var grp=grupos[slug];',
+    '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
+    '  _RP.slug=slug;_RP.nome=grp.nome;',
+    '  _rpMostrarCultos();',
+    '}',
+    'function _rpMostrarCultos(){',
+    '  _RP.state="cultos";',
+    '  var todos=(CULTOS_ATUAL||[]).concat(CULTOS_PROX||[]);',
+    '  var meus=todos.filter(function(c){return c.grupos&&c.grupos.indexOf(_RP.nome)>=0;});',
+    '  meus.sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
+    '  var now=new Date();var mesAtualN=now.getMonth();var anoAtual=now.getFullYear();',
+    '  function mesNumero(ml){var M={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};var p=(ml||MES_ATUAL).split(" ");return{m:M[p[0]]!==undefined?M[p[0]]:mesAtualN,a:parseInt(p[1])||anoAtual};}',
+    '  var items=meus.map(function(c){',
+    '    var mesLabel=((CULTOS_PROX||[]).indexOf(c)>=0)?MES_PROX:MES_ATUAL;',
+    '    var mn=mesNumero(mesLabel);',
+    '    var dt=new Date(mn.a,mn.m,parseInt(c.data));',
+    '    var key="d"+String(c.data).padStart(2,"0")+"_h"+c.hora.replace(":","");',
+    '    var diff=Math.round((dt-new Date())/86400000);',
+    '    var quando=diff<0?"Realizado":diff===0?"Hoje":diff===1?"Amanhã":"Em "+diff+" dias";',
+    '    return\'<div class="rp-culto-item" onclick="_rpAbrirEditor(\\\'\'+key+\'\\\',\\\'\'+encodeURIComponent(c.culto+\' — Dia \'+c.data+\' \'+c.hora)+\'\\\')">\'',
+    '      +\'<div><div class="rp-culto-nome">\'+c.culto+\'</div><div class="rp-culto-sub">Dia \'+c.data+\' · \'+c.hora+\' · \'+mesLabel+\'</div></div>\'',
+    '      +\'<span style="font-size:11px;color:#7a9aa8">\'+quando+\'</span></div>\';',
+    '  }).join("");',
+    '  if(!items)items=\'<p style="font-size:13px;color:#7a9aa8">Nenhum culto encontrado para <strong>\'+_RP.nome+\'</strong> na escala publicada.</p>\';',
+    '  _rpHtml(\'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">\'',
+    '    +\'<button style="background:none;border:none;color:#2ab482;font-size:18px;cursor:pointer" onclick="_rpMostrarLogin()">←</button>\'',
+    '    +\'<div class="rp-title">\'+_RP.nome+\'</div></div>\'',
+    '    +\'<p class="rp-sub">Selecione o culto para editar o rider</p>\'',
+    '    +items);',
+    '}',
+    'function _rpAbrirEditor(key,labelEnc){',
+    '  _RP.cultoKey=key;_RP.cultoLabel=decodeURIComponent(labelEnc);',
+    '  _rpHtml(\'<p class="rp-sub" style="margin-top:0">⏳ Carregando rider...</p>\');',
+    '  fetch("https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/riders/"+_RP.slug+"?key="+_RP_KEY)',
+    '    .then(function(r){return r.ok?r.json():{};}).then(function(doc){',
+    '      _RP.fsDoc=doc;',
+    '      var cultos=doc.fields&&doc.fields.cultos?_rpFsParse(doc.fields.cultos):{};',
+    '      var rd=cultos[key]||{};',
+    '      var inp=rd.inputList||[{canal:"",instrumento:"",tipo:"",obs:""}];',
+    '      var set=rd.setList||[{musica:"",solo:""}];',
+    '      _rpRenderEditor(inp,set);',
+    '    }).catch(function(){_rpRenderEditor([{canal:"",instrumento:"",tipo:"",obs:""}],[{musica:"",solo:""}]);});',
+    '}',
+    'function _rpRenderEditor(inp,set){',
+    '  var inpRows=inp.map(function(r,i){',
+    '    return\'<tr>\'',
+    '      +\'<td><input class="rp-cell" value="\'+r.canal+\'" placeholder="1" id="inp_canal_\'+i+\'"></td>\'',
+    '      +\'<td><input class="rp-cell" value="\'+r.instrumento+\'" placeholder="Violão" id="inp_inst_\'+i+\'"></td>\'',
+    '      +\'<td><input class="rp-cell" value="\'+r.tipo+\'" placeholder="DI" id="inp_tipo_\'+i+\'"></td>\'',
+    '      +\'<td><input class="rp-cell" value="\'+r.obs+\'" placeholder="" id="inp_obs_\'+i+\'"></td>\'',
+    '      +\'<td><button class="rp-rm" onclick="_rpRemInp(\'+i+\')">✕</button></td></tr>\';',
+    '  }).join("");',
+    '  var setRows=set.map(function(r,i){',
+    '    return\'<tr>\'',
+    '      +\'<td><input class="rp-cell" value="\'+r.musica+\'" placeholder="Nome da música" id="set_mus_\'+i+\'" style="width:100%"></td>\'',
+    '      +\'<td><input class="rp-cell" value="\'+r.solo+\'" placeholder="Solo (opcional)" id="set_sol_\'+i+\'"></td>\'',
+    '      +\'<td><button class="rp-rm" onclick="_rpRemSet(\'+i+\')">✕</button></td></tr>\';',
+    '  }).join("");',
+    '  window._rpInpCount=inp.length;window._rpSetCount=set.length;',
+    '  _rpHtml(\'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">\'',
+    '    +\'<button style="background:none;border:none;color:#2ab482;font-size:18px;cursor:pointer" onclick="_rpMostrarCultos()">←</button>\'',
+    '    +\'<div class="rp-title">🎛 Rider: \'+_RP.cultoLabel+\'</div></div>\'',
+    '    +\'<p class="rp-sub">Input List + Set List — \'+_RP.nome+\'</p>\'',
+    '    +\'<div class="rp-sec">🎚 Input List</div>\'',
+    '    +\'<table class="rp-tbl"><thead><tr><th>Canal</th><th>Instrumento</th><th>Tipo/Mic</th><th>Obs</th><th></th></tr></thead><tbody id="rp-inp-body">\'+inpRows+\'</tbody></table>\'',
+    '    +\'<button class="rp-add" onclick="_rpAddInp()">+ Adicionar canal</button>\'',
+    '    +\'<div class="rp-sec">🎵 Set List</div>\'',
+    '    +\'<table class="rp-tbl"><thead><tr><th style="width:55%">Música</th><th>Solo</th><th></th></tr></thead><tbody id="rp-set-body">\'+setRows+\'</tbody></table>\'',
+    '    +\'<button class="rp-add" onclick="_rpAddSet()">+ Adicionar música</button>\'',
+    '    +\'<button class="rp-btn" onclick="_rpSalvar()">💾 Salvar rider</button>\'',
+    '    +\'<button class="rp-btn-out" onclick="_rpCompartilhar()" style="width:100%;margin-top:6px">📤 Compartilhar no WhatsApp</button>\');',
+    '}',
+    'function _rpColeta(){',
+    '  var inp=[];for(var i=0;i<window._rpInpCount;i++){var c=document.getElementById("inp_canal_"+i),inst=document.getElementById("inp_inst_"+i),t=document.getElementById("inp_tipo_"+i),o=document.getElementById("inp_obs_"+i);if(c)inp.push({canal:c.value,instrumento:inst?inst.value:"",tipo:t?t.value:"",obs:o?o.value:""});}',
+    '  var set=[];for(var j=0;j<window._rpSetCount;j++){var m=document.getElementById("set_mus_"+j),s=document.getElementById("set_sol_"+j);if(m)set.push({musica:m.value,solo:s?s.value:""});}',
+    '  return{inputList:inp.filter(function(r){return r.canal||r.instrumento;}),setList:set.filter(function(r){return r.musica;})};',
+    '}',
+    'function _rpRemInp(i){var d=_rpColeta();d.inputList.splice(i,1);if(!d.inputList.length)d.inputList=[{canal:"",instrumento:"",tipo:"",obs:""}];_rpRenderEditor(d.inputList,d.setList);}',
+    'function _rpRemSet(i){var d=_rpColeta();d.setList.splice(i,1);if(!d.setList.length)d.setList=[{musica:"",solo:""}];_rpRenderEditor(d.inputList,d.setList);}',
+    'function _rpAddInp(){var d=_rpColeta();d.inputList.push({canal:"",instrumento:"",tipo:"",obs:""});_rpRenderEditor(d.inputList,d.setList);}',
+    'function _rpAddSet(){var d=_rpColeta();d.setList.push({musica:"",solo:""});_rpRenderEditor(d.inputList,d.setList);}',
+    'function _rpSalvar(){',
+    '  var d=_rpColeta();',
+    '  var doc=_RP.fsDoc||{};',
+    '  var cultos=doc.fields&&doc.fields.cultos?_rpFsParse(doc.fields.cultos):{};',
+    '  cultos[_RP.cultoKey]={inputList:d.inputList,setList:d.setList,updatedAt:Date.now()};',
+    '  var body={fields:{cultos:_rpFsEnc(cultos)}};',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/riders/"+_RP.slug+"?key="+_RP_KEY;',
+    '  fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
+    '    .then(function(r){if(r.ok){_RP.fsDoc=Object.assign({},_RP.fsDoc,{fields:{cultos:_rpFsEnc(cultos)}});alert("✅ Rider salvo com sucesso!");}else{return r.text().then(function(t){alert("Erro ao salvar: "+t);});}}).catch(function(e){alert("Erro: "+e.message);});',
+    '}',
+    'function _rpCompartilhar(){',
+    '  var d=_rpColeta();',
+    '  var txt="🎛 *Rider Técnico — "+_RP.nome+"*\\n📅 "+_RP.cultoLabel+"\\n\\n";',
+    '  if(d.inputList.length){txt+="🎚 *INPUT LIST*\\n";d.inputList.forEach(function(r,i){txt+=(i+1)+". Canal "+r.canal+" — "+r.instrumento+(r.tipo?" ("+r.tipo+")":"")+(r.obs?" ["+r.obs+"]":"")+"\\n";});}',
+    '  if(d.setList.length){txt+="\\n🎵 *SET LIST*\\n";d.setList.forEach(function(r,i){txt+=(i+1)+". "+r.musica+(r.solo?" — Solo: "+r.solo:"")+"\\n";});}',
+    '  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");',
+    '}',
   ].join('\n');
 
   /* ── Monta HTML ── */
@@ -3501,7 +3827,10 @@ function exportarPagina(){
     +(visProx?'<main id="main-prox" style="display:none">\n'+CARDS_PROX+'\n</main>\n':'')
     +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span>📄 Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
     +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
-    +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
+    +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central'
+    +'<br><button class="rp-footer-link" onclick="abrirRiderPanel()" style="margin-top:6px">\uD83C\uDF9B Acesso L\u00EDderes</button>'
+    +'</footer>\n'
+    +'<div id="rp-overlay" class="rp-overlay" style="display:none" onclick="if(event.target===this)fecharRiderPanel()"><div class="rp-panel" id="rp-panel"><button class="rp-close" onclick="fecharRiderPanel()">\u2715</button><div id="rp-content"></div></div></div>\n'
     +'<script>\n'+JS+'\n<\/script>\n'
     +'</body>\n</html>';
 
@@ -3585,7 +3914,7 @@ function irPara(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,semana:8};
+  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,semana:9};
   document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
   if(p==='preview')renderPreview();
   if(p==='hist')renderHist();
@@ -3595,6 +3924,7 @@ function irPara(p){
   if(p==='qr')iniciarQR();
   if(p==='semana')renderSemana(0);
   if(p==='colab')renderColaboradores();
+  if(p==='riders')renderRiders();
 }
 
 // ═══════════════════════════════════════════════
