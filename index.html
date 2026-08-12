@@ -3824,7 +3824,7 @@ function exportarPagina(){
     '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/riders/"+_RP.slug+"?key="+_RP_KEY;',
     '  fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
     '    .then(function(r){',
-    '      if(r.ok){_RP.fsDoc=Object.assign({},_RP.fsDoc,{fields:{cultos:_rpFsEnc(cultos)}});alert("&#10003; Rider salvo!");}',
+    '      if(r.ok){_RP.fsDoc=Object.assign({},_RP.fsDoc,{fields:{cultos:_rpFsEnc(cultos)}});alert("✅ Rider salvo!");}',
     '      else{return r.text().then(function(t){alert("Erro ao salvar: "+t);});}',
     '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
