@@ -3878,11 +3878,11 @@ function exportarPagina(){
     +'<div class="logo-wrap">'+LOGO
     +'<div class="logo-txt"><div class="dept">Departamento de</div><div class="nome">M\u00FAsica e Louvor</div><div class="igreja">Igreja Evang\u00E9lica Congregacional Central</div></div>'
     +'</div>'
-    +'<button class="btn-rider-hdr" onclick="abrirRiderPanel()" title="Acesso L\u00EDderes">\uD83C\uDF9B RT</button>'
+    +'<button class="btn-rider-hdr" onclick="abrirRiderPanel()" title="Acesso L\u00EDderes">RT</button>'
     +'<div class="hdr-right">'
     +(()=>{
       const _AB={Janeiro:'JAN',Fevereiro:'FEV','Mar\u00E7o':'MAR',Marco:'MAR',Abril:'ABR',Maio:'MAI',Junho:'JUN',Julho:'JUL',Agosto:'AGO',Setembro:'SET',Outubro:'OUT',Novembro:'NOV',Dezembro:'DEZ'};
-      const _ab=l=>{if(!l)return l;const p=l.split(' ');return(_AB[p[0]]||p[0].slice(0,3).toUpperCase())+(p[1]?'|'+p[1].slice(2):'');};
+      const _ab=l=>{if(!l)return l;const p=l.split(' ');return(_AB[p[0]]||p[0].slice(0,3).toUpperCase())+(p[1]?' | '+p[1].slice(2):'');};
       return visProx
         ?'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\'atual\')">'+_ab(mesLabel)+'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\'prox\')">'+_ab(mesProxLabel)+'</button></div>'
         :'<div class="mes-badge">'+_ab(mesLabel)+'</div>';
