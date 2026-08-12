@@ -3653,7 +3653,7 @@ function exportarPagina(){
     '      +\'<label class="rp-label">Grupo</label>\'',
     '      +\'<select class="rp-sel" id="rp-grupo">\'+opts+\'</select>\'',
     '      +\'<label class="rp-label">PIN</label>\'',
-    '      +\'<input class="rp-inp" type="password" id="rp-pin" maxlength="6" placeholder="••••••" onkeydown="if(event.key===\\'Enter\\')_rpLogin()">\'',
+    '      +\'<input class="rp-inp" type="password" id="rp-pin" maxlength="6" placeholder="------" onkeydown="if(event.keyCode===13)_rpLogin()">\'',
     '      +\'<div class="rp-err" id="rp-err">PIN incorreto.</div>\'',
     '      +\'<button class="rp-btn" onclick="_rpLogin()">Entrar</button>\');',
     '  }).catch(function(){_rpHtml(\'<p class="rp-err" style="display:block">Erro ao carregar configuração. Tente novamente.</p>\');});',
