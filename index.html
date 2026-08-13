@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escala DML</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Firebase SDK -->
@@ -59,6 +60,11 @@ header{background:var(--navy);border-bottom:2px solid var(--teal-dim);padding:9p
 .logo-txt .name{font-size:14px;font-weight:800;color:var(--teal-light);}
 .logo-txt .church{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
 .hdr-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+
+/* ── ICONS ── */
+[class^=ph-],[class*=" ph-"]{font-family:'Phosphor';font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;}
+i[class^=ph-],i[class*=" ph-"]{font-size:1em;vertical-align:-0.12em;display:inline-block;}
+button i,a i,label i,span i{pointer-events:none;}
 
 /* ── NAV ── */
 .nav-pills{display:flex;gap:2px;background:rgba(0,0,0,.25);border-radius:var(--radius);padding:3px;}
@@ -681,7 +687,7 @@ tr.esp-row .td-dia{color:#c03030;}
 </svg>
 
 <!-- Banner offline -->
-<div class="offline-banner" id="offline-banner">⚠️ Sem conexão — alterações salvas localmente e sincronizadas quando a internet voltar</div>
+<div class="offline-banner" id="offline-banner"><i class=ph-warning></i> Sem conexão — alterações salvas localmente e sincronizadas quando a internet voltar</div>
 <header>
   <div class="logo-wrap">
     <svg viewBox="0 0 82.39 47.38" xmlns="http://www.w3.org/2000/svg">
@@ -695,26 +701,26 @@ tr.esp-row .td-dia{color:#c03030;}
   </div>
   <div class="hdr-right">
     <div class="nav-pills">
-      <button class="nav-pill active" onclick="irPara('upload')">🏠</button>
-      <button class="nav-pill" id="pill-edit" onclick="irPara('edit')" style="display:none">✏️ Editar</button>
-      <button class="nav-pill" id="pill-prev" onclick="irPara('preview')" style="display:none">👁 PDF</button>
-      <button class="nav-pill" onclick="irPara('hist')">📁 Histórico</button>
-      <button class="nav-pill" onclick="irPara('dash')">📊 Dashboard</button>
-      <button class="nav-pill" onclick="irPara('config')">⚙️ Grupos</button>
-      <button class="nav-pill" onclick="irPara('tmpl')">📋 Templates</button>
-      <button class="nav-pill" onclick="irPara('colab')">👥 Colaboradores</button>
-      <button class="nav-pill" onclick="irPara('riders')">🎛 Riders</button>
-      <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none">📆 Semana</button>
+      <button class="nav-pill active" onclick="irPara('upload')"><i class=ph-house></i></button>
+      <button class="nav-pill" id="pill-edit" onclick="irPara('edit')" style="display:none"><i class=ph-pencil-simple></i> Editar</button>
+      <button class="nav-pill" id="pill-prev" onclick="irPara('preview')" style="display:none"><i class=ph-eye></i> PDF</button>
+      <button class="nav-pill" onclick="irPara('hist')"><i class=ph-folder-open></i> Histórico</button>
+      <button class="nav-pill" onclick="irPara('dash')"><i class=ph-chart-bar></i> Dashboard</button>
+      <button class="nav-pill" onclick="irPara('config')"><i class=ph-gear></i> Grupos</button>
+      <button class="nav-pill" onclick="irPara('tmpl')"><i class=ph-clipboard-text></i> Templates</button>
+      <button class="nav-pill" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
+      <button class="nav-pill" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
+      <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
-    <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none">🌐 Publicar</button>
-    <button class="btn btn-ghost btn-sm" id="btn-versoes" onclick="abrirVersoes()" style="display:none" title="Histórico de versões">🕐 Versões</button>
+    <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none"><i class=ph-globe></i> Publicar</button>
+    <button class="btn btn-ghost btn-sm" id="btn-versoes" onclick="abrirVersoes()" style="display:none" title="Histórico de versões"><i class=ph-clock-counter-clockwise></i> Versões</button>
     <button class="btn btn-outline btn-sm" id="btn-pdf" onclick="exportarPDF()" style="display:none">↓ PDF</button>
-    <button class="btn btn-primary btn-sm" id="btn-save" onclick="salvarSessao()" style="display:none">💾 Salvar</button>
-    <button class="btn btn-ghost btn-sm" onclick="exportarJSON()" title="Backup JSON">⬇ Backup</button>
-    <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Restaurar JSON">⬆ Restaurar<input type="file" id="import-json" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
-    <span class="sync-indicator sync-ok" id="sync-status" style="display:none">☁️ Salvo</span>
-    <div class="modo-colab-badge" id="modo-colab-badge">👥 <span id="modo-colab-nome"></span></div>
+    <button class="btn btn-primary btn-sm" id="btn-save" onclick="salvarSessao()" style="display:none"> <i class=ph-floppy-disk></i> Salvar</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportarJSON()" title="Backup JSON"><i class=ph-download-simple></i> Backup</button>
+    <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Restaurar JSON"><i class=ph-upload-simple></i> Restaurar<input type="file" id="import-json" accept=".json" style="display:none" onchange="importarJSON(event)"></label>
+    <span class="sync-indicator sync-ok" id="sync-status" style="display:none"><i class=ph-cloud></i> Salvo</span>
+    <div class="modo-colab-badge" id="modo-colab-badge"><i class=ph-users></i> <span id="modo-colab-nome"></span></div>
     <div class="user-badge" id="user-badge" onclick="menuUsuario()" style="display:none">
       <img id="user-photo" src="" alt="">
       <span id="user-name"></span>
@@ -748,7 +754,7 @@ tr.esp-row .td-dia{color:#c03030;}
     <!-- Card última escala (aparece quando há sessão salva) -->
     <div id="card-ultima" style="display:none;width:100%;max-width:700px;margin-bottom:16px">
       <div class="upload-card ultima-card" onclick="abrirUltimaEscala()" style="flex-direction:row;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:rgba(42,180,130,.06);border-color:var(--teal-dim)">
-        <div style="font-size:36px;flex-shrink:0">📋</div>
+        <div style="font-size:36px;flex-shrink:0"><i class=ph-clipboard-text></i></div>
         <div style="flex:1;text-align:left">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:3px">Continuar editando</div>
           <div id="ultima-label" style="font-size:18px;font-weight:800;color:var(--teal)"></div>
@@ -760,28 +766,28 @@ tr.esp-row .td-dia{color:#c03030;}
     <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:700px;width:100%">
       <!-- Opção 1: DOCX -->
       <div class="upload-card" id="drop-zone" style="flex:1;min-width:220px" onclick="document.getElementById('file-input').click()">
-        <div style="font-size:42px">📄</div>
+        <div style="font-size:42px"><i class=ph-file-text></i></div>
         <h2>Importar .docx</h2>
         <p>Arraste a escala geral aqui<br>ou clique para selecionar</p>
         <span class="file-tag">.DOCX</span>
       </div>
       <!-- Opção 2: Calendário -->
       <div class="upload-card" style="flex:1;min-width:220px;cursor:pointer" onclick="abrirModalCalendario()">
-        <div style="font-size:42px">📅</div>
+        <div style="font-size:42px"><i class=ph-calendar></i></div>
         <h2>Criar pelo Calendário</h2>
         <p>Gere a escala automaticamente<br>escolhendo o mês e ano</p>
         <span class="file-tag">MANUAL</span>
       </div>
     </div>
     <input type="file" id="file-input" accept=".docx" onchange="lerArquivo(event)">
-    <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px">🗑 Limpar Escala Atual</button>
+    <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px"><i class=ph-trash></i> Limpar Escala Atual</button>
 
     <!-- Painel de Aviso para a página pública -->
     <div style="width:100%;max-width:700px;margin-top:24px">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:18px">📢</span>
+            <span style="font-size:18px"><i class=ph-megaphone></i></span>
             <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Aviso na Página Pública</span>
           </div>
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--muted)">
@@ -797,7 +803,7 @@ tr.esp-row .td-dia{color:#c03030;}
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
           <span id="aviso-status" style="font-size:11px;color:var(--muted)"></span>
-          <button class="btn btn-outline btn-sm" onclick="salvarAviso()">💾 Salvar aviso</button>
+          <button class="btn btn-outline btn-sm" onclick="salvarAviso()"> <i class=ph-floppy-disk></i> Salvar aviso</button>
         </div>
       </div>
     </div>
@@ -809,7 +815,7 @@ tr.esp-row .td-dia{color:#c03030;}
   <div class="edit-toolbar">
     <label class="toggle-label"><input type="checkbox" id="chk-ocultos" checked onchange="renderCultos()"> Mostrar ocultos</label>
     <div class="busca-editor-wrap" id="busca-editor-wrap">
-      <input class="busca-editor-input" id="busca-editor-input" placeholder="🔍 Buscar culto..." oninput="buscarNaEscala(this.value)">
+      <input class="busca-editor-input" id="busca-editor-input" placeholder="<i class=ph-magnifying-glass></i> Buscar culto..." oninput="buscarNaEscala(this.value)">
       <button class="busca-editor-clear" onclick="limparBuscaEscala()">✕</button>
     </div>
     <div class="dia-filtros">
@@ -821,15 +827,15 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="dia-filtro-btn esp" data-dia="esp" onclick="filtrarDia('esp')">ESP</button>
     </div>
     <span style="flex:1"></span>
-    <button class="btn-preview-rt" id="btn-preview-rt" onclick="togglePreviewRT()">👁 Preview</button>
-    <button class="btn btn-ghost btn-sm" onclick="toggleBuscaEscala()">🔍</button>
-    <button class="btn btn-danger btn-sm" onclick="limparEscala()">🗑 Limpar</button>
+    <button class="btn-preview-rt" id="btn-preview-rt" onclick="togglePreviewRT()"><i class=ph-eye></i> Preview</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleBuscaEscala()"><i class=ph-magnifying-glass></i></button>
+    <button class="btn btn-danger btn-sm" onclick="limparEscala()"><i class=ph-trash></i> Limpar</button>
     <button class="btn btn-outline btn-sm" onclick="abrirModalEsp()">+ Culto Especial</button>
   </div>
   <!-- Preview tempo real -->
   <div class="preview-rt-wrap" id="preview-rt-wrap">
     <div class="preview-rt-header">
-      <span>👁 Preview — ${mesLabel}</span>
+      <span><i class=ph-eye></i> Preview — ${mesLabel}</span>
       <button class="btn btn-ghost btn-sm" onclick="togglePreviewRT()">✕</button>
     </div>
     <div class="preview-rt-body" id="preview-rt-body"></div>
@@ -837,7 +843,7 @@ tr.esp-row .td-dia{color:#c03030;}
   <div class="edit-layout">
     <div class="cultos-grid" id="cultos-grid"></div>
     <div class="sidebar-panel" id="sidebar-panel">
-      <div class="sidebar-title">🎵 Grupos</div>
+      <div class="sidebar-title"><i class=ph-music-note></i> Grupos</div>
       <div id="sidebar-cats"></div>
     </div>
   </div>
@@ -884,11 +890,11 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-hist" class="page">
   <div class="hist-top">
     <h2 style="color:var(--teal);font-size:17px">Histórico de Escalas</h2>
-    <input class="hist-search" type="text" placeholder="🔍 Buscar por grupo ou mês..." oninput="renderHist(this.value)">
+    <input class="hist-search" type="text" placeholder="<i class=ph-magnifying-glass></i> Buscar por grupo ou mês..." oninput="renderHist(this.value)">
   </div>
   <div style="display:flex;gap:8px;margin-bottom:14px;">
-    <button class="btn btn-outline btn-sm hist-tab active" id="tab-hist" onclick="mostrarTabHist('hist')">📁 Escalas</button>
-    <button class="btn btn-ghost btn-sm hist-tab" id="tab-lixeira" onclick="mostrarTabHist('lixeira')">🗑 Lixeira <span id="lixeira-count" style="font-size:10px;background:rgba(200,60,60,.2);color:#e06060;border-radius:8px;padding:1px 6px;margin-left:2px;display:none"></span></button>
+    <button class="btn btn-outline btn-sm hist-tab active" id="tab-hist" onclick="mostrarTabHist('hist')"><i class=ph-folder-open></i> Escalas</button>
+    <button class="btn btn-ghost btn-sm hist-tab" id="tab-lixeira" onclick="mostrarTabHist('lixeira')"><i class=ph-trash></i> Lixeira <span id="lixeira-count" style="font-size:10px;background:rgba(200,60,60,.2);color:#e06060;border-radius:8px;padding:1px 6px;margin-left:2px;display:none"></span></button>
   </div>
   <div class="hist-grid" id="hist-grid"></div>
   <div class="hist-grid" id="lixeira-grid" style="display:none"></div>
@@ -911,25 +917,25 @@ tr.esp-row .td-dia{color:#c03030;}
     </select>
     <label style="margin-left:8px">Grupo:</label>
     <select id="dash-grupo" onchange="renderDash()"><option value="all">Todos</option></select>
-    <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="exportarSheets()">📊 Google Sheets</button>
+    <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="exportarSheets()"><i class=ph-chart-bar></i> Google Sheets</button>
     <button class="btn btn-ghost btn-sm" id="btn-push" onclick="configurarPush()">🔔 Notificações</button>
   </div>
 
   <!-- Gráficos Chart.js — containers fixos, nunca são recriados -->
   <div class="dash-charts-wrap">
     <div class="dash-card">
-      <h3>🏆 Ranking de Participação</h3>
+      <h3><i class=ph-trophy></i> Ranking de Participação</h3>
       <div style="position:relative;height:260px"><canvas id="chart-ranking"></canvas></div>
     </div>
     <div class="dash-card">
-      <h3>📈 Evolução Mensal</h3>
+      <h3><i class=ph-trend-up></i> Evolução Mensal</h3>
       <div style="position:relative;height:260px"><canvas id="chart-evolucao"></canvas></div>
     </div>
   </div>
 
   <!-- Comparativo entre meses -->
   <div class="dash-card full" style="margin-bottom:20px">
-    <h3>🔄 Comparativo entre Meses</h3>
+    <h3><i class=ph-arrows-clockwise></i> Comparativo entre Meses</h3>
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <label style="font-size:12px;color:var(--muted)">Mês A:</label>
       <select id="comp-mes-a" onchange="renderComparativo()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:12px;padding:5px 10px;font-family:var(--font)"><option value="">— Selecione —</option></select>
@@ -945,14 +951,14 @@ tr.esp-row .td-dia{color:#c03030;}
 
   <!-- Relatório por dirigente -->
   <div style="margin-top:24px">
-    <h3 style="color:var(--teal);font-size:14px;margin-bottom:12px">🎤 Relatório por Dirigente</h3>
+    <h3 style="color:var(--teal);font-size:14px;margin-bottom:12px"><i class=ph-microphone></i> Relatório por Dirigente</h3>
     <div id="relatorio-dirigentes"></div>
   </div>
 
   <!-- Relatório anual -->
   <div style="margin-top:24px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <h3 style="color:var(--teal);font-size:14px">📋 Relatório Anual por Grupo</h3>
+      <h3 style="color:var(--teal);font-size:14px"><i class=ph-clipboard-text></i> Relatório Anual por Grupo</h3>
       <div style="display:flex;gap:8px;align-items:center">
         <select id="dash-ano" onchange="renderAnual()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:11px;padding:4px 9px;font-family:var(--font)"><option value="all">Todos os anos</option></select>
         <button class="btn btn-outline btn-sm" onclick="imprimirAnual()">↓ PDF Anual</button>
@@ -964,10 +970,10 @@ tr.esp-row .td-dia{color:#c03030;}
 
 <!-- CONFIGURAÇÕES DE GRUPOS -->
 <div id="page-config" class="page">
-  <div class="section-top"><h2>⚙️ Gestão de Grupos</h2></div>
+  <div class="section-top"><h2><i class=ph-gear></i> Gestão de Grupos</h2></div>
   <div id="config-body"></div>
   <div class="config-section">
-    <h3>➕ Adicionar Novo</h3>
+    <h3><i class=ph-plus></i> Adicionar Novo</h3>
     <div class="add-grupo-form">
       <input type="text" id="novo-grupo-nome" placeholder="Nome do grupo / cantor / coral">
       <select id="novo-grupo-cat">
@@ -984,7 +990,7 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- COLABORADORES -->
 <div id="page-colab" class="page">
   <div class="section-top">
-    <div><h2 style="color:var(--teal);font-size:17px">👥 Colaboradores</h2>
+    <div><h2 style="color:var(--teal);font-size:17px"><i class=ph-users></i> Colaboradores</h2>
     <p style="color:var(--muted);font-size:13px;margin-top:3px">Pessoas que podem editar a escala com você</p></div>
   </div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px;margin-bottom:16px">
@@ -997,7 +1003,7 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- TEMPLATES -->
 <div id="page-tmpl" class="page">
   <div class="section-top">
-    <div><h2 style="color:var(--teal);font-size:17px">📋 Templates de Culto</h2>
+    <div><h2 style="color:var(--teal);font-size:17px"><i class=ph-clipboard-text></i> Templates de Culto</h2>
     <p style="color:var(--muted);font-size:13px;margin-top:3px">Salve configurações padrão por tipo de culto</p></div>
     <button class="btn btn-outline btn-sm" onclick="abrirFormTemplate()">+ Novo Template</button>
   </div>
@@ -1013,7 +1019,7 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- SEMANA -->
 <div id="page-semana" class="page">
   <div class="section-top">
-    <div><h2 style="color:var(--teal);font-size:17px">📆 Visão Semanal</h2>
+    <div><h2 style="color:var(--teal);font-size:17px"><i class=ph-calendar-dots></i> Visão Semanal</h2>
     <p style="color:var(--muted);font-size:13px;margin-top:3px" id="semana-subtitulo"></p></div>
   </div>
   <div class="semana-tabs">
@@ -1028,39 +1034,39 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-riders" class="page">
   <div class="riders-header">
     <div>
-      <h2 style="color:var(--teal);font-size:17px">🎛 Riders Técnicos</h2>
+      <h2 style="color:var(--teal);font-size:17px"><i class=ph-sliders-horizontal></i> Riders Técnicos</h2>
       <p class="riders-desc">Configure o PIN de acesso de cada grupo. Compartilhe com o líder — ele usa na página pública para preencher o rider técnico do culto.</p>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="salvarRiderConfig()">💾 Salvar PINs</button>
+    <button class="btn btn-primary btn-sm" onclick="salvarRiderConfig()"> <i class=ph-floppy-disk></i> Salvar PINs</button>
   </div>
-  <div class="riders-grid" id="riders-grid"><div class="empty-state"><div class="icon">⏳</div><p>Carregando grupos...</p></div></div>
+  <div class="riders-grid" id="riders-grid"><div class="empty-state"><div class="icon"><i class=ph-hourglass></i></div><p>Carregando grupos...</p></div></div>
   <!-- Contatos para compartilhamento do Set List -->
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px">
-    <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:4px">📤 Contatos para Set List</div>
+    <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:4px"><i class=ph-share-network></i> Contatos para Set List</div>
     <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Números WhatsApp com código do país (ex: 5541999999999). O líder compartilha o Set List para esses contatos direto do rider.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">🎚 Técnico de Som</label><input id="cont-tecnico" type="tel" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="5541999999999"></div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">📺 Mídia</label><input id="cont-midia" type="tel" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="5541999999999"></div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">🤟 Dep. de Surdos</label><input id="cont-surdos" type="tel" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="5541999999999"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px"><i class=ph-sliders></i> Técnico de Som</label><input id="cont-tecnico" type="tel" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="5541999999999"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px"><i class=ph-television-simple></i> Mídia</label><input id="cont-midia" type="tel" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="5541999999999"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px"><i class=ph-ear></i> Dep. de Surdos</label><input id="cont-surdos" type="tel" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="5541999999999"></div>
     </div>
   </div>
   <div id="riders-submissions"></div>
 </div>
 <!-- QR CODE -->
 <div id="page-qr" class="page">
-  <div class="section-top"><h2 style="color:var(--teal);font-size:17px">📲 QR Code da Escala</h2></div>
+  <div class="section-top"><h2 style="color:var(--teal);font-size:17px"><i class=ph-qr-code></i> QR Code da Escala</h2></div>
   <div class="qr-section"><h3>Link da página pública</h3>
     <div class="qr-input-row"><input type="url" id="qr-url" placeholder="https://escala-dml.netlify.app" oninput="gerarQR()"><button class="btn btn-primary btn-sm" onclick="gerarQR()">Gerar QR</button></div>
-    <div class="qr-canvas-wrap" id="qr-wrap" style="display:none"><canvas id="qr-canvas" width="240" height="240"></canvas><div class="qr-hint">Aponte a câmera do celular para o QR Code<br>ou baixe e imprima</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarQR()">⬇ Baixar PNG</button><button class="btn btn-ghost btn-sm" onclick="copiarLink()">📋 Copiar Link</button></div></div>
+    <div class="qr-canvas-wrap" id="qr-wrap" style="display:none"><canvas id="qr-canvas" width="240" height="240"></canvas><div class="qr-hint">Aponte a câmera do celular para o QR Code<br>ou baixe e imprima</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarQR()"><i class=ph-download-simple></i> Baixar PNG</button><button class="btn btn-ghost btn-sm" onclick="copiarLink()"><i class=ph-clipboard-text></i> Copiar Link</button></div></div>
   </div>
-  <div class="qr-section"><h3>💡 Como usar</h3><p style="font-size:13px;color:var(--muted);line-height:1.7">1. Exporte a página clicando em <strong style="color:var(--teal)">🌐 Página</strong><br>2. Publique no Netlify e copie o link<br>3. Cole o link acima e gere o QR Code<br>4. Baixe e compartilhe no grupo do WhatsApp ou imprima para o mural do DML</p></div>
+  <div class="qr-section"><h3><i class=ph-lightbulb></i> Como usar</h3><p style="font-size:13px;color:var(--muted);line-height:1.7">1. Exporte a página clicando em <strong style="color:var(--teal)"><i class=ph-globe></i> Página</strong><br>2. Publique no Netlify e copie o link<br>3. Cole o link acima e gere o QR Code<br>4. Baixe e compartilhe no grupo do WhatsApp ou imprima para o mural do DML</p></div>
 </div>
 </main>
 
 <!-- MODAL CALENDÁRIO -->
 <div class="modal-overlay" id="modal-cal">
   <div class="modal" style="width:480px">
-    <h3>📅 Criar Escala pelo Calendário</h3>
+    <h3><i class=ph-calendar></i> Criar Escala pelo Calendário</h3>
     <div style="display:flex;gap:12px;margin-bottom:16px">
       <div class="form-row" style="flex:1;margin-bottom:0">
         <label>Mês</label>
@@ -1103,14 +1109,14 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- MODAL EDITAR CULTO -->
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
-    <h3>✏️ Editar Culto</h3>
+    <h3><i class=ph-pencil-simple></i> Editar Culto</h3>
     <input type="hidden" id="edit-id">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-row" style="margin-bottom:0"><label>Nome do Culto</label><input type="text" id="edit-nome"></div>
       <div class="form-row" style="margin-bottom:0"><label>Horário</label><input type="text" id="edit-hora" placeholder="19:30"></div>
     </div>
     <div class="form-row" style="margin-top:12px"><label>Dirigente</label><input type="text" id="edit-dir"></div>
-    <div class="form-row"><label>📝 Nota interna (não aparece no PDF)</label>
+    <div class="form-row"><label><i class=ph-note-pencil></i> Nota interna (não aparece no PDF)</label>
       <textarea class="nota-input" id="edit-nota" placeholder="Observações, substituições, avisos..."></textarea>
     </div>
     <div class="form-row">
@@ -1128,7 +1134,7 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- MODAL CULTO ESPECIAL -->
 <div class="modal-overlay" id="modal-esp">
   <div class="modal">
-    <h3>✨ Culto Especial</h3>
+    <h3><i class=ph-sparkle></i> Culto Especial</h3>
     <div class="form-row"><label>Data</label><input type="number" id="esp-data" min="1" max="31" placeholder="Dia"></div>
     <div class="form-row"><label>Dia da Semana</label>
       <select id="esp-dia">
@@ -1148,16 +1154,16 @@ tr.esp-row .td-dia{color:#c03030;}
 </div>
 
 <!-- NOTEPAD FLUTUANTE -->
-<button id="notepad-toggle" onclick="toggleNotepad()" title="Anotações rápidas">📝</button>
+<button id="notepad-toggle" onclick="toggleNotepad()" title="Anotações rápidas"><i class=ph-note-pencil></i></button>
 <div id="notepad-panel">
   <div id="notepad-header">
-    <span>📝 Anotações</span>
+    <span><i class=ph-note-pencil></i> Anotações</span>
     <button onclick="toggleNotepad()" title="Fechar">×</button>
   </div>
   <div class="np-tabs">
-    <button class="np-tab ativo" id="np-tab-geral" onclick="npMostrarAba('geral')">📋 Geral</button>
-    <button class="np-tab" id="np-tab-mes" onclick="npMostrarAba('mes')">📅 Do Mês</button>
-    <button class="np-tab" id="np-tab-tasks" onclick="npMostrarAba('tasks')">✅ Tarefas</button>
+    <button class="np-tab ativo" id="np-tab-geral" onclick="npMostrarAba('geral')"><i class=ph-clipboard-text></i> Geral</button>
+    <button class="np-tab" id="np-tab-mes" onclick="npMostrarAba('mes')"><i class=ph-calendar></i> Do Mês</button>
+    <button class="np-tab" id="np-tab-tasks" onclick="npMostrarAba('tasks')"><i class=ph-check-circle></i> Tarefas</button>
   </div>
   <!-- Aba geral -->
   <div id="np-aba-geral">
@@ -1178,7 +1184,7 @@ tr.esp-row .td-dia{color:#c03030;}
   </div>
   <div id="notepad-footer">
     <span id="notepad-saved"></span>
-    <button id="notepad-clear" onclick="limparNotepadAtual()">🗑 Limpar</button>
+    <button id="notepad-clear" onclick="limparNotepadAtual()"><i class=ph-trash></i> Limpar</button>
   </div>
 </div>
 <div id="toast"></div>
@@ -1255,7 +1261,7 @@ const getCulto=id=>cultos.find(c=>c.id===id);
 const dz=document.getElementById('drop-zone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
 dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f?.name.endsWith('.docx'))processarArq(f);else toast('⚠️ Envie um .docx');});
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f?.name.endsWith('.docx'))processarArq(f);else toast('<i class=ph-warning></i> Envie um .docx');});
 function lerArquivo(e){if(e.target.files[0])processarArq(e.target.files[0]);}
 
 async function processarArq(file){
@@ -1264,10 +1270,10 @@ async function processarArq(file){
     const buf=await file.arrayBuffer();
     const res=await mammoth.convertToHtml({arrayBuffer:buf});
     const parsed=parsear(res.value);
-    if(!parsed.length){toast('⚠️ Nenhum culto encontrado.');mostrarLoad(false);return;}
+    if(!parsed.length){toast('<i class=ph-warning></i> Nenhum culto encontrado.');mostrarLoad(false);return;}
     cultos=parsed;sessaoId='sess_'+Date.now();mesLabel=extrairMes(file.name);
     abrirEditor();
-  }catch(e){console.error(e);toast('❌ Erro ao ler arquivo');}
+  }catch(e){console.error(e);toast('<i class=ph-x-circle></i> Erro ao ler arquivo');}
   mostrarLoad(false);
 }
 
@@ -1346,7 +1352,7 @@ function renderCultos(){
   const showOc=document.getElementById('chk-ocultos').checked;
   const filtrados=cultos.filter(c=>matchFiltroDia(c));
   if(filtrados.length===0&&_filtroDia!=='todos'){
-    grid.innerHTML=`<div class="empty-state"><div class="icon">📅</div><p>Nenhum culto encontrado para este filtro.</p></div>`;
+    grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-calendar></i></div><p>Nenhum culto encontrado para este filtro.</p></div>`;
     return;
   }
   filtrados.forEach(c=>{
@@ -1361,7 +1367,7 @@ function renderCultos(){
     const dot=c.grupos.length?'<span class="sdot sdot-ok"></span>':'<span class="sdot sdot-no"></span>';
     const bOc=c.oculto?'<span class="badge badge-oc">oculto</span>':'';
     const bEsp=c.especial?'<span class="badge badge-esp">especial</span>':'';
-    const bNota=c.nota?'<span class="nota-badge" title="'+c.nota.replace(/"/g,"'")+'">📝 nota</span>':'';
+    const bNota=c.nota?'<span class="nota-badge" title="'+c.nota.replace(/"/g,"'")+'"><i class=ph-note-pencil></i> nota</span>':'';
     const gStr=c.grupos.length
       ?sortGrupos(c.grupos).map(g=>{const lbl=g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ');return`<span class="gbadge ${badgeClass(g)}">${lbl}</span>`;}).join('')
       :'<span style="color:var(--muted);font-style:italic;font-size:11px">sem grupo</span>';
@@ -1379,8 +1385,8 @@ function renderCultos(){
           <div style="margin-top:4px">${gStr}</div>
         </div>
         <div class="c-actions">
-          <button class="btn-icon" onclick="abrirModalEdit('${c.id}')">✏️</button>
-          <button class="btn-vis" onclick="toggleVis('${c.id}')">${c.oculto?'🙈':'👁'}</button>
+          <button class="btn-icon" onclick="abrirModalEdit('${c.id}')"><i class=ph-pencil-simple></i></button>
+          <button class="btn-vis" onclick="toggleVis('${c.id}')">${c.oculto?'<i class=ph-eye-slash></i>':'<i class=ph-eye></i>'}</button>
         </div>
       </div>`;
     // Drag reorder
@@ -1431,7 +1437,7 @@ function abrevDia(d){
   return(d||'').substring(0,3).toUpperCase();
 }
 
-function toggleVis(id){const c=getCulto(id);if(!c)return;c.oculto=!c.oculto;renderCultos();toast(c.oculto?'🙈 Oculto':'👁 Visível');}
+function toggleVis(id){const c=getCulto(id);if(!c)return;c.oculto=!c.oculto;renderCultos();toast(c.oculto?'<i class=ph-eye-slash></i> Oculto':'<i class=ph-eye></i> Visível');}
 
 // Conflito = mesmo grupo em cultos a ≤2 dias de distância (exceto mesmo dia)
 
@@ -1485,7 +1491,7 @@ function confirmarEdit(){
   c.dirigente=document.getElementById('edit-dir').value.trim();
   c.nota=document.getElementById('edit-nota').value.trim();
   c.grupos=sortGrupos([..._eg]);
-  fecharModal('modal-edit');renderCultos();toast('✅ Culto atualizado');
+  fecharModal('modal-edit');renderCultos();toast('<i class=ph-check-circle></i> Culto atualizado');
 }
 
 // ═══════════════════════════════════════════════
@@ -1498,11 +1504,11 @@ function confirmarEsp(){
   const hora=document.getElementById('esp-hora').value.trim();
   const nome=document.getElementById('esp-culto').value.trim();
   const dir=document.getElementById('esp-dirg').value.trim();
-  if(!data||!nome||!hora){toast('⚠️ Preencha Data, Horário e Nome');return;}
+  if(!data||!nome||!hora){toast('<i class=ph-warning></i> Preencha Data, Horário e Nome');return;}
   const grupos=SH_DIAS.test(dia)?[SH_LABEL]:[];
   cultos.push({id:uid(),data:data.padStart(2,'0'),dia,hora,culto:nome.toUpperCase(),dirigente:dir,grupos,oculto:false,especial:true});
   cultos.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
-  fecharModal('modal-esp');renderCultos();toast('✅ Adicionado!');
+  fecharModal('modal-esp');renderCultos();toast('<i class=ph-check-circle></i> Adicionado!');
   ['esp-data','esp-hora','esp-culto','esp-dirg'].forEach(id=>document.getElementById(id).value='');
 }
 function fecharModal(id){document.getElementById(id).classList.remove('open');}
@@ -1629,14 +1635,14 @@ function enableDropOnCard(card, cultoId){
         if(!x.grupos.includes(_dragGrupo)){x.grupos=sortGrupos([...x.grupos,_dragGrupo]);adicionados++;}
       });
       renderCultos();
-      toast(adicionados>0?`✅ ${_dragGrupo} adicionado manhã e noite`:'⚠️ Já atribuído nos dois cultos');
+      toast(adicionados>0?`<i class=ph-check-circle></i> ${_dragGrupo} adicionado manhã e noite`:'<i class=ph-warning></i> Já atribuído nos dois cultos');
     } else {
       if(!c.grupos.includes(_dragGrupo)){
         c.grupos=sortGrupos([...c.grupos,_dragGrupo]);
         renderCultos();
-        toast(`✅ ${_dragGrupo===SH_LABEL?'S&H':_dragGrupo} adicionado`);
+        toast(`<i class=ph-check-circle></i> ${_dragGrupo===SH_LABEL?'S&H':_dragGrupo} adicionado`);
       } else {
-        toast('⚠️ Grupo já atribuído');
+        toast('<i class=ph-warning></i> Grupo já atribuído');
       }
     }
     _dragGrupo=null;
@@ -1648,7 +1654,7 @@ function renderPreview(){
   tbody.innerHTML='';
   document.getElementById('prev-mes').textContent=mesLabel;
   const vis=cultos.filter(c=>!c.oculto);
-  if(!vis.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><div class="icon">🎵</div><p>Nenhum culto visível.</p></div></td></tr>`;return;}
+  if(!vis.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><div class="icon"><i class=ph-music-note></i></div><p>Nenhum culto visível.</p></div></td></tr>`;return;}
 
   const louvorCell=c=>{
     if(!c.grupos.length)return'<td>—</td>';
@@ -1831,8 +1837,8 @@ function emailToKey(email){ return email.toLowerCase().replace(/\./g,'_').replac
 
 async function convidarColaborador(){
   const email=document.getElementById('colab-email-input').value.trim().toLowerCase();
-  if(!email||!email.includes('@')){toast('⚠️ Digite um email válido');return;}
-  if(email===window._fbUser.email.toLowerCase()){toast('⚠️ Este é seu próprio email');return;}
+  if(!email||!email.includes('@')){toast('<i class=ph-warning></i> Digite um email válido');return;}
+  if(email===window._fbUser.email.toLowerCase()){toast('<i class=ph-warning></i> Este é seu próprio email');return;}
   const{doc,setDoc}=window._fbFns;
   const key=emailToKey(email);
   const dados={
@@ -1845,31 +1851,31 @@ async function convidarColaborador(){
   // Salva na coleção global (para o colaborador encontrar)
   await setDoc(doc(window._fbDb,'convites',key),dados);
   document.getElementById('colab-email-input').value='';
-  toast(`✅ Convite enviado para ${email}`);
+  toast(`<i class=ph-check-circle></i> Convite enviado para ${email}`);
   renderColaboradores();
 }
 
 async function renderColaboradores(){
   const lista=document.getElementById('colab-lista');
   if(!lista)return;
-  lista.innerHTML=`<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>`;
+  lista.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-hourglass></i></div><p>Carregando...</p></div>`;
   try{
     const{collection,getDocs}=window._fbFns;
     const snap=await getDocs(collection(window._fbDb,`usuarios/${getDonoUid()}/colaboradores`));
     if(snap.empty){
-      lista.innerHTML=`<div class="empty-state"><div class="icon">👥</div><p>Nenhum colaborador ainda.<br>Convide alguém pelo email acima.</p></div>`;
+      lista.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-users></i></div><p>Nenhum colaborador ainda.<br>Convide alguém pelo email acima.</p></div>`;
       return;
     }
     lista.innerHTML=snap.docs.map(d=>{
       const c=d.data();
       const key=d.id;
       return`<div class="colab-card">
-        <div class="colab-avatar">👤</div>
+        <div class="colab-avatar"><i class=ph-user></i></div>
         <div class="colab-info">
           <div class="colab-nome">${c.email}</div>
           <div class="colab-email">Convidado em ${new Date(c.convidadoEm||0).toLocaleDateString('pt-BR')}</div>
         </div>
-        <span class="colab-status ${c.status||'pendente'}">${c.status==='ativo'?'✅ Ativo':'⏳ Pendente'}</span>
+        <span class="colab-status ${c.status||'pendente'}">${c.status==='ativo'?'<i class=ph-check-circle></i> Ativo':'<i class=ph-hourglass></i> Pendente'}</span>
         <button class="btn-danger" onclick="removerColaborador('${key}')" title="Remover">✕</button>
       </div>`;
     }).join('');
@@ -1880,7 +1886,7 @@ async function removerColaborador(key){
   if(!confirm('Remover este colaborador?'))return;
   const{doc,deleteDoc}=window._fbFns;
   await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/colaboradores`,key));
-  toast('🗑 Colaborador removido');
+  toast('<i class=ph-trash></i> Colaborador removido');
   renderColaboradores();
 }
 
@@ -1960,7 +1966,7 @@ function renderPreviewRT(){
   body.innerHTML=vis.map(c=>{
     const cls=c.especial?"esp":/domingo/i.test(c.dia)?"dom":/ter[cç]a/i.test(c.dia)?"ter":/quinta/i.test(c.dia)?"qui":/s[aá]b/i.test(c.dia)?"sab":"";
     const badges=sortGrupos(c.grupos).map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${lG(g)}</span>`).join("");
-    return `<div class="preview-rt-card ${cls}"><div class="preview-rt-data">${c.data} ${abrevDia(c.dia)} · ${c.hora}</div><div class="preview-rt-nome">${c.culto}</div>${c.dirigente?`<div class="preview-rt-dir">🎤 ${c.dirigente}</div>`:""}<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${badges||"<span style=\"font-size:10px;color:var(--muted)\">sem grupo</span>"}</div></div>`;
+    return `<div class="preview-rt-card ${cls}"><div class="preview-rt-data">${c.data} ${abrevDia(c.dia)} · ${c.hora}</div><div class="preview-rt-nome">${c.culto}</div>${c.dirigente?`<div class="preview-rt-dir"><i class=ph-microphone></i> ${c.dirigente}</div>`:""}<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${badges||"<span style=\"font-size:10px;color:var(--muted)\">sem grupo</span>"}</div></div>`;
   }).join("");
 }
 
@@ -1975,28 +1981,28 @@ function renderRelatorioDirigentes(){
   const sorted=Object.entries(freq).sort((a,b)=>b[1].total-a[1].total);
   if(!sorted.length){el.innerHTML=`<div class="empty-state"><p>Nenhum dirigente registrado ainda.</p></div>`;return;}
   const max=sorted[0][1].total;
-  el.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;">${sorted.map(([dir,info])=>`<div class="rank-item" style="margin-bottom:10px"><span class="rank-name" style="min-width:160px">🎤 ${dir}</span><div class="rank-bar-wrap" style="flex:1"><div class="rank-bar" style="width:${Math.round(info.total/max*100)}%;background:#4a9eff"></div></div><span class="rank-count">${info.total} culto${info.total!==1?"s":""}</span><span style="font-size:10px;color:var(--muted);margin-left:8px">${info.meses.size} mês/meses</span></div>`).join("")}</div>`;
+  el.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;">${sorted.map(([dir,info])=>`<div class="rank-item" style="margin-bottom:10px"><span class="rank-name" style="min-width:160px"><i class=ph-microphone></i> ${dir}</span><div class="rank-bar-wrap" style="flex:1"><div class="rank-bar" style="width:${Math.round(info.total/max*100)}%;background:#4a9eff"></div></div><span class="rank-count">${info.total} culto${info.total!==1?"s":""}</span><span style="font-size:10px;color:var(--muted);margin-left:8px">${info.meses.size} mês/meses</span></div>`).join("")}</div>`;
 }
 
 // ═══════════════════════════════════════════════
 // ATALHOS DE TECLADO
 // ═══════════════════════════════════════════════
-document.addEventListener("keydown",e=>{const ctrl=e.ctrlKey||e.metaKey;if(!ctrl)return;if(e.key==="s"&&cultos.length){e.preventDefault();salvarSessao();return;}if(e.key==="p"&&cultos.length){e.preventDefault();publicarNetlify();return;}if(e.key==="f"){const pEdit=document.getElementById("page-edit");if(pEdit?.classList.contains("active")){e.preventDefault();toggleBuscaEscala();return;}}if(e.key==="z"&&e.shiftKey&&sessaoId){e.preventDefault();const versoes=getVersoes(sessaoId);if(versoes.length>1){restaurarVersao(1);return;}toast("⚠️ Nenhuma versão anterior disponível");return;}if(e.key==="Escape"){document.getElementById("versoes-modal")?.remove();document.querySelector(".modal-overlay.show")?.classList.remove("show");if(_previewRTAtivo)togglePreviewRT();}});
+document.addEventListener("keydown",e=>{const ctrl=e.ctrlKey||e.metaKey;if(!ctrl)return;if(e.key==="s"&&cultos.length){e.preventDefault();salvarSessao();return;}if(e.key==="p"&&cultos.length){e.preventDefault();publicarNetlify();return;}if(e.key==="f"){const pEdit=document.getElementById("page-edit");if(pEdit?.classList.contains("active")){e.preventDefault();toggleBuscaEscala();return;}}if(e.key==="z"&&e.shiftKey&&sessaoId){e.preventDefault();const versoes=getVersoes(sessaoId);if(versoes.length>1){restaurarVersao(1);return;}toast("<i class=ph-warning></i> Nenhuma versão anterior disponível");return;}if(e.key==="Escape"){document.getElementById("versoes-modal")?.remove();document.querySelector(".modal-overlay.show")?.classList.remove("show");if(_previewRTAtivo)togglePreviewRT();}});
 
 // ═══════════════════════════════════════════════
 // ONBOARDING PARA COLABORADORES
 // ═══════════════════════════════════════════════
 const ONBOARD_KEY="dml_onboard_v1";
-const PASSOS=[{icon:"👋",titulo:"Bem-vindo ao Sistema DML!",desc:"Você foi convidado como colaborador para editar a escala do Departamento de Música e Louvor. Vamos te mostrar o essencial em alguns passos."},{icon:"📋",titulo:"Importar ou Criar Escala",desc:"Na tela inicial você pode importar um arquivo .docx da escala geral da igreja, ou criar manualmente pelo calendário."},{icon:"🎵",titulo:"Atribuir Grupos",desc:"No editor, arraste os grupos do painel lateral para cada culto, ou clique no culto para editar nome, horário e dirigente."},{icon:"☁️",titulo:"Salvar na Nuvem",desc:"Clique em 💾 Salvar para guardar a escala. Os dados ficam na nuvem e você pode continuar de qualquer dispositivo."},{icon:"🌐",titulo:"Publicar para os Integrantes",desc:"Quando pronta, clique em 🌐 Publicar. A página dos integrantes atualiza em segundos."}];
+const PASSOS=[{icon:"<i class=ph-hand-waving></i>",titulo:"Bem-vindo ao Sistema DML!",desc:"Você foi convidado como colaborador para editar a escala do Departamento de Música e Louvor. Vamos te mostrar o essencial em alguns passos."},{icon:"<i class=ph-clipboard-text></i>",titulo:"Importar ou Criar Escala",desc:"Na tela inicial você pode importar um arquivo .docx da escala geral da igreja, ou criar manualmente pelo calendário."},{icon:"<i class=ph-music-note></i>",titulo:"Atribuir Grupos",desc:"No editor, arraste os grupos do painel lateral para cada culto, ou clique no culto para editar nome, horário e dirigente."},{icon:"<i class=ph-cloud></i>",titulo:"Salvar na Nuvem",desc:"Clique em <i class=ph-floppy-disk></i> Salvar para guardar a escala. Os dados ficam na nuvem e você pode continuar de qualquer dispositivo."},{icon:"<i class=ph-globe></i>",titulo:"Publicar para os Integrantes",desc:"Quando pronta, clique em <i class=ph-globe></i> Publicar. A página dos integrantes atualiza em segundos."}];
 function mostrarOnboarding(){
   if(localStorage.getItem(ONBOARD_KEY))return;
   let passo=0;
   const PASSOS2=[
-    {icon:"👋",titulo:"Bem-vindo ao Sistema DML!",desc:"Você foi convidado como colaborador. Vamos te mostrar o essencial em alguns passos."},
-    {icon:"📋",titulo:"Importar ou Criar Escala",desc:"Na tela inicial importe um .docx ou crie pelo calendário escolhendo o mês e o ano."},
-    {icon:"🎵",titulo:"Atribuir Grupos",desc:"No editor, arraste grupos do painel lateral para cada culto ou clique no culto para editar."},
-    {icon:"☁️",titulo:"Salvar na Nuvem",desc:"Clique em 💾 Salvar. Os dados ficam na nuvem e você continua de qualquer dispositivo."},
-    {icon:"🌐",titulo:"Publicar para os Integrantes",desc:"Quando pronta, clique em 🌐 Publicar. A página dos integrantes atualiza em segundos."}
+    {icon:"<i class=ph-hand-waving></i>",titulo:"Bem-vindo ao Sistema DML!",desc:"Você foi convidado como colaborador. Vamos te mostrar o essencial em alguns passos."},
+    {icon:"<i class=ph-clipboard-text></i>",titulo:"Importar ou Criar Escala",desc:"Na tela inicial importe um .docx ou crie pelo calendário escolhendo o mês e o ano."},
+    {icon:"<i class=ph-music-note></i>",titulo:"Atribuir Grupos",desc:"No editor, arraste grupos do painel lateral para cada culto ou clique no culto para editar."},
+    {icon:"<i class=ph-cloud></i>",titulo:"Salvar na Nuvem",desc:"Clique em <i class=ph-floppy-disk></i> Salvar. Os dados ficam na nuvem e você continua de qualquer dispositivo."},
+    {icon:"<i class=ph-globe></i>",titulo:"Publicar para os Integrantes",desc:"Quando pronta, clique em <i class=ph-globe></i> Publicar. A página dos integrantes atualiza em segundos."}
   ];
   function render(){
     const p=PASSOS2[passo];
@@ -2023,19 +2029,19 @@ function atualizarStatusOnline(){
   const banner=document.getElementById('offline-banner');
   const sync=document.getElementById('sync-status');
   if(banner)banner.classList.toggle('show',!_online);
-  if(sync&&!_online){sync.textContent='📵 Offline';sync.className='sync-indicator offline';}
+  if(sync&&!_online){sync.textContent='<i class=ph-wifi-slash></i> Offline';sync.className='sync-indicator offline';}
 }
 
 window.addEventListener('online',async()=>{
   _online=true;
   atualizarStatusOnline();
-  toast('✅ Conexão restaurada — sincronizando...');
+  toast('<i class=ph-check-circle></i> Conexão restaurada — sincronizando...');
   await processarFilaSync();
 });
 window.addEventListener('offline',()=>{
   _online=false;
   atualizarStatusOnline();
-  toast('⚠️ Sem conexão — salvando localmente');
+  toast('<i class=ph-warning></i> Sem conexão — salvando localmente');
 });
 
 async function processarFilaSync(){
@@ -2056,7 +2062,7 @@ async function processarFilaSync(){
     localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
   } else {
     setSyncStatus('ok');
-    toast('☁️ Tudo sincronizado!');
+    toast('<i class=ph-cloud></i> Tudo sincronizado!');
   }
 }
 
@@ -2089,7 +2095,7 @@ function saveVersao(sessaoId,dados){
 }
 
 function abrirVersoes(){
-  if(!sessaoId){toast('⚠️ Nenhuma escala aberta');return;}
+  if(!sessaoId){toast('<i class=ph-warning></i> Nenhuma escala aberta');return;}
   const versoes=getVersoes(sessaoId);
   const modal=document.createElement('div');
   modal.className='versoes-modal';
@@ -2097,12 +2103,12 @@ function abrirVersoes(){
   modal.innerHTML=`
     <div class="versoes-box">
       <div class="versoes-hdr">
-        <h3>🕐 Versões — ${mesLabel}</h3>
+        <h3><i class=ph-clock-counter-clockwise></i> Versões — ${mesLabel}</h3>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('versoes-modal').remove()">✕ Fechar</button>
       </div>
       <div class="versoes-lista">
         ${!versoes.length
-          ?'<div class="empty-state"><div class="icon">🕐</div><p>Nenhuma versão salva ainda.<br>As versões são criadas a cada salvamento.</p></div>'
+          ?'<div class="empty-state"><div class="icon"><i class=ph-clock-counter-clockwise></i></div><p>Nenhuma versão salva ainda.<br>As versões são criadas a cada salvamento.</p></div>'
           :versoes.map((v,i)=>`
             <div class="versao-item${i===0?' atual':''}" onclick="restaurarVersao(${i})">
               <span class="versao-num">v${versoes.length-i}</span>
@@ -2112,7 +2118,7 @@ function abrirVersoes(){
               </div>
               ${i===0
                 ?'<span style="font-size:11px;color:var(--teal);font-weight:600">atual</span>'
-                :`<button class="versao-btn" onclick="event.stopPropagation();restaurarVersao(${i})">↩ Restaurar</button>`
+                :`<button class="versao-btn" onclick="event.stopPropagation();restaurarVersao(${i})"><i class=ph-arrow-counter-clockwise></i> Restaurar</button>`
               }
             </div>`).join('')
         }
@@ -2131,7 +2137,7 @@ function restaurarVersao(idx){
   cultos=v.cultos.map(c=>({...c,id:c.id||uid()}));
   renderCultos();
   document.getElementById('versoes-modal')?.remove();
-  toast('↩ Versão restaurada! Clique em Salvar para confirmar.');
+  toast('<i class=ph-arrow-counter-clockwise></i> Versão restaurada! Clique em Salvar para confirmar.');
 }
 
 // ═══════════════════════════════════════════════
@@ -2147,7 +2153,7 @@ function salvarSessao(){
   if(dup){if(!confirm(`Já existe uma escala para "${mesLabel}". Substituir?`))return;localStorage.removeItem(SK(dup));saveIdx(getIdx().filter(i=>i!==dup));}
   localStorage.setItem(SK(sessaoId),JSON.stringify({cultos,mesLabel,id:sessaoId,savedAt:new Date().toISOString()}));
   const i=getIdx();if(!i.includes(sessaoId)){i.push(sessaoId);saveIdx(i);}
-  toast('✅ Escala salva!');renderHist();
+  toast('<i class=ph-check-circle></i> Escala salva!');renderHist();
 }
 
 function carregarSessao(id){
@@ -2161,7 +2167,7 @@ function carregarSessao(id){
 function excluirSessao(id){
   if(!confirm('Excluir esta escala?'))return;
   localStorage.removeItem(SK(id));saveIdx(getIdx().filter(i=>i!==id));
-  renderHist();toast('🗑 Excluída');
+  renderHist();toast('<i class=ph-trash></i> Excluída');
 }
 
 // ═══════════════════════════════════════════════
@@ -2179,7 +2185,7 @@ function renderHist(busca=''){
     }catch{return false;}
   });
   if(!filtrado.length){
-    grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty-state"><div class="icon">📭</div><p>${busca?'Nenhum resultado para "'+busca+'"':'Nenhuma escala salva ainda.'}</p></div></div>`;
+    grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty-state"><div class="icon"><i class=ph-tray></i></div><p>${busca?'Nenhum resultado para "'+busca+'"':'Nenhuma escala salva ainda.'}</p></div></div>`;
     return;
   }
   grid.innerHTML='';
@@ -2198,10 +2204,10 @@ function renderHist(busca=''){
       <div class="meta">Salvo em ${saved} · ${vis} cultos · ${comG} com grupo</div>
       <div class="hist-tags">${top.map(([g,n])=>`<span class="hist-tag">${g===SH_LABEL?'S&H':g} (${n}×)</span>`).join('')}</div>
       <div class="hist-actions">
-        <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')">✏️ Abrir</button>
-        <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')">👁 Ver</button>
-        <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')">📋 Duplicar</button>
-        <button class="btn-danger" onclick="excluirSessao('${id}')">🗑</button>
+        <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')"><i class=ph-pencil-simple></i> Abrir</button>
+        <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')"><i class=ph-eye></i> Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')"><i class=ph-clipboard-text></i> Duplicar</button>
+        <button class="btn-danger" onclick="excluirSessao('${id}')"><i class=ph-trash></i></button>
       </div>`;
     grid.appendChild(card);
   });
@@ -2275,7 +2281,7 @@ function renderDash(){
   grid.innerHTML=''; // limpa SEMPRE antes de adicionar
 
   if(!Object.keys(freq).length){
-    grid.innerHTML=`<div class="dash-card full"><div class="empty-state"><div class="icon">📊</div><p>Nenhum dado. Salve escalas primeiro.</p></div></div>`;
+    grid.innerHTML=`<div class="dash-card full"><div class="empty-state"><div class="icon"><i class=ph-chart-bar></i></div><p>Nenhum dado. Salve escalas primeiro.</p></div></div>`;
     return;
   }
   const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
@@ -2283,7 +2289,7 @@ function renderDash(){
 
   // Card ranking textual
   const cardR=document.createElement('div');cardR.className='dash-card';
-  cardR.innerHTML=`<h3>📋 Detalhes por Participação</h3>`+sorted.map(([g,n])=>`
+  cardR.innerHTML=`<h3><i class=ph-clipboard-text></i> Detalhes por Participação</h3>`+sorted.map(([g,n])=>`
     <div class="rank-item">
       <span class="rank-name" title="${g}">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>
       <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(n/max*100)}%"></div></div>
@@ -2294,7 +2300,7 @@ function renderDash(){
   // Card detalhe por grupo
   const grupos=fg==='all'?sorted.map(([g])=>g):[fg];
   const cardD=document.createElement('div');cardD.className='dash-card';
-  cardD.innerHTML=`<h3>🔍 Cultos por Grupo</h3>`+grupos.map(g=>`
+  cardD.innerHTML=`<h3><i class=ph-magnifying-glass></i> Cultos por Grupo</h3>`+grupos.map(g=>`
     <div class="grupo-detail">
       <div class="grupo-detail-hdr">
         <span class="grupo-detail-nome">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>
@@ -2345,7 +2351,7 @@ function renderAnual(){
       const sec=document.createElement('div');
       sec.className='dash-card';sec.style.marginBottom='10px';
       const mHtml=Object.entries(meses).sort(([a],[b])=>a.localeCompare(b,'pt')).map(([mes,itens])=>`
-        <div class="anual-mes-hdr">📅 ${mes} — ${itens.length}×</div>
+        <div class="anual-mes-hdr"><i class=ph-calendar></i> ${mes} — ${itens.length}×</div>
         <div>${itens.map(it=>`<span class="culto-pill"><span class="pill-data">Dia ${it.data}</span>${it.culto}</span>`).join('')}</div>`).join('');
       sec.innerHTML=`
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -2372,7 +2378,7 @@ function imprimirAnual(){
     .gnome{font-size:13px;font-weight:700;}
     .gcont{font-size:11px;color:#666;}
   </style></head><body>
-    <h1>📋 Relatório Anual — Departamento de Música e Louvor</h1>
+    <h1><i class=ph-clipboard-text></i> Relatório Anual — Departamento de Música e Louvor</h1>
     <p style="color:#666;font-size:11px;margin-bottom:16px">Igreja Evangélica Congregacional Central · Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
     ${document.getElementById('relatorio-anual').innerHTML.replace(/class="dash-card"/g,'class="grupo"').replace(/class="grupo-detail-nome" style="font-size:14px"/g,'class="gnome"').replace(/class="month-badge"/g,'class="gcont"').replace(/class="anual-mes-hdr"/g,'class="mes"').replace(/class="culto-pill"/g,'class="pill"').replace(/class="pill-data"/g,'class="d"')}
   </body></html>`;
@@ -2391,7 +2397,7 @@ function renderConfig(){
       lista.map(g=>`
         <div class="config-row">
           <div><div class="config-nome">${g}</div><div class="config-cat">${cat}</div></div>
-          <button class="btn-danger" onclick="removerGrupo('${cat}','${g.replace(/'/g,"\\'")}')">🗑 Remover</button>
+          <button class="btn-danger" onclick="removerGrupo('${cat}','${g.replace(/'/g,"\\'")}')"><i class=ph-trash></i> Remover</button>
         </div>`).join('');
     body.appendChild(sec);
   }
@@ -2400,20 +2406,20 @@ function renderConfig(){
 function adicionarGrupo(){
   const nome=document.getElementById('novo-grupo-nome').value.trim().toUpperCase();
   const cat=document.getElementById('novo-grupo-cat').value;
-  if(!nome){toast('⚠️ Digite o nome');return;}
+  if(!nome){toast('<i class=ph-warning></i> Digite o nome');return;}
   if(!GRUPOS[cat])GRUPOS[cat]=[];
-  if(GRUPOS[cat].includes(nome)){toast('⚠️ Já existe');return;}
+  if(GRUPOS[cat].includes(nome)){toast('<i class=ph-warning></i> Já existe');return;}
   GRUPOS[cat].push(nome);
   saveGrupos(GRUPOS);
   document.getElementById('novo-grupo-nome').value='';
-  renderConfig();toast('✅ Grupo adicionado!');
+  renderConfig();toast('<i class=ph-check-circle></i> Grupo adicionado!');
 }
 
 function removerGrupo(cat,nome){
   if(!confirm(`Remover "${nome}" da categoria "${cat}"?`))return;
   GRUPOS[cat]=GRUPOS[cat].filter(g=>g!==nome);
   if(!GRUPOS[cat].length)delete GRUPOS[cat];
-  saveGrupos(GRUPOS);renderConfig();toast('🗑 Removido');
+  saveGrupos(GRUPOS);renderConfig();toast('<i class=ph-trash></i> Removido');
 }
 
 // ═══════════════════════════════════════════════
@@ -2438,7 +2444,7 @@ function exportarJSON(){
   const blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=`dml-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();
-  toast('✅ Backup exportado!');
+  toast('<i class=ph-check-circle></i> Backup exportado!');
 }
 
 function importarJSON(e){
@@ -2453,8 +2459,8 @@ function importarJSON(e){
         ids.forEach(id=>{localStorage.setItem(SK(id),JSON.stringify(all.sessions[id]));});
         const idx=getIdx();const merged=[...new Set([...idx,...ids])];saveIdx(merged);
       }
-      toast('✅ Backup restaurado!');renderHist();
-    }catch{toast('❌ Arquivo inválido');}
+      toast('<i class=ph-check-circle></i> Backup restaurado!');renderHist();
+    }catch{toast('<i class=ph-x-circle></i> Arquivo inválido');}
   };
   reader.readAsText(file);
   e.target.value='';
@@ -2467,7 +2473,7 @@ async function exportarImagem(){
   mostrarLoad(true);
   try{
     const vis=cultos.filter(c=>!c.oculto);
-    if(!vis.length){toast('⚠️ Nenhum culto visível');mostrarLoad(false);return;}
+    if(!vis.length){toast('<i class=ph-warning></i> Nenhum culto visível');mostrarLoad(false);return;}
   /* -- Proximo mes -- */
   var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
@@ -2720,7 +2726,7 @@ async function exportarImagem(){
     a.download=`escala-${mesLabel.replace(/\s/g,'-')}-stories.png`;
     a.href=canvas.toDataURL('image/png');a.click();
     toast('🖼 Imagem exportada!');
-  }catch(e){console.error(e);toast('❌ Erro: '+e.message);}
+  }catch(e){console.error(e);toast('<i class=ph-x-circle></i> Erro: '+e.message);}
   mostrarLoad(false);
 }
 
@@ -2742,7 +2748,7 @@ function configurarTokens(){
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:500;display:flex;align-items:center;justify-content:center';
   modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:480px;max-width:96vw">
-    <h3 style="color:var(--teal);margin-bottom:16px">🔑 Configurar Publicação</h3>
+    <h3 style="color:var(--teal);margin-bottom:16px"><i class=ph-key></i> Configurar Publicação</h3>
     <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
       Cole seu <strong style="color:var(--white)">GitHub Personal Access Token</strong> abaixo.<br>
       Fica salvo apenas no seu navegador — nunca no código.
@@ -2773,7 +2779,7 @@ async function salvarTokens(btn){
 }
 
 async function publicarNetlify(){
-  if(!cultos.length){toast('⚠️ Nenhum culto para publicar');return;}
+  if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para publicar');return;}
   const ghToken=getGithubToken();
   console.log('publicarNetlify — token:', ghToken?'presente':'ausente');
   if(!ghToken){configurarTokens();return;}
@@ -2820,7 +2826,7 @@ async function publicarNetlify(){
     const html=await gerarHTMLPublico();
     cultos=_origCultos;mesLabel=_origMes;
     console.log('HTML gerado:', html?html.length+' chars':'vazio');
-    if(!html){mostrarLoad(false);toast('⚠️ Erro ao gerar HTML');return;}
+    if(!html){mostrarLoad(false);toast('<i class=ph-warning></i> Erro ao gerar HTML');return;}
 
     const owner=GITHUB_USER;
     const repo=GITHUB_REPO;
@@ -2847,17 +2853,17 @@ async function publicarNetlify(){
     });
     if(!putRes.ok){
       const status=putRes.status;
-      if(status===401||status===403){localStorage.removeItem('dml_gh_token');mostrarLoad(false);toast('🔑 Token GitHub expirado ou inválido — reconfigure');configurarTokens();return;}
+      if(status===401||status===403){localStorage.removeItem('dml_gh_token');mostrarLoad(false);toast('<i class=ph-key></i> Token GitHub expirado ou inválido — reconfigure');configurarTokens();return;}
       const t=await putRes.text();throw new Error(`GitHub ${status}: ${t}`);
     }
 
     mostrarLoad(false);
-    toast('🌐 Publicado! escala-dml.netlify.app atualiza em instantes...');
+    toast('<i class=ph-globe></i> Publicado! escala-dml.netlify.app atualiza em instantes...');
   }catch(e){
     mostrarLoad(false);
     console.error('Publish erro:',e);
-    if(e.message.includes('401')||e.message.includes('403')){localStorage.removeItem('dml_gh_token');toast('🔑 Token GitHub expirado — reconfigure');configurarTokens();}
-    else toast('❌ Erro ao publicar: '+e.message);
+    if(e.message.includes('401')||e.message.includes('403')){localStorage.removeItem('dml_gh_token');toast('<i class=ph-key></i> Token GitHub expirado — reconfigure');configurarTokens();}
+    else toast('<i class=ph-x-circle></i> Erro ao publicar: '+e.message);
   }
 }
 
@@ -2872,20 +2878,20 @@ function atualizarPainelAviso(){
 async function carregarAvisoAtual(){
   const st=document.getElementById('aviso-status');
   const ghToken=getGithubToken();
-  if(!ghToken){if(st)st.textContent='⚠️ Token GitHub não configurado';return;}
+  if(!ghToken){if(st)st.textContent='<i class=ph-warning></i> Token GitHub não configurado';return;}
   if(st)st.textContent='Carregando...';
   try{
     const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
       headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
     });
-    if(r.status===401||r.status===403){if(st)st.textContent='⚠️ Token expirado — reconfigure';return;}
+    if(r.status===401||r.status===403){if(st)st.textContent='<i class=ph-warning></i> Token expirado — reconfigure';return;}
     if(!r.ok){if(st)st.textContent='';return;}
     const f=await r.json();
     const dados=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
     document.getElementById('aviso-ativo').checked=!!dados.ativo;
     document.getElementById('aviso-titulo').value=dados.titulo||'';
     document.getElementById('aviso-texto').value=dados.mensagem||'';
-    if(st)st.textContent=dados.ativo?'🟢 Aviso ativo na página pública':'⚫ Aviso desativado';
+    if(st)st.textContent=dados.ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
     atualizarPainelAviso();
   }catch(e){if(st)st.textContent='';}
 }
@@ -2896,7 +2902,7 @@ async function salvarAviso(){
   const ativo=document.getElementById('aviso-ativo').checked;
   const titulo=(document.getElementById('aviso-titulo').value||'').trim();
   const mensagem=(document.getElementById('aviso-texto').value||'').trim();
-  if(ativo&&!mensagem){toast('⚠️ Digite a mensagem do aviso');return;}
+  if(ativo&&!mensagem){toast('<i class=ph-warning></i> Digite a mensagem do aviso');return;}
   const dados={ativo,titulo,mensagem,id:'aviso-'+Date.now()};
   const json=JSON.stringify(dados,null,2);
   const content=btoa(unescape(encodeURIComponent(json)));
@@ -2911,13 +2917,13 @@ async function salvarAviso(){
     });
     if(!putR.ok){
       const s=putR.status;
-      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').textContent='⚠️ Token expirado — reconfigure';configurarTokens();return;}
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').textContent='<i class=ph-warning></i> Token expirado — reconfigure';configurarTokens();return;}
       throw new Error(await putR.text());
     }
-    const statusTxt=ativo?'🟢 Aviso ativo na página pública':'⚫ Aviso desativado';
+    const statusTxt=ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
     document.getElementById('aviso-status').textContent=statusTxt;
-    toast(ativo?'✅ Aviso ativado':'✅ Aviso desativado');
-  }catch(e){toast('❌ Erro ao salvar aviso: '+e.message);}
+    toast(ativo?'<i class=ph-check-circle></i> Aviso ativado':'<i class=ph-check-circle></i> Aviso desativado');
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar aviso: '+e.message);}
 }
 
 // Carrega aviso ao entrar na página inicial
@@ -2979,7 +2985,7 @@ async function renderRiders(){
   if(document.getElementById('cont-surdos'))document.getElementById('cont-surdos').value=cont.surdos||'';
   const todos=todosGrupos().filter(g=>g!==SH_LABEL);
   if(!todos.length){
-    grid.innerHTML=`<div class="empty-state"><div class="icon">⚙️</div><p>Nenhum grupo cadastrado em ⚙️ Grupos.</p></div>`;
+    grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-gear></i></div><p>Nenhum grupo cadastrado em <i class=ph-gear></i> Grupos.</p></div>`;
     return;
   }
   grid.innerHTML=todos.map(g=>{
@@ -3028,16 +3034,16 @@ async function salvarRiderConfig(){
       if(st===401||st===403){localStorage.removeItem('dml_gh_token');configurarTokens();return;}
       throw new Error(await putR.text());
     }
-    toast('✅ PINs salvos com sucesso!');
-  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+    toast('<i class=ph-check-circle></i> PINs salvos com sucesso!');
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+e.message);}
 }
 
 async function renderRiderSubmissions(){
   const wrap=document.getElementById('riders-submissions');
   if(!wrap)return;
-  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Buscando riders enviados...</p>';
+  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0"><i class=ph-hourglass></i> Buscando riders enviados...</p>';
   const todos=todosGrupos().filter(g=>g!==SH_LABEL);
-  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Riders Preenchidos</h3>';
+  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px"><i class=ph-clipboard-text></i> Riders Preenchidos</h3>';
   let hasAny=false;
   for(const g of todos){
     const slug=grupoSlug(g);
@@ -3107,9 +3113,9 @@ function gerarHTMLPublico(){
 // ═══════════════════════════════════════════════
 
 function exportarPagina(){
-  if(!cultos.length){toast('⚠️ Nenhum culto para exportar');return;}
+  if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para exportar');return;}
   const vis=cultos.filter(c=>!c.oculto);
-  if(!vis.length){toast('⚠️ Nenhum culto visível');return;}
+  if(!vis.length){toast('<i class=ph-warning></i> Nenhum culto visível');return;}
   /* -- Proximo mes -- */
   var _MPAR=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var _mlp=mesLabel.split(' ');var _mln=_mlp[0].toLowerCase().replace(/ç/g,'c').replace(/ã/g,'a');
@@ -3158,7 +3164,7 @@ function exportarPagina(){
     const gcUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='
       +encodeURIComponent(c.culto+' — DML')+'&dates='+dtS+'/'+dtE
       +'&details='+encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(lg).join(', '));
-    const waT=encodeURIComponent('📅 *'+c.culto+'*\n🗓 Dia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'🎤 '+c.dirigente+'\n':'')+'🎵 '+grupos.map(lg).join(' | '));
+    const waT=encodeURIComponent('📅 *'+c.culto+'*\n🗓 Dia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'<i class=ph-microphone></i> '+c.dirigente+'\n':'')+'<i class=ph-music-note></i> '+grupos.map(lg).join(' | '));
     const badges=grupos.map(g=>'<span class="badge" data-grupo="'+encodeURIComponent(g)+'" style="background:'+gc(g)+'">'+lg(g)+'</span>').join('');
     return '<div class="culto-row" data-grupos="'+c.grupos.map(encodeURIComponent).join(',')+'" data-data="'+c.data+'">'
       +'<div class="col-hora">'+c.hora+'</div>'
@@ -3168,8 +3174,8 @@ function exportarPagina(){
       +'<div class="culto-countdown" data-data="'+c.data+'"></div>'
       +(badges?'<div class="badges">'+badges+'</div>':'')
       +'<div class="culto-actions">'
-      +'<a class="btn-acao" href="'+gcUrl+'" target="_blank">📅 Calendário</a>'
-      +'<a class="btn-acao" href="https://wa.me/?text='+waT+'" target="_blank">📤 Compartilhar</a>'
+      +'<a class="btn-acao" href="'+gcUrl+'" target="_blank"><i class=ph-calendar></i> Calendário</a>'
+      +'<a class="btn-acao" href="https://wa.me/?text='+waT+'" target="_blank"><i class=ph-share-network></i> Compartilhar</a>'
       +'</div></div></div>';
   }
 
@@ -3202,7 +3208,7 @@ function exportarPagina(){
     }
     return html;
   }
-  var CARDS_PROX=visProx?(visProx.length?gerarCards(visProx,mesProxLabel):'<div class="aguardando-escala"><div class="aguardando-icone">📋</div><div class="aguardando-titulo">Aguardando escala</div><div class="aguardando-sub">A escala de '+mesProxLabel+' ainda não foi definida.</div></div>'):'';
+  var CARDS_PROX=visProx?(visProx.length?gerarCards(visProx,mesProxLabel):'<div class="aguardando-escala"><div class="aguardando-icone"><i class=ph-clipboard-text></i></div><div class="aguardando-titulo">Aguardando escala</div><div class="aguardando-sub">A escala de '+mesProxLabel+' ainda não foi definida.</div></div>'):'';
 
 
 
@@ -3221,6 +3227,9 @@ function exportarPagina(){
     ".logo-txt .igreja{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;}",
     ".hdr-right{display:flex;align-items:center;gap:8px;justify-self:end;}",
     ".mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800;}",
+    "[class^=ph-],[class*=' ph-']{font-family:'Phosphor';font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;}",
+    "i[class^=ph-],i[class*=' ph-']{font-size:1em;vertical-align:-0.12em;display:inline-block;}",
+    "button i,label i,span i{pointer-events:none;}",
     ".btn-ico{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;}",
     ".btn-ico:hover{border-color:#2ab482;color:#2ab482;}",
     ".btn-notif.ativo{border-color:#2ab482;color:#2ab482;background:rgba(42,180,130,.1);}",
@@ -3481,12 +3490,12 @@ function exportarPagina(){
     '    cultosHtml=cultosDia.map(function(c){var cbg=c.grupos.map(function(g){return"<span class=\\"badge\\" style=\\"background:"+corG(g)+"\\">"+lg(g)+"</span>";}).join("");return"<div style=\\"margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)\\">"+"<div style=\\"font-size:12px;font-weight:700;color:#d4a017\\">"+c.hora+"</div>"+"<div style=\\"font-size:13px;font-weight:700\\">"+c.culto+"</div>"+(c.dirigente?"<div style=\\"font-size:11px;color:#2ab482\\">"+c.dirigente+"</div>":"")+(cbg?"<div style=\\"margin-top:4px\\">"+cbg+"</div>":"")+"</div>";}).join("");',
     '  }',
     '  wrap.innerHTML="<div class=\\"proximo-card"+(isDom?" dom":"")+"\\">"',
-    '    +"<div class=\\"proximo-tag\\">⭐ Próximo culto</div>"',
+    '    +"<div class=\\"proximo-tag\\"><i class=ph-star></i> Próximo culto</div>"',
     '    +(isDom&&cultosDia&&cultosDia.length>1',
     '      ?"<div class=\\"proximo-nome\\">"+cultosDia.length+" cultos neste domingo</div><div class=\\"proximo-meta\\">Dia "+p.data+"</div>"+cultosHtml',
     '      :"<div class=\\"proximo-nome\\">"+p.culto+"</div>"',
     '       +"<div class=\\"proximo-meta\\">Dia "+p.data+" · "+p.hora+"</div>"',
-    '       +(p.dirigente?"<div class=\\"proximo-dir\\">🏤 "+p.dirigente+"</div>":"")',
+    '       +(p.dirigente?"<div class=\\"proximo-dir\\"><i class=ph-buildings></i> "+p.dirigente+"</div>":"")',
     '       +(bg?"<div class=\\"proximo-badges\\">"+bg+"</div>":""))',
     '    +"<div class=\\"proximo-countdown\\">"+ct+"</div>"',
     '    +"</div>";',
@@ -3685,8 +3694,8 @@ function exportarPagina(){
     'function _rpInstrOpts(sel){return _RP_INSTRS.map(function(x){return\'<option value="\'+x+\'"\'+(x===sel?\' selected\':\'\')+\'>\'+x+\'</option>\';}).join("");}',
 
     'function _rpHdr(backFn){',
-    '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()">&#8592;</button>\':"";',
-    '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">🎵</span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">🎛 RIDER TÉCNICO</span></div>\';',
+    '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
+    '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-sliders-horizontal></i> RIDER TÉCNICO</span></div>\';',
     '  return\'<div class="rp-hdr-box"><div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
     '}',
 
@@ -3742,7 +3751,7 @@ function exportarPagina(){
 
     'function _rpAbrirEditor(key,labelEnc){',
     '  _RP.cultoKey=key;_RP.cultoLabel=decodeURIComponent(labelEnc);',
-    '  _rpHtml(_rpHdr("_rpMostrarCultos")+"<p class=\\"rp-sub\\">&#9203; Carregando rider...</p>");',
+    '  _rpHtml(_rpHdr("_rpMostrarCultos")+"<p class=\\"rp-sub\\"><i class=ph-hourglass></i> Carregando rider...</p>");',
     '  fetch("https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/riders/"+_RP.slug+"?key="+_RP_KEY)',
     '    .then(function(r){return r.ok?r.json():{};}).then(function(doc){',
     '      _RP.fsDoc=doc;',
@@ -3761,42 +3770,42 @@ function exportarPagina(){
     '  var voz=(window._RP&&_RP.voz)||{qtd:1,fone:false};',
     '  var vozQtdOpts=[1,2,3,4,5,6,7,8,9,10,11,12].map(function(n){return\'<option value="\'+n+\'"\'+(n===(voz.qtd||1)?\' selected\':\'\')+\'>\'+n+\'</option>\';}).join("");',
     '  var vozFoneChk=voz.fone?"checked":"";',
-    '  var vozHtml=\'<div class="rp-voz-row"><label class="rp-voz-lbl">Qtd:</label><select id="rp-voz-qtd" class="rp-instr-sel" style="width:60px">\'+vozQtdOpts+\'</select><label class="rp-check-wrap" style="margin-left:8px"><input type="checkbox" id="rp-voz-fone" \'+vozFoneChk+\'>&#127911;</label></div>\';',
+    '  var vozHtml=\'<div class="rp-voz-row"><label class="rp-voz-lbl">Qtd:</label><select id="rp-voz-qtd" class="rp-instr-sel" style="width:60px">\'+vozQtdOpts+\'</select><label class="rp-check-wrap" style="margin-left:8px"><input type="checkbox" id="rp-voz-fone" \'+vozFoneChk+\'><i class=ph-headphones></i></label></div>\';',
     '  var inpRows=inp.map(function(r,i){',
     '    var foneChk=r.fone?"checked":"";var cantaChk=r.canta?"checked":"";',
     '    return\'<tr>\'',
     '      +\'<td style="width:22px;color:#7a9aa8;font-size:11px;text-align:center;padding-right:2px">\'+(i+1)+\'</td>\'',
     '      +\'<td><select class="rp-instr-sel" id="inp_ins_\'+i+\'">\'+_rpInstrOpts(r.instrumento||"GUITARRA")+\'</select></td>\'',
-    '      +\'<td><label class="rp-check-wrap"><input type="checkbox" id="inp_fone_\'+i+\'" \'+foneChk+\'>&#127911;</label></td>\'',
-    '      +\'<td><label class="rp-check-wrap"><input type="checkbox" id="inp_canta_\'+i+\'" \'+cantaChk+\'>&#127908;</label></td>\'',
-    '      +\'<td><button class="rp-rm" onclick="_rpRemInp(\'+i+\')">&#10005;</button></td></tr>\';',
+    '      +\'<td><label class="rp-check-wrap"><input type="checkbox" id="inp_fone_\'+i+\'" \'+foneChk+\'><i class=ph-headphones></i></label></td>\'',
+    '      +\'<td><label class="rp-check-wrap"><input type="checkbox" id="inp_canta_\'+i+\'" \'+cantaChk+\'><i class=ph-microphone></i></label></td>\'',
+    '      +\'<td><button class="rp-rm" onclick="_rpRemInp(\'+i+\')"><i class=ph-x></i></button></td></tr>\';',
     '  }).join("");',
     '  var setRows=set.map(function(r,i){',
     '    return\'<tr>\'',
     '      +\'<td style="width:22px;color:#7a9aa8;font-size:11px;text-align:center">\'+(i+1)+\'</td>\'',
     '      +\'<td><input class="rp-cell" value="\'+r.musica.replace(/"/g,"&quot;")+\'" placeholder="Nome da música" id="set_mus_\'+i+\'"></td>\'',
     '      +\'<td><input class="rp-cell" value="\'+r.solo.replace(/"/g,"&quot;")+\'" placeholder="Solo (opc.)" id="set_sol_\'+i+\'"></td>\'',
-    '      +\'<td><button class="rp-rm" onclick="_rpRemSet(\'+i+\')">&#10005;</button></td></tr>\';',
+    '      +\'<td><button class="rp-rm" onclick="_rpRemSet(\'+i+\')"><i class=ph-x></i></button></td></tr>\';',
     '  }).join("");',
     '  var cont=(_RP.cfg&&_RP.cfg.contatos)||{};',
     '  var shareBtns=',
     '    \'<div class="rp-share-row">\'',
-    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'tecnico\\\')"><span>🎚</span>Técnico</button>\'',
-    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'midia\\\')"><span>📺</span>Mídia</button>\'',
-    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'surdos\\\')"><span>🤟</span>Surdos</button>\'',
+    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'tecnico\\\')"><span><i class=ph-sliders></i></span>Técnico</button>\'',
+    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'midia\\\')"><span><i class=ph-television-simple></i></span>Mídia</button>\'',
+    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'surdos\\\')"><span><i class=ph-ear></i></span>Surdos</button>\'',
     '    +\'</div>\';',
     '  _rpHtml(_rpHdr("_rpMostrarCultos")',
-    '    +\'<div class="rp-sec" style="margin-top:4px">🎤 Vozes</div>\'',
+    '    +\'<div class="rp-sec" style="margin-top:4px"><i class=ph-microphone></i> Vozes</div>\'',
     '    +vozHtml',
-    '    +\'<div class="rp-sec">🎚 Instrumentos</div>\'',
-    '    +\'<table class="rp-tbl"><thead><tr><th>#</th><th>Instrumento</th><th title="Fone de ouvido">&#127911;</th><th title="Canta">&#127908;</th><th></th></tr></thead><tbody>\'+inpRows+\'</tbody></table>\'',
+    '    +\'<div class="rp-sec"><i class=ph-sliders></i> Instrumentos</div>\'',
+    '    +\'<table class="rp-tbl"><thead><tr><th>#</th><th>Instrumento</th><th title="Fone de ouvido"><i class=ph-headphones></i></th><th title="Canta"><i class=ph-microphone></i></th><th></th></tr></thead><tbody>\'+inpRows+\'</tbody></table>\'',
     '    +\'<button class="rp-add" onclick="_rpAddInp()">+ Adicionar instrumento</button>\'',
-    '    +\'<div class="rp-obs-wrap"><label class="rp-obs-lbl">📝 Observações / Equipamentos especiais</label><textarea id="rp-obs" class="rp-obs" rows="2" placeholder="Ex.: TALKBACK, monitor de retorno, DI box...\">\'+(window._RP&&_RP.obs||\'\')+\'</textarea></div>\'',
-    '    +\'<div class="rp-sec">&#127925; Set List</div>\'',
+    '    +\'<div class="rp-obs-wrap"><label class="rp-obs-lbl"><i class=ph-note-pencil></i> Observações / Equipamentos especiais</label><textarea id="rp-obs" class="rp-obs" rows="2" placeholder="Ex.: TALKBACK, monitor de retorno, DI box...\">\'+(window._RP&&_RP.obs||\'\')+\'</textarea></div>\'',
+    '    +\'<div class="rp-sec"><i class=ph-music-note></i> Set List</div>\'',
     '    +\'<table class="rp-tbl"><thead><tr><th>#</th><th>Música</th><th>Solo</th><th></th></tr></thead><tbody>\'+setRows+\'</tbody></table>\'',
     '    +\'<button class="rp-add" onclick="_rpAddSet()">+ Adicionar música</button>\'',
-    '    +\'<button class="rp-btn" onclick="_rpSalvar()" style="margin-top:4px">&#128190; Salvar rider</button>\'',
-    '    +\'<div class="rp-sec">&#128228; Compartilhar Set List</div>\'',
+    '    +\'<button class="rp-btn" onclick="_rpSalvar()" style="margin-top:4px"><i class=ph-floppy-disk></i> Salvar rider</button>\'',
+    '    +\'<div class="rp-sec"><i class=ph-share-network></i> Compartilhar Set List</div>\'',
     '    +shareBtns);',
     '}',
 
@@ -3844,9 +3853,9 @@ function exportarPagina(){
 
     'function _rpFmtInp(inputList,voz){',
     '  var linhas=[];var n=1;',
-    '  if(voz&&voz.qtd){var lbl=voz.qtd>1?voz.qtd+" Vozes":"Voz";linhas.push(n+". "+lbl+(voz.fone?" 🎧":""));n++;}',
+    '  if(voz&&voz.qtd){var lbl=voz.qtd>1?voz.qtd+" Vozes":"Voz";linhas.push(n+". "+lbl+(voz.fone?" <i class=ph-headphones></i>":""));n++;}',
     '  inputList.forEach(function(r){',
-    '    linhas.push(n+". "+r.instrumento+(r.fone?" 🎧":"")+(r.canta?" 🎙":""));n++;',
+    '    linhas.push(n+". "+r.instrumento+(r.fone?" <i class=ph-headphones></i>":"")+(r.canta?" <i class=ph-microphone-stage></i>":""));n++;',
     '  });',
     '  return linhas.join("\\n");',
     '}',
@@ -3855,7 +3864,7 @@ function exportarPagina(){
     '  var d=_rpColeta();',
     '  var cont=(_RP.cfg&&_RP.cfg.contatos)||{};',
     '  var phone=dest==="tecnico"?cont.tecnico:dest==="midia"?cont.midia:cont.surdos;',
-    '  var hdr="🎛 *Rider — "+_RP.nome+"*\\n📅 "+_RP.cultoLabel+"\\n\\n";',
+    '  var hdr="🎛 *Rider — "+_RP.nome+"*\\n<i class=ph-calendar></i> "+_RP.cultoLabel+"\\n\\n";',
     '  var setTxt=d.setList.length?"🎵 *SET LIST*\\n"+d.setList.map(function(r,i){return(i+1)+". "+r.musica+(r.solo?" — Solo: "+r.solo:"");}).join("\\n"):"";',
     '  var inpTxt=(dest==="tecnico")?"🎚 *INPUT LIST*\\n"+_rpFmtInp(d.inputList,d.voz)+"\\n\\n":"";',
     '  var obsTxt=(dest==="tecnico"&&d.obs)?"\\n📝 *Observações*\\n"+d.obs+"\\n":"";',
@@ -3871,6 +3880,7 @@ function exportarPagina(){
     +'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">\n'
     +'<meta name="theme-color" content="#111820">\n'
     +'<title>Escala DML \u2014 '+mesLabel+'</title>\n'
+    +'<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
     +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
     +'<style>\n'+CSS+'\n</style>\n'
     +'</head>\n<body>\n'
@@ -3931,7 +3941,7 @@ function exportarPagina(){
     // cards
     +'<main id="main-atual" class="aba-vis">\n'+gerarCards()+'\n</main>\n'
     +(visProx?'<main id="main-prox" style="display:none">\n'+CARDS_PROX+'\n</main>\n':'')
-    +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span>📄 Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
+    +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span><i class=ph-file-text></i> Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
     +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
     +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
     +'<div id="rp-overlay" class="rp-overlay" style="display:none" onclick="if(event.target===this)fecharRiderPanel()"><div class="rp-panel" id="rp-panel"><button class="rp-close" onclick="fecharRiderPanel()">\u2715</button><div id="rp-content"></div></div></div>\n'
@@ -3951,7 +3961,7 @@ function exportarPagina(){
 // ═══════════════════════════════════════════════
 function mostrarLoad(s){document.getElementById('loading-overlay').classList.toggle('show',s);}
 let _tt;
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
+function toast(msg){const el=document.getElementById('toast');el.innerHTML=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
 
 // ═══════════════════════════════════════════════
 // CALENDÁRIO
@@ -4001,7 +4011,7 @@ function confirmarCalendario(){
   mesLabel=`${MESES_PT[mes]} ${ano}`;
   fecharModal('modal-cal');
   abrirEditor();
-  toast(`✅ ${lista.length} cultos gerados para ${mesLabel}`);
+  toast(`<i class=ph-check-circle></i> ${lista.length} cultos gerados para ${mesLabel}`);
 }
 
 // ═══════════════════════════════════════════════
@@ -4011,7 +4021,7 @@ function limparEscala(){
   if(!confirm('Limpar todos os cultos da escala atual? Esta ação não pode ser desfeita.'))return;
   cultos=[];
   renderCultos();
-  toast('🗑 Escala limpa');
+  toast('<i class=ph-trash></i> Escala limpa');
 }
 
 function irPara(p){
@@ -4083,24 +4093,24 @@ function addTmplChip(){
 function salvarTemplate(){
   const nome=document.getElementById('tmpl-nome').value.trim();
   const culto=document.getElementById('tmpl-culto').value.trim().toUpperCase();
-  if(!nome){toast('⚠️ Digite o nome do template');return;}
+  if(!nome){toast('<i class=ph-warning></i> Digite o nome do template');return;}
   const tmpls=getTmpls();
   tmpls.push({id:'t'+Date.now(),nome,culto,grupos:[..._tmplGrupos]});
   saveTmpls(tmpls);
   fecharFormTemplate();
   renderTemplates();
-  toast('✅ Template salvo!');
+  toast('<i class=ph-check-circle></i> Template salvo!');
 }
 
 function excluirTemplate(id){
   if(!confirm('Excluir este template?'))return;
   saveTmpls(getTmpls().filter(t=>t.id!==id));
-  renderTemplates();toast('🗑 Template removido');
+  renderTemplates();toast('<i class=ph-trash></i> Template removido');
 }
 
 function aplicarTemplate(id){
   const t=getTmpls().find(t=>t.id===id);
-  if(!t||!cultos.length){toast('⚠️ Abra uma escala primeiro');return;}
+  if(!t||!cultos.length){toast('<i class=ph-warning></i> Abra uma escala primeiro');return;}
   // Abre modal de culto especial pré-preenchido
   document.getElementById('esp-culto').value=t.culto;
   // Vai para edição e abre modal especial
@@ -4110,7 +4120,7 @@ function aplicarTemplate(id){
     // Pre-fill grupos
     _eg=[...t.grupos];renderChips();
   },200);
-  toast('📋 Template carregado no formulário');
+  toast('<i class=ph-clipboard-text></i> Template carregado no formulário');
 }
 
 function aplicarTemplateAoCulto(tmplId,cultoId){
@@ -4121,14 +4131,14 @@ function aplicarTemplateAoCulto(tmplId,cultoId){
   t.grupos.forEach(g=>{if(!c.grupos.includes(g))c.grupos.push(g);});
   c.grupos=sortGrupos(c.grupos);
   renderCultos();
-  toast(`✅ Template "${t.nome}" aplicado!`);
+  toast(`<i class=ph-check-circle></i> Template "${t.nome}" aplicado!`);
 }
 
 function renderTemplates(){
   const tmpls=getTmpls();
   const grid=document.getElementById('tmpl-grid');
   if(!tmpls.length){
-    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>Nenhum template salvo ainda.<br>Crie templates para agilizar a montagem mensal.</p></div>`;
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon"><i class=ph-clipboard-text></i></div><p>Nenhum template salvo ainda.<br>Crie templates para agilizar a montagem mensal.</p></div>`;
     return;
   }
   grid.innerHTML=tmpls.map(t=>`
@@ -4138,7 +4148,7 @@ function renderTemplates(){
       <div class="tmpl-tags">${t.grupos.map(g=>`<span class="gbadge ${badgeClass(g)}">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}</div>
       <div class="tmpl-actions">
         <button class="btn btn-outline btn-sm" onclick="aplicarTemplate('${t.id}')">▶ Usar</button>
-        <button class="btn-danger" onclick="excluirTemplate('${t.id}')">🗑</button>
+        <button class="btn-danger" onclick="excluirTemplate('${t.id}')"><i class=ph-trash></i></button>
       </div>
     </div>`).join('');
 }
@@ -4191,13 +4201,13 @@ function baixarQR(){
   a.download=`qr-escala-dml.png`;
   a.href=canvas.toDataURL('image/png');
   a.click();
-  toast('⬇ QR Code baixado!');
+  toast('<i class=ph-download-simple></i> QR Code baixado!');
 }
 
 function copiarLink(){
   const url=document.getElementById('qr-url').value.trim();
-  if(!url){toast('⚠️ Digite o link primeiro');return;}
-  navigator.clipboard.writeText(url).then(()=>toast('📋 Link copiado!'));
+  if(!url){toast('<i class=ph-warning></i> Digite o link primeiro');return;}
+  navigator.clipboard.writeText(url).then(()=>toast('<i class=ph-clipboard-text></i> Link copiado!'));
 }
 
 // ═══════════════════════════════════════════════
@@ -4215,7 +4225,7 @@ function duplicarMes(id){
   abrirModalCalendario();
   // Ao confirmar, preserva grupos do mês original por tipo de culto
   _duplicarFonte=d;
-  toast('📋 Escolha o mês destino no calendário');
+  toast('<i class=ph-clipboard-text></i> Escolha o mês destino no calendário');
 }
 
 let _duplicarFonte=null;
@@ -4247,7 +4257,7 @@ function _confirmarCalendarioDuplicar(){
     if(mapaGrupos[c.culto]) c.grupos=sortGrupos([...mapaGrupos[c.culto]]);
   });
   renderCultos();
-  toast(`✅ Escala duplicada de "${fonte.mesLabel}" para ${MESES_PT[mes]} ${ano}!`);
+  toast(`<i class=ph-check-circle></i> Escala duplicada de "${fonte.mesLabel}" para ${MESES_PT[mes]} ${ano}!`);
 }
 
 // ═══════════════════════════════════════════════
@@ -4289,7 +4299,7 @@ function renderAlertaInativos(containerId='alerta-inativos-semana'){
   if(!box)return;
   if(!inativos.length){box.innerHTML='';return;}
   box.innerHTML=`<div class="alerta-inativo">
-    <strong>⚠️ Grupos não escalados este mês</strong>
+    <strong><i class=ph-warning></i> Grupos não escalados este mês</strong>
     ${inativos.map(g=>`<span class="grupo-alerta">${g===SH_LABEL?'S&H':g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
   </div>`;
 }
@@ -4544,7 +4554,7 @@ async function exportarSheets(){
   }
   const wb=window.XLSX.utils.book_new();
   const idx=getIdx();
-  if(!idx.length){toast('⚠️ Nenhuma escala salva');return;}
+  if(!idx.length){toast('<i class=ph-warning></i> Nenhuma escala salva');return;}
 
   // Aba de resumo geral
   const resumo=[['Mês','Total Cultos','Com Grupo','Sem Grupo']];
@@ -4576,7 +4586,7 @@ async function exportarSheets(){
   window.XLSX.utils.book_append_sheet(wb,window.XLSX.utils.aoa_to_sheet(rankRows),'Ranking');
 
   window.XLSX.writeFile(wb,`escala-dml-${new Date().getFullYear()}.xlsx`);
-  toast('📊 Arquivo Excel exportado! Abra no Google Sheets.');
+  toast('<i class=ph-chart-bar></i> Arquivo Excel exportado! Abra no Google Sheets.');
 }
 
 // ═══════════════════════════════════════════════
@@ -4616,7 +4626,7 @@ function configurarPush(){
 
 function salvarPushId(){
   const id=document.getElementById('onesignal-id').value.trim();
-  if(id){localStorage.setItem('dml_onesignal_id',id);toast('✅ App ID salvo! Exporte a página para ativar as notificações.');}
+  if(id){localStorage.setItem('dml_onesignal_id',id);toast('<i class=ph-check-circle></i> App ID salvo! Exporte a página para ativar as notificações.');}
   document.getElementById('push-modal')?.remove();
 }
 
@@ -4686,7 +4696,7 @@ function npKeyMes(){ return mesLabel?`dml_np_mes_${mesLabel.replace(/\s/g,'_')}`
 function carregarNotepadMes(){
   const lbl=document.getElementById('np-mes-label');
   const area=document.getElementById('notepad-mes-area');
-  if(lbl)lbl.textContent=mesLabel?`📅 Notas de ${mesLabel}`:'(abra uma escala primeiro)';
+  if(lbl)lbl.textContent=mesLabel?`<i class=ph-calendar></i> Notas de ${mesLabel}`:'(abra uma escala primeiro)';
   const key=npKeyMes();
   if(area&&key)area.value=localStorage.getItem(key)||'';
 }
@@ -4778,7 +4788,7 @@ function limparNotepadAtual(){
     renderTasks();
   }
   atualizarToggleNotepad();
-  toast('🗑 Limpo!');
+  toast('<i class=ph-trash></i> Limpo!');
 }
 
 // ═══════════════════════════════════════════════
@@ -4847,9 +4857,9 @@ function fbUserPath(sub){ return `usuarios/${window._fbUser?.uid}/${sub}`; }
 function setSyncStatus(s){
   const el=document.getElementById('sync-status');
   if(!el)return;
-  if(s==='ok'){el.textContent='☁️ Salvo';el.className='sync-indicator sync-ok';}
-  else if(s==='saving'){el.textContent='⏳ Salvando...';el.className='sync-indicator sync-saving';}
-  else{el.textContent='⚠️ Erro sync';el.className='sync-indicator sync-err';}
+  if(s==='ok'){el.textContent='<i class=ph-cloud></i> Salvo';el.className='sync-indicator sync-ok';}
+  else if(s==='saving'){el.textContent='<i class=ph-hourglass></i> Salvando...';el.className='sync-indicator sync-saving';}
+  else{el.textContent='<i class=ph-warning></i> Erro sync';el.className='sync-indicator sync-err';}
 }
 
 // ── Salvar sessão no Firestore
@@ -4950,7 +4960,7 @@ async function carregarDadosFirebase(){
 // OVERRIDE: salvarSessao usa Firebase
 // ═══════════════════════════════════════════════
 async function salvarSessao(){
-  if(!cultos.length){toast('⚠️ Nenhum culto para salvar');return;}
+  if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para salvar');return;}
   if(!sessaoId)sessaoId='s'+Date.now();
   const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now()};
 
@@ -4966,16 +4976,16 @@ async function salvarSessao(){
     // Online — salva no Firebase direto
     await salvarSessaoFirebase(sessaoId,dados);
     salvarConfigFirebase();
-    toast('✅ Escala salva na nuvem!');
+    toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
   } else if(window._fbUser){
     // Offline — adiciona à fila de sync
     _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
     localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
     setSyncStatus('offline');
-    toast('💾 Salvo localmente — sincronizará quando voltar a conexão');
+    toast('<i class=ph-floppy-disk></i> Salvo localmente — sincronizará quando voltar a conexão');
   } else {
     setSyncStatus('err');
-    toast('💾 Salvo localmente');
+    toast('<i class=ph-floppy-disk></i> Salvo localmente');
   }
 
   renderHist();
@@ -5005,12 +5015,12 @@ async function carregarSessao(id){
     if(raw)dados=JSON.parse(raw);
   }
   mostrarLoad(false);
-  if(!dados){toast('❌ Sessão não encontrada');return;}
+  if(!dados){toast('<i class=ph-x-circle></i> Sessão não encontrada');return;}
   sessaoId=dados.id||id;
   mesLabel=dados.mesLabel||'';
   cultos=(dados.cultos||[]).map(c=>({...c,id:c.id||uid()}));
   abrirEditor();
-  toast(`✅ ${mesLabel} carregada`);
+  toast(`<i class=ph-check-circle></i> ${mesLabel} carregada`);
 }
 
 // ═══════════════════════════════════════════════
@@ -5054,7 +5064,7 @@ async function restaurarDaLixeira(id){
     await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/lixeira`,id)).catch(console.error);
   }
   renderHist();renderLixeira();
-  toast(`✅ "${item.mesLabel}" restaurada!`);
+  toast(`<i class=ph-check-circle></i> "${item.mesLabel}" restaurada!`);
 }
 
 async function excluirDefinitivo(id){
@@ -5064,7 +5074,7 @@ async function excluirDefinitivo(id){
     const{doc,deleteDoc}=window._fbFns;
     await deleteDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/lixeira`,id)).catch(console.error);
   }
-  renderLixeira();toast('🗑 Excluído definitivamente');
+  renderLixeira();toast('<i class=ph-trash></i> Excluído definitivamente');
 }
 
 async function esvaziarLixeira(){
@@ -5077,7 +5087,7 @@ async function esvaziarLixeira(){
     }
   }
   saveLixeira([]);
-  renderLixeira();toast('🗑 Lixeira esvaziada');
+  renderLixeira();toast('<i class=ph-trash></i> Lixeira esvaziada');
 }
 
 // Limpa itens com mais de 30 dias automaticamente
@@ -5098,24 +5108,24 @@ function renderLixeira(){
   }
   if(!grid)return;
   if(!lixeira.length){
-    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">🗑</div><p>Lixeira vazia.</p></div>`;
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon"><i class=ph-trash></i></div><p>Lixeira vazia.</p></div>`;
     return;
   }
   const agora=Date.now();
   grid.innerHTML=`<div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-bottom:4px">
-    <button class="btn btn-ghost btn-sm" style="color:#e06060;border-color:#7a2020" onclick="esvaziarLixeira()">🗑 Esvaziar lixeira</button>
+    <button class="btn btn-ghost btn-sm" style="color:#e06060;border-color:#7a2020" onclick="esvaziarLixeira()"><i class=ph-trash></i> Esvaziar lixeira</button>
   </div>`+lixeira.map(d=>{
     const diasRestantes=Math.max(0,LIXEIRA_DIAS-Math.floor((agora-(d.deletedAt||0))/86400000));
     const top3=[...new Set((d.cultos||[]).flatMap(c=>c.grupos||[]))].filter(g=>g!==SH_LABEL).slice(0,3);
     return`<div class="hist-card lixeira-card">
       <div class="hist-mes">${d.mesLabel||'Sem título'}</div>
       <div class="hist-meta">${(d.cultos||[]).length} cultos</div>
-      <div class="lixeira-expira">⏳ Expira em ${diasRestantes} dia${diasRestantes!==1?'s':''}</div>
+      <div class="lixeira-expira"><i class=ph-hourglass></i> Expira em ${diasRestantes} dia${diasRestantes!==1?'s':''}</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">
         ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
       </div>
       <div class="hist-actions">
-        <button class="btn btn-outline btn-sm" onclick="restaurarDaLixeira('${d.id}')">↩ Restaurar</button>
+        <button class="btn btn-outline btn-sm" onclick="restaurarDaLixeira('${d.id}')"><i class=ph-arrow-counter-clockwise></i> Restaurar</button>
         <button class="btn-danger" onclick="excluirDefinitivo('${d.id}')">✕ Excluir</button>
       </div>
     </div>`;
@@ -5146,7 +5156,7 @@ async function excluirSessao(id){
   localStorage.removeItem(SK(id));
   renderHist();renderLixeira();
   renderLixeira();
-  toast('🗑 Movido para a lixeira');
+  toast('<i class=ph-trash></i> Movido para a lixeira');
 }
 
 // ═══════════════════════════════════════════════
@@ -5155,7 +5165,7 @@ async function excluirSessao(id){
 async function renderHist(busca=''){
   const grid=document.getElementById('hist-grid');
   if(!grid)return;
-  grid.innerHTML=`<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>`;
+  grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-hourglass></i></div><p>Carregando...</p></div>`;
 
   let idx=[];
   if(window._fbUser) idx=await getIdxFirebase();
@@ -5174,7 +5184,7 @@ async function renderHist(busca=''){
   const filtrados=sessions.filter(d=>!busca||d.mesLabel?.toLowerCase().includes(busca.toLowerCase())||d.cultos?.some(c=>c.grupos?.some(g=>g.toLowerCase().includes(busca.toLowerCase()))));
 
   if(!filtrados.length){
-    grid.innerHTML=`<div class="empty-state"><div class="icon">📁</div><p>${busca?'Nenhum resultado.':'Nenhuma escala salva ainda.'}</p></div>`;return;
+    grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-folder-open></i></div><p>${busca?'Nenhum resultado.':'Nenhuma escala salva ainda.'}</p></div>`;return;
   }
 
   filtrados.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
@@ -5188,10 +5198,10 @@ async function renderHist(busca=''){
         ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
       </div>
       <div class="hist-actions">
-        <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')">✏️ Abrir</button>
-        <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')">👁 Ver</button>
-        <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')">📋 Duplicar</button>
-        <button class="btn-danger" onclick="excluirSessao('${id}')">🗑</button>
+        <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')"><i class=ph-pencil-simple></i> Abrir</button>
+        <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')"><i class=ph-eye></i> Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')"><i class=ph-clipboard-text></i> Duplicar</button>
+        <button class="btn-danger" onclick="excluirSessao('${id}')"><i class=ph-trash></i></button>
       </div>
     </div>`;
   }).join('');
