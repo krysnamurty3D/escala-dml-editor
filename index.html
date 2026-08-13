@@ -3165,7 +3165,7 @@ function exportarPagina(){
     const gcUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='
       +encodeURIComponent(c.culto+' — DML')+'&dates='+dtS+'/'+dtE
       +'&details='+encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(lg).join(', '));
-    const waT=encodeURIComponent('📅 *'+c.culto+'*\n🗓 Dia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'<i class=ph-microphone></i> '+c.dirigente+'\n':'')+'<i class=ph-music-note></i> '+grupos.map(lg).join(' | '));
+    const waT=encodeURIComponent('*'+c.culto+'*\nDia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'Dirigente: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(lg).join(' | '));
     const badges=grupos.map(g=>'<span class="badge" data-grupo="'+encodeURIComponent(g)+'" style="background:'+gc(g)+'">'+lg(g)+'</span>').join('');
     return '<div class="culto-row" data-grupos="'+c.grupos.map(encodeURIComponent).join(',')+'" data-data="'+c.data+'">'
       +'<div class="col-hora">'+c.hora+'</div>'
@@ -3594,8 +3594,8 @@ function exportarPagina(){
     '  var cd=g==="todos"?CULTOS:CULTOS.filter(function(c){return c.grupos.indexOf(g)>=0;});',
     '  var fut=cd.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
     '  if(!fut.length){alert("Nenhum culto futuro.");return;}',
-    '  var linhas=fut.map(function(c){return"\uD83D\uDCC5 Dia "+c.data+" \u00B7 "+c.hora+" \u2014 "+c.culto+(c.dirigente?" ("+c.dirigente+")":"");});',
-    '  var txt="*Escala DML \u2014 "+MES+"*"+(g!=="todos"?"\\n*Grupo: "+g+"*":"")+"\\n\\n"+linhas.join("\\n")+"\\n\\n\uD83D\uDD17 "+location.href;',
+    '  var linhas=fut.map(function(c){return"Dia "+c.data+" \u00B7 "+c.hora+" \u2014 "+c.culto+(c.dirigente?" ("+c.dirigente+")":"");});',
+    '  var txt="*Escala DML \u2014 "+MES+"*"+(g!=="todos"?"\\n*Grupo: "+g+"*":"")+"\\n\\n"+linhas.join("\\n")+"\\n\\n"+location.href;',
     '  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");',
     '}',
 
@@ -3855,9 +3855,9 @@ function exportarPagina(){
 
     'function _rpFmtInp(inputList,voz){',
     '  var linhas=[];var n=1;',
-    '  if(voz&&voz.qtd){var lbl=voz.qtd>1?voz.qtd+" Vozes":"Voz";linhas.push(n+". "+lbl+(voz.fone?" 🎧":""));n++;}',
+    '  if(voz&&voz.qtd){var lbl=voz.qtd>1?voz.qtd+" Vozes":"Voz";linhas.push(n+". "+lbl+(voz.fone?" (fone)":""));n++;}',
     '  inputList.forEach(function(r){',
-    '    linhas.push(n+". "+r.instrumento+(r.fone?" 🎧":"")+(r.canta?" 🎤":""));n++;',
+    '    linhas.push(n+". "+r.instrumento+(r.fone?" (fone)":"")+(r.canta?" (canta)":""));n++;',
     '  });',
     '  return linhas.join("\\n");',
     '}',
@@ -3866,10 +3866,10 @@ function exportarPagina(){
     '  var d=_rpColeta();',
     '  var cont=(_RP.cfg&&_RP.cfg.contatos)||{};',
     '  var phone=dest==="tecnico"?cont.tecnico:dest==="midia"?cont.midia:cont.surdos;',
-    '  var hdr="🎛 *Rider — "+_RP.nome+"*\\n📅 "+_RP.cultoLabel+"\\n\\n";',
-    '  var setTxt=d.setList.length?"🎵 *SET LIST*\\n"+d.setList.map(function(r,i){return(i+1)+". "+r.musica+(r.solo?" — Solo: "+r.solo:"");}).join("\\n"):"";',
-    '  var inpTxt=(dest==="tecnico")?"🎚 *INPUT LIST*\\n"+_rpFmtInp(d.inputList,d.voz)+"\\n\\n":"";',
-    '  var obsTxt=(dest==="tecnico"&&d.obs)?"\\n📝 *Observações*\\n"+d.obs+"\\n":"";',
+    '  var hdr="*Rider — "+_RP.nome+"*\\n"+_RP.cultoLabel+"\\n\\n";',
+    '  var setTxt=d.setList.length?"*SET LIST*\\n"+d.setList.map(function(r,i){return(i+1)+". "+r.musica+(r.solo?" — Solo: "+r.solo:"");}).join("\\n"):"";',
+    '  var inpTxt=(dest==="tecnico")?"*INPUT LIST*\\n"+_rpFmtInp(d.inputList,d.voz)+"\\n\\n":"";',
+    '  var obsTxt=(dest==="tecnico"&&d.obs)?"\\n*Observações*\\n"+d.obs+"\\n":"";',
     '  var txt=hdr+inpTxt+setTxt+obsTxt;',
     '  var url=phone?"https://wa.me/"+phone.replace(/\\D/g,"")+"?text="+encodeURIComponent(txt):"https://wa.me/?text="+encodeURIComponent(txt);',
     '  window.open(url,"_blank");',
