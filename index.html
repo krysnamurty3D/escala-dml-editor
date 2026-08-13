@@ -3874,6 +3874,7 @@ function exportarPagina(){
     '  var url=phone?"https://wa.me/"+phone.replace(/\\D/g,"")+"?text="+encodeURIComponent(txt):"https://wa.me/?text="+encodeURIComponent(txt);',
     '  window.open(url,"_blank");',
     '}',
+    'document.addEventListener("DOMContentLoaded",function(){document.querySelectorAll("i[class]").forEach(function(el){if(/(?:^| )ph-/.test(el.className))el.classList.add("ph");});});',
   ].join('\n');
 
   /* ── Monta HTML ── */
@@ -5220,6 +5221,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   const sel=document.getElementById('cal-mes');
   if(sel)sel.value=now.getMonth();
 });
+
+// Phosphor icons require class "ph" + "ph-name". Since markup uses only "ph-name"
+// to avoid quoting conflicts in JS strings, we patch the DOM here and via MutationObserver.
+function _phPatch(root){(root||document).querySelectorAll('i[class]').forEach(el=>{if(/(?:^| )ph-/.test(el.className))el.classList.add('ph');});}
+document.addEventListener('DOMContentLoaded',()=>_phPatch());
+new MutationObserver(muts=>{muts.forEach(m=>{m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.matches('i[class*="ph-"]'))n.classList.add('ph');n.querySelectorAll('i[class*="ph-"]').forEach(el=>el.classList.add('ph'));});});}).observe(document.documentElement,{childList:true,subtree:true});
 </script>
 </body>
 </html>
