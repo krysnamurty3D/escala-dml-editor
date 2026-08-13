@@ -3855,9 +3855,9 @@ function exportarPagina(){
 
     'function _rpFmtInp(inputList,voz){',
     '  var linhas=[];var n=1;',
-    '  if(voz&&voz.qtd){var lbl=voz.qtd>1?voz.qtd+" Vozes":"Voz";linhas.push(n+". "+lbl+(voz.fone?" <i class=ph-headphones></i>":""));n++;}',
+    '  if(voz&&voz.qtd){var lbl=voz.qtd>1?voz.qtd+" Vozes":"Voz";linhas.push(n+". "+lbl+(voz.fone?" 🎧":""));n++;}',
     '  inputList.forEach(function(r){',
-    '    linhas.push(n+". "+r.instrumento+(r.fone?" <i class=ph-headphones></i>":"")+(r.canta?" <i class=ph-microphone-stage></i>":""));n++;',
+    '    linhas.push(n+". "+r.instrumento+(r.fone?" 🎧":"")+(r.canta?" 🎤":""));n++;',
     '  });',
     '  return linhas.join("\\n");',
     '}',
@@ -3866,7 +3866,7 @@ function exportarPagina(){
     '  var d=_rpColeta();',
     '  var cont=(_RP.cfg&&_RP.cfg.contatos)||{};',
     '  var phone=dest==="tecnico"?cont.tecnico:dest==="midia"?cont.midia:cont.surdos;',
-    '  var hdr="🎛 *Rider — "+_RP.nome+"*\\n<i class=ph-calendar></i> "+_RP.cultoLabel+"\\n\\n";',
+    '  var hdr="🎛 *Rider — "+_RP.nome+"*\\n📅 "+_RP.cultoLabel+"\\n\\n";',
     '  var setTxt=d.setList.length?"🎵 *SET LIST*\\n"+d.setList.map(function(r,i){return(i+1)+". "+r.musica+(r.solo?" — Solo: "+r.solo:"");}).join("\\n"):"";',
     '  var inpTxt=(dest==="tecnico")?"🎚 *INPUT LIST*\\n"+_rpFmtInp(d.inputList,d.voz)+"\\n\\n":"";',
     '  var obsTxt=(dest==="tecnico"&&d.obs)?"\\n📝 *Observações*\\n"+d.obs+"\\n":"";',
@@ -3874,7 +3874,9 @@ function exportarPagina(){
     '  var url=phone?"https://wa.me/"+phone.replace(/\\D/g,"")+"?text="+encodeURIComponent(txt):"https://wa.me/?text="+encodeURIComponent(txt);',
     '  window.open(url,"_blank");',
     '}',
-    'document.addEventListener("DOMContentLoaded",function(){document.querySelectorAll("i[class]").forEach(function(el){if(/(?:^| )ph-/.test(el.className))el.classList.add("ph");});});',
+    'function _phPatch(root){(root||document).querySelectorAll(\'i[class]\').forEach(function(el){if(/(?:^| )ph-/.test(el.className))el.classList.add("ph");});}',
+    'document.addEventListener("DOMContentLoaded",function(){_phPatch();});',
+    'new MutationObserver(function(muts){muts.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType!==1)return;if(n.matches&&n.matches(\'i[class*="ph-"]\'))n.classList.add("ph");if(n.querySelectorAll)n.querySelectorAll(\'i[class*="ph-"]\').forEach(function(el){el.classList.add("ph");});});});}).observe(document.documentElement,{childList:true,subtree:true});',
   ].join('\n');
 
   /* ── Monta HTML ── */
