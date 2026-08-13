@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escala DML</title>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Firebase SDK -->
@@ -63,6 +63,7 @@ header{background:var(--navy);border-bottom:2px solid var(--teal-dim);padding:9p
 
 /* ── ICONS ── */
 [class^="ph-"],[class*=" ph-"]{font-family:'Phosphor';font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;}
+[class^="ph-"]::before,[class*=" ph-"]::before{font-family:'Phosphor' !important;}
 i[class^="ph-"],i[class*=" ph-"]{font-size:1em;vertical-align:-0.12em;display:inline-block;}
 button i,a i,label i,span i{pointer-events:none;}
 
@@ -2029,7 +2030,7 @@ function atualizarStatusOnline(){
   const banner=document.getElementById('offline-banner');
   const sync=document.getElementById('sync-status');
   if(banner)banner.classList.toggle('show',!_online);
-  if(sync&&!_online){sync.textContent='<i class=ph-wifi-slash></i> Offline';sync.className='sync-indicator offline';}
+  if(sync&&!_online){sync.innerHTML='<i class=ph-wifi-slash></i> Offline';sync.className='sync-indicator offline';}
 }
 
 window.addEventListener('online',async()=>{
@@ -2878,20 +2879,20 @@ function atualizarPainelAviso(){
 async function carregarAvisoAtual(){
   const st=document.getElementById('aviso-status');
   const ghToken=getGithubToken();
-  if(!ghToken){if(st)st.textContent='<i class=ph-warning></i> Token GitHub não configurado';return;}
+  if(!ghToken){if(st)st.innerHTML='<i class=ph-warning></i> Token GitHub não configurado';return;}
   if(st)st.textContent='Carregando...';
   try{
     const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
       headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
     });
-    if(r.status===401||r.status===403){if(st)st.textContent='<i class=ph-warning></i> Token expirado — reconfigure';return;}
+    if(r.status===401||r.status===403){if(st)st.innerHTML='<i class=ph-warning></i> Token expirado — reconfigure';return;}
     if(!r.ok){if(st)st.textContent='';return;}
     const f=await r.json();
     const dados=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
     document.getElementById('aviso-ativo').checked=!!dados.ativo;
     document.getElementById('aviso-titulo').value=dados.titulo||'';
     document.getElementById('aviso-texto').value=dados.mensagem||'';
-    if(st)st.textContent=dados.ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
+    if(st)st.innerHTML=dados.ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
     atualizarPainelAviso();
   }catch(e){if(st)st.textContent='';}
 }
@@ -2917,7 +2918,7 @@ async function salvarAviso(){
     });
     if(!putR.ok){
       const s=putR.status;
-      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').textContent='<i class=ph-warning></i> Token expirado — reconfigure';configurarTokens();return;}
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').innerHTML='<i class=ph-warning></i> Token expirado — reconfigure';configurarTokens();return;}
       throw new Error(await putR.text());
     }
     const statusTxt=ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
@@ -3228,6 +3229,7 @@ function exportarPagina(){
     ".hdr-right{display:flex;align-items:center;gap:8px;justify-self:end;}",
     ".mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800;}",
     "[class^='ph-'],[class*=' ph-']{font-family:'Phosphor';font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;}",
+    "[class^='ph-']::before,[class*=' ph-']::before{font-family:'Phosphor' !important;}",
     "i[class^='ph-'],i[class*=' ph-']{font-size:1em;vertical-align:-0.12em;display:inline-block;}",
     "button i,label i,span i{pointer-events:none;}",
     ".btn-ico{background:none;border:1px solid #2a3a4a;border-radius:8px;color:#7a9aa8;padding:6px 10px;font-size:18px;cursor:pointer;line-height:1;}",
@@ -3880,7 +3882,7 @@ function exportarPagina(){
     +'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">\n'
     +'<meta name="theme-color" content="#111820">\n'
     +'<title>Escala DML \u2014 '+mesLabel+'</title>\n'
-    +'<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
+    +'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
     +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
     +'<style>\n'+CSS+'\n</style>\n'
     +'</head>\n<body>\n'
@@ -4696,7 +4698,7 @@ function npKeyMes(){ return mesLabel?`dml_np_mes_${mesLabel.replace(/\s/g,'_')}`
 function carregarNotepadMes(){
   const lbl=document.getElementById('np-mes-label');
   const area=document.getElementById('notepad-mes-area');
-  if(lbl)lbl.textContent=mesLabel?`<i class=ph-calendar></i> Notas de ${mesLabel}`:'(abra uma escala primeiro)';
+  if(lbl)lbl.innerHTML=mesLabel?`<i class=ph-calendar></i> Notas de ${mesLabel}`:'(abra uma escala primeiro)';
   const key=npKeyMes();
   if(area&&key)area.value=localStorage.getItem(key)||'';
 }
@@ -4857,9 +4859,9 @@ function fbUserPath(sub){ return `usuarios/${window._fbUser?.uid}/${sub}`; }
 function setSyncStatus(s){
   const el=document.getElementById('sync-status');
   if(!el)return;
-  if(s==='ok'){el.textContent='<i class=ph-cloud></i> Salvo';el.className='sync-indicator sync-ok';}
-  else if(s==='saving'){el.textContent='<i class=ph-hourglass></i> Salvando...';el.className='sync-indicator sync-saving';}
-  else{el.textContent='<i class=ph-warning></i> Erro sync';el.className='sync-indicator sync-err';}
+  if(s==='ok'){el.innerHTML='<i class=ph-cloud></i> Salvo';el.className='sync-indicator sync-ok';}
+  else if(s==='saving'){el.innerHTML='<i class=ph-hourglass></i> Salvando...';el.className='sync-indicator sync-saving';}
+  else{el.innerHTML='<i class=ph-warning></i> Erro sync';el.className='sync-indicator sync-err';}
 }
 
 // ── Salvar sessão no Firestore
