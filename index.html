@@ -831,7 +831,7 @@ tr.esp-row .td-dia{color:#c03030;}
     <button class="btn-preview-rt" id="btn-preview-rt" onclick="togglePreviewRT()"><i class=ph-eye></i> Preview</button>
     <button class="btn btn-ghost btn-sm" onclick="toggleBuscaEscala()"><i class=ph-magnifying-glass></i></button>
     <button class="btn btn-danger btn-sm" onclick="limparEscala()"><i class=ph-trash></i> Limpar</button>
-    <button class="btn btn-outline btn-sm" onclick="abrirModalEsp()">+ Culto Especial</button>
+    <button class="btn btn-outline btn-sm" onclick="abrirModalEsp()"><i class=ph-plus></i> Adicionar Culto</button>
   </div>
   <!-- Preview tempo real -->
   <div class="preview-rt-wrap" id="preview-rt-wrap">
@@ -1125,9 +1125,12 @@ tr.esp-row .td-dia{color:#c03030;}
       <div class="grupo-chips" id="edit-chips"></div>
       <select id="edit-sel" onchange="addChip()"><option value="">— Adicionar grupo —</option></select>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="fecharModal('modal-edit')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarEdit()">Salvar</button>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="excluirCultoModal()"><i class=ph-trash></i> Excluir</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-edit')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarEdit()">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1388,6 +1391,7 @@ function renderCultos(){
         <div class="c-actions">
           <button class="btn-icon" onclick="abrirModalEdit('${c.id}')"><i class=ph-pencil-simple></i></button>
           <button class="btn-vis" onclick="toggleVis('${c.id}')">${c.oculto?'<i class=ph-eye-slash></i>':'<i class=ph-eye></i>'}</button>
+          <button class="btn-icon" onclick="excluirCulto('${c.id}')" title="Excluir culto"><i class=ph-trash></i></button>
         </div>
       </div>`;
     // Drag reorder
@@ -1439,6 +1443,20 @@ function abrevDia(d){
 }
 
 function toggleVis(id){const c=getCulto(id);if(!c)return;c.oculto=!c.oculto;renderCultos();toast(c.oculto?'<i class=ph-eye-slash></i> Oculto':'<i class=ph-eye></i> Visível');}
+
+function excluirCulto(id){
+  const c=getCulto(id);if(!c)return;
+  if(!confirm('Excluir "'+c.culto+'" ('+c.data+' — '+c.dia+' — '+c.hora+')?\n\nEsta ação não pode ser desfeita.'))return;
+  const idx=cultos.findIndex(x=>x.id===id);
+  if(idx>=0)cultos.splice(idx,1);
+  renderCultos();
+  toast('<i class=ph-trash></i> Culto excluído');
+}
+function excluirCultoModal(){
+  const id=document.getElementById('edit-id').value;
+  fecharModal('modal-edit');
+  excluirCulto(id);
+}
 
 // Conflito = mesmo grupo em cultos a ≤2 dias de distância (exceto mesmo dia)
 
@@ -1507,7 +1525,7 @@ function confirmarEsp(){
   const dir=document.getElementById('esp-dirg').value.trim();
   if(!data||!nome||!hora){toast('<i class=ph-warning></i> Preencha Data, Horário e Nome');return;}
   const grupos=SH_DIAS.test(dia)?[SH_LABEL]:[];
-  cultos.push({id:uid(),data:data.padStart(2,'0'),dia,hora,culto:nome.toUpperCase(),dirigente:dir,grupos,oculto:false,especial:true});
+  cultos.push({id:uid(),data:data.padStart(2,'0'),dia,hora,culto:nome.toUpperCase(),dirigente:dir,grupos,oculto:false,especial:dia==='Especial'});
   cultos.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
   fecharModal('modal-esp');renderCultos();toast('<i class=ph-check-circle></i> Adicionado!');
   ['esp-data','esp-hora','esp-culto','esp-dirg'].forEach(id=>document.getElementById(id).value='');
