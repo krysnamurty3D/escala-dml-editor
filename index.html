@@ -1138,8 +1138,8 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- MODAL CULTO ESPECIAL -->
 <div class="modal-overlay" id="modal-esp">
   <div class="modal">
-    <h3><i class=ph-sparkle></i> Culto Especial</h3>
-    <div class="form-row"><label>Data</label><input type="number" id="esp-data" min="1" max="31" placeholder="Dia"></div>
+    <h3><i class=ph-sparkle></i> Adicionar Culto</h3>
+    <div class="form-row"><label>Data</label><input type="date" id="esp-data-picker" style="color-scheme:dark" onchange="onEspDataPick()"><input type="hidden" id="esp-data"></div>
     <div class="form-row"><label>Dia da Semana</label>
       <select id="esp-dia">
         <option value="Domingo">Domingo</option><option value="Terça">Terça</option>
@@ -1516,7 +1516,39 @@ function confirmarEdit(){
 // ═══════════════════════════════════════════════
 // MODAL ESPECIAL
 // ═══════════════════════════════════════════════
-function abrirModalEsp(){document.getElementById('modal-esp').classList.add('open');}
+const DIAS_SEMANA_PT=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function _mesAtualInfo(){
+  const parts=(mesLabel||'').split(' ');
+  const idx=MESES_PT.indexOf(parts[0]);
+  const ano=parseInt(parts[1]);
+  if(idx<0||isNaN(ano))return null;
+  return{mes:idx,ano};
+}
+function abrirModalEsp(){
+  document.getElementById('modal-esp').classList.add('open');
+  const picker=document.getElementById('esp-data-picker');
+  const info=_mesAtualInfo();
+  if(info){
+    const mm=String(info.mes+1).padStart(2,'0');
+    const ultimoDia=new Date(info.ano,info.mes+1,0).getDate();
+    picker.min=info.ano+'-'+mm+'-01';
+    picker.max=info.ano+'-'+mm+'-'+String(ultimoDia).padStart(2,'0');
+    picker.value=picker.min;
+  }else{
+    picker.removeAttribute('min');picker.removeAttribute('max');picker.value='';
+  }
+  onEspDataPick();
+}
+function onEspDataPick(){
+  const v=document.getElementById('esp-data-picker').value;
+  if(!v){document.getElementById('esp-data').value='';return;}
+  const[y,m,d]=v.split('-').map(Number);
+  document.getElementById('esp-data').value=String(d);
+  const nomeDia=DIAS_SEMANA_PT[new Date(y,m-1,d).getDay()];
+  const sel=document.getElementById('esp-dia');
+  const opts=[...sel.options].map(o=>o.value);
+  sel.value=opts.includes(nomeDia)?nomeDia:'Especial';
+}
 function confirmarEsp(){
   const data=document.getElementById('esp-data').value.trim();
   const dia=document.getElementById('esp-dia').value;
@@ -1529,6 +1561,7 @@ function confirmarEsp(){
   cultos.sort((a,b)=>parseInt(a.data)-parseInt(b.data));
   fecharModal('modal-esp');renderCultos();toast('<i class=ph-check-circle></i> Adicionado!');
   ['esp-data','esp-hora','esp-culto','esp-dirg'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('esp-data-picker').value='';
 }
 function fecharModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
