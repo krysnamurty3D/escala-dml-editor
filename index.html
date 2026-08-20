@@ -1253,7 +1253,15 @@ const IGNORAR=[/hora\s*nona/i,/reuni[aã]o\s*(de\s*)?(coordenadores?|oficial|adm
 const DIAS_OK=/domingo|ter[cç]a|quinta|s[aá]b(ado)?/i;
 
 let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null,_filtroDia='todos';
-const uid=()=>'c'+(++_uid);
+function uid(){
+  let max=0;
+  for(const c of cultos){
+    const m=/^c(\d+)$/.exec(c&&c.id||'');
+    if(m)max=Math.max(max,parseInt(m[1]));
+  }
+  _uid=Math.max(_uid,max)+1;
+  return 'c'+_uid;
+}
 const getCulto=id=>cultos.find(c=>c.id===id);
 
 // ═══════════════════════════════════════════════
@@ -1324,7 +1332,15 @@ function parsear(html){
 // ═══════════════════════════════════════════════
 // EDITOR
 // ═══════════════════════════════════════════════
+function _dedupCultoIds(){
+  const seen=new Set();
+  cultos.forEach(c=>{
+    if(!c.id||seen.has(c.id))c.id=uid();
+    seen.add(c.id);
+  });
+}
 function abrirEditor(){
+  _dedupCultoIds();
   ['pill-edit','pill-prev','pill-semana'].forEach(id=>document.getElementById(id).style.display='');
   document.getElementById('hdr-badge').style.display='inline';
   document.getElementById('hdr-badge').textContent=mesLabel;
