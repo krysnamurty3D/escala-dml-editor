@@ -837,7 +837,7 @@ tr.esp-row .td-dia{color:#c03030;}
   <!-- Preview tempo real -->
   <div class="preview-rt-wrap" id="preview-rt-wrap">
     <div class="preview-rt-header">
-      <span><i class=ph-eye></i> Preview — ${mesLabel}</span>
+      <span><i class=ph-eye></i> Preview — <span id="preview-rt-mes"></span></span>
       <button class="btn btn-ghost btn-sm" onclick="togglePreviewRT()">✕</button>
     </div>
     <div class="preview-rt-body" id="preview-rt-body"></div>
@@ -2029,6 +2029,8 @@ function renderPreviewRT(){
   if(!_previewRTAtivo)return;
   const body=document.getElementById("preview-rt-body");
   if(!body)return;
+  const mesEl=document.getElementById("preview-rt-mes");
+  if(mesEl)mesEl.textContent=mesLabel;
   const vis=cultos.filter(c=>!c.oculto&&matchFiltroDia(c));
   if(!vis.length){body.innerHTML="<div class=\"empty-state\"><p>Nenhum culto visível.</p></div>";return;}
   const lG=g=>g===SH_LABEL?"S\&H":g.replace(/^CORAL\s+/,"C. ");
@@ -2864,19 +2866,29 @@ async function publicarNetlify(){
     const _norm=function(s){return (s||'').toLowerCase().replace(/ç/g,'c').trim();};
     window._visProxData=[];window._mesProxLabel=_nxtLbl;
     window._cultosParaPublicar=null;window._mesParaPublicar=_curLbl;
+    // Se o mês atualmente aberto no editor é o mesmo que será publicado, usa os dados
+    // AO VIVO da tela (podem ter edições ainda não salvas) em vez de buscar a versão salva.
+    if(_norm(mesLabel)===_norm(_curLbl)){
+      window._cultosParaPublicar=cultos.filter(function(c){return !c.oculto;});
+    }
+    if(_norm(mesLabel)===_norm(_nxtLbl)){
+      window._visProxData=cultos.filter(function(c){return !c.oculto;});
+    }
+    const _liveCurAtivo=_norm(mesLabel)===_norm(_curLbl);
+    const _liveNxtAtivo=_norm(mesLabel)===_norm(_nxtLbl);
     if(window._fbDb&&window._fbFns){
       try{
         const {collection,getDocs}=window._fbFns;
         const _snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
         _snap.forEach(function(d){
           var dd=d.data();var lbl=_norm(dd.mesLabel);
-          if(lbl===_norm(_curLbl)){var _cp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_cp.length)window._cultosParaPublicar=_cp;}
-          if(lbl===_norm(_nxtLbl)){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
+          if(lbl===_norm(_curLbl)&&!_liveCurAtivo){var _cp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_cp.length)window._cultosParaPublicar=_cp;}
+          if(lbl===_norm(_nxtLbl)&&!_liveNxtAtivo){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
         });
       }catch(e){console.error('fetch meses firestore:',e);}
     }
     // fallback: busca no localStorage
-    if(!window._cultosParaPublicar){
+    if(!window._cultosParaPublicar&&!_liveCurAtivo){
       var _lsIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
       for(var _li=0;_li<_lsIdx.length;_li++){
         try{var _ld=JSON.parse(localStorage.getItem('dml_sess_'+_lsIdx[_li]));
