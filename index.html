@@ -3675,7 +3675,9 @@ function exportarPagina(){
     '  var fut=cd.filter(function(c){return calcDias(c.data)>=0;}).sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
     '  if(!fut.length){alert("Nenhum culto futuro.");return;}',
     '  var linhas=fut.map(function(c){return"Dia "+c.data+" \u00B7 "+c.hora+" \u2014 "+c.culto+(c.dirigente?" ("+c.dirigente+")":"");});',
-    '  var txt="*Escala DML \u2014 "+MES+"*"+(g!=="todos"?"\\n*Grupo: "+g+"*":"")+"\\n\\n"+linhas.join("\\n")+"\\n\\n"+location.href;',
+    '  var _slug=MES.toLowerCase().replace(/\u00e7/g,"c").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");',
+    '  var _link=location.origin+location.pathname+"?mes="+_slug;',
+    '  var txt="*Escala DML \u2014 "+MES+"*"+(g!=="todos"?"\\n*Grupo: "+g+"*":"")+"\\n\\n"+linhas.join("\\n")+"\\n\\n"+_link;',
     '  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");',
     '}',
 
@@ -3965,6 +3967,12 @@ function exportarPagina(){
     +'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">\n'
     +'<meta name="theme-color" content="#111820">\n'
     +'<title>Escala DML \u2014 '+mesLabel+'</title>\n'
+    +'<meta property="og:title" content="Escala DML \u2014 '+mesLabel+'">\n'
+    +'<meta property="og:description" content="Confira a escala de louvor da Igreja Evang\u00e9lica Congregacional Central \u2014 '+mesLabel+'.">\n'
+    +'<meta property="og:type" content="website">\n'
+    +'<meta name="twitter:card" content="summary">\n'
+    +'<meta name="twitter:title" content="Escala DML \u2014 '+mesLabel+'">\n'
+    +'<meta name="twitter:description" content="Confira a escala de louvor \u2014 '+mesLabel+'.">\n'
     +'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
     +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
     +'<style>\n'+CSS+'\n</style>\n'
