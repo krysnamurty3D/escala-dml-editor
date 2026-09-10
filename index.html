@@ -3186,18 +3186,18 @@ async function salvarRiderConfig(){
   const ghToken=getGithubToken();
   if(!ghToken){configurarTokens();return;}
   const todos=todosGrupos().filter(g=>g!==SH_LABEL);
-  const grupos={};
+  const grupos=Object.assign({},_riderCfg.grupos||{});
   todos.forEach(g=>{
     const slug=grupoSlug(g);
     const pin=(document.getElementById('pin-'+slug)?.value||'').trim();
-    grupos[slug]={nome:g,pin};
+    grupos[slug]=Object.assign({},grupos[slug],{nome:g,pin});
   });
   const contatos={
     tecnico:(document.getElementById('cont-tecnico')?.value||'').trim(),
     midia:(document.getElementById('cont-midia')?.value||'').trim(),
     surdos:(document.getElementById('cont-surdos')?.value||'').trim()
   };
-  _riderCfg={grupos,contatos};
+  _riderCfg=Object.assign({},_riderCfg,{grupos,contatos});
   const json=JSON.stringify(_riderCfg,null,2);
   const content=btoa(unescape(encodeURIComponent(json)));
   const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
