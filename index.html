@@ -376,6 +376,15 @@ tr.esp-row .td-dia{color:#c03030;}
 .estudio-check-badge.pendente{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border);}
 .estudio-check-badge.problema{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
 .estudio-horario{font-size:11px;color:var(--muted);margin-top:6px;}
+.ensaio-dia-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ensaio-dia-row select,.ensaio-dia-row input[type=time]{background:var(--navy);border:1px solid var(--border);border-radius:7px;color:var(--white);font-size:12px;padding:6px 8px;font-family:inherit;}
+.estudio-status-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.estudio-status-badge.preenchido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
+.estudio-status-badge.aguardando{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.4);}
+.estudio-status-badge.atrasado{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
+.estudio-status-badge.sem-ensaio{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border);}
+.estudio-status-badge.sem-config{background:rgba(255,255,255,.05);color:var(--muted);border:1px dashed var(--border);}
+.nav-badge{background:#e06060;color:#fff;font-size:9px;font-weight:800;border-radius:10px;padding:1px 6px;margin-left:4px;}
 
 /* ── DASHBOARD ── */
 .dash-hdr{margin-bottom:16px;}
@@ -746,7 +755,7 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
       <button class="nav-pill" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
       <button class="nav-pill" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
-      <button class="nav-pill" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio</button>
+      <button class="nav-pill" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio<span class="nav-badge" id="estudio-nav-badge" style="display:none"></span></button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
@@ -1122,15 +1131,24 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-estudio" class="page">
   <div class="riders-header">
     <div>
-      <h2 style="color:var(--teal);font-size:17px">📋 Estúdio — Checklist e Horário</h2>
-      <p class="riders-desc">Defina os itens do checklist do estúdio. Os líderes marcam o status (OK / Pendente / Problema) e batem entrada/saída pela página pública, por culto.</p>
+      <h2 style="color:var(--teal);font-size:17px">📋 Estúdio — Ensaios, Checklist e Horário</h2>
+      <p class="riders-desc">Defina o dia/horário fixo de ensaio e os itens do checklist. Os líderes marcam os itens, batem entrada/saída e podem avisar quando não houver ensaio, pela página pública.</p>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="salvarChecklistConfig()">💾 Salvar itens</button>
   </div>
   <div class="estudio-cfg">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Um item por linha</div>
-    <textarea id="checklist-itens" placeholder="Microfone sem fio 1&#10;Microfone sem fio 2&#10;Caixa de retorno&#10;Cabos P10&#10;Pedalboard&#10;Fone de ouvido (in-ear)"></textarea>
-    <span id="checklist-status" style="font-size:11px;color:var(--muted)"></span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">🗓 Dia e horário fixo de ensaio</div>
+      <button class="btn btn-outline btn-sm" onclick="salvarEnsaioDias()">💾 Salvar dias de ensaio</button>
+    </div>
+    <div class="riders-grid" id="ensaio-dias-grid"><div class="empty-state"><div class="icon">⏳</div><p>Carregando grupos...</p></div></div>
+  </div>
+  <div class="estudio-cfg">
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">✅ Itens do checklist (um por linha)</div>
+    <textarea id="checklist-itens" placeholder="BATERIA&#10;BAIXO&#10;TECLADO&#10;MICROFONES&#10;MESA DE SOM&#10;AMPLIFICADOR&#10;DIRECT BOXES"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span id="checklist-status" style="font-size:11px;color:var(--muted)"></span>
+      <button class="btn btn-primary btn-sm" onclick="salvarChecklistConfig()">💾 Salvar itens</button>
+    </div>
   </div>
   <div id="estudio-submissions"><p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Carregando envios...</p></div>
 </div>
@@ -3089,6 +3107,7 @@ async function salvarAviso(){
 
 // Carrega aviso ao entrar na página inicial
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(carregarAvisoAtual,1500);});
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{if(getGithubToken()&&typeof renderEstudio==='function')renderEstudio();},2500);});
 
 // ═══════════════════════════════════════════════
 // RIDERS TÉCNICOS
@@ -3291,23 +3310,99 @@ async function _solicResponder(id,status){
 }
 
 // ═══════════════════════════════════════════════
-// ESTÚDIO — CHECKLIST + HORÁRIO
+// ESTÚDIO — ENSAIOS, CHECKLIST + HORÁRIO
 // ═══════════════════════════════════════════════
+// Data (meia-noite) da ocorrência mais recente do dia-da-semana informado (hoje, se coincidir)
+function _estudioDataCiclo(diaSemana){
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const diffAtras=(hoje.getDay()-diaSemana+7)%7;
+  const d=new Date(hoje);d.setDate(d.getDate()-diffAtras);
+  return d;
+}
+function _estudioYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
 async function renderEstudio(){
   const ghToken=getGithubToken();
+  let cfg={};
   if(ghToken){
     try{
-      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{
+      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
         headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
       });
-      if(r.ok){
-        const f=await r.json();
-        const cfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
-        document.getElementById('checklist-itens').value=(cfg.itens||[]).join('\n');
+      if(r.ok){const f=await r.json();cfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));}
+    }catch(e){}
+    try{
+      const r2=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{
+        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
+      });
+      if(r2.ok){
+        const f2=await r2.json();
+        const chkCfg=JSON.parse(decodeURIComponent(escape(atob(f2.content.replace(/\n/g,'')))));
+        if(document.getElementById('checklist-itens'))document.getElementById('checklist-itens').value=(chkCfg.itens||[]).join('\n');
       }
     }catch(e){}
   }
-  renderEstudioSubmissions();
+  if(document.getElementById('checklist-itens')&&!document.getElementById('checklist-itens').value.trim()){
+    document.getElementById('checklist-itens').value='BATERIA\nBAIXO\nTECLADO\nMICROFONES\nMESA DE SOM\nAMPLIFICADOR\nDIRECT BOXES';
+  }
+  _riderCfg=cfg;
+  renderEnsaioDiasGrid();
+  await renderEstudioSubmissions();
+}
+
+function renderEnsaioDiasGrid(){
+  const grid=document.getElementById('ensaio-dias-grid');
+  if(!grid)return;
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  if(!todos.length){grid.innerHTML='<div class="empty-state"><div class="icon">⚙️</div><p>Nenhum grupo cadastrado em ⚙️ Grupos.</p></div>';return;}
+  const grupos=_riderCfg.grupos||{};
+  grid.innerHTML=todos.map(g=>{
+    const slug=grupoSlug(g);
+    const gc=grupos[slug]||{};
+    const dia=(gc.ensaioDia!==undefined&&gc.ensaioDia!==null)?gc.ensaioDia:'';
+    const hora=gc.ensaioHora||'19:30';
+    const opts=DIAS_SEMANA.map((d,i)=>`<option value="${i}"${String(dia)===String(i)?' selected':''}>${d}</option>`).join('');
+    return `<div class="rider-card">
+      <div class="rider-card-nome">${g}</div>
+      <div class="ensaio-dia-row">
+        <select id="ensaio-dia-${slug}"><option value=""${dia===''?' selected':''}>— Sem ensaio fixo —</option>${opts}</select>
+        <input type="time" id="ensaio-hora-${slug}" value="${hora}">
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function salvarEnsaioDias(){
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  const grupos=Object.assign({},_riderCfg.grupos||{});
+  todos.forEach(g=>{
+    const slug=grupoSlug(g);
+    const diaSel=document.getElementById('ensaio-dia-'+slug)?.value;
+    const hora=document.getElementById('ensaio-hora-'+slug)?.value||'19:30';
+    const atual=grupos[slug]||{nome:g,pin:''};
+    grupos[slug]=Object.assign({},atual,{nome:g,ensaioDia:(diaSel===''||diaSel===undefined)?null:parseInt(diaSel),ensaioHora:hora});
+  });
+  _riderCfg=Object.assign({},_riderCfg,{grupos});
+  const json=JSON.stringify(_riderCfg,null,2);
+  const content=btoa(unescape(encodeURIComponent(json)));
+  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
+  try{
+    let sha=null;
+    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{headers});
+    if(getR.ok){const f=await getR.json();sha=f.sha;}
+    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
+      method:'PUT',headers,
+      body:JSON.stringify({message:'Dias de ensaio atualizados',content,...(sha?{sha}:{})})
+    });
+    if(!putR.ok){
+      const s=putR.status;
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
+    toast('✅ Dias de ensaio salvos!');
+  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
 }
 
 async function salvarChecklistConfig(){
@@ -3339,46 +3434,67 @@ async function salvarChecklistConfig(){
 async function renderEstudioSubmissions(){
   const wrap=document.getElementById('estudio-submissions');
   if(!wrap)return;
-  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Buscando envios...</p>';
+  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Verificando ensaios...</p>';
   const todos=todosGrupos().filter(g=>g!==SH_LABEL);
-  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Checklists e Horários Enviados</h3>';
-  let hasAny=false;
+  const grupos=_riderCfg.grupos||{};
+  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Situação dos ensaios (ciclo atual)</h3>';
+  let atrasados=0;
+  const linhas=[];
   for(const g of todos){
     const slug=grupoSlug(g);
+    const gc=grupos[slug]||{};
+    if(gc.ensaioDia===undefined||gc.ensaioDia===null||gc.ensaioDia===''){
+      linhas.push(`<div class="estudio-check-row"><span>${g}</span><span class="estudio-status-badge sem-config">Sem dia configurado</span></div>`);
+      continue;
+    }
+    const diaSemana=parseInt(gc.ensaioDia);
+    const dataCiclo=_estudioDataCiclo(diaSemana);
+    const key=_estudioYmd(dataCiclo);
+    const hora=gc.ensaioHora||'19:30';
+    const [hh,mm]=hora.split(':').map(Number);
+    const agendado=new Date(dataCiclo);agendado.setHours(hh||0,mm||0,0,0);
+    const prazo=new Date(agendado.getTime()+2*60*60*1000);
+    const agora=new Date();
+    let rd=null;
     try{
       const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/estudio/${slug}?key=${_RIDER_KEY}`;
       const res=await fetch(url);
-      if(!res.ok)continue;
-      const fdoc=await res.json();
-      if(!fdoc.fields?.cultos)continue;
-      const cultos=_fsParse(fdoc.fields.cultos);
-      const keys=Object.keys(cultos||{});
-      if(!keys.length)continue;
-      hasAny=true;
-      html+=`<div class="estudio-sub-section"><div class="estudio-sub-title">${g}</div>`;
-      keys.sort().reverse().slice(0,5).forEach(k=>{
-        const rd=cultos[k]||{};
-        const dt=k.replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');
-        const check=rd.checklist||{};
-        const valores=Object.values(check);
-        const total=valores.length;
-        const ok=valores.filter(v=>v==='ok').length;
-        const prob=valores.filter(v=>v==='problema').length;
-        const ent=rd.entrada?new Date(rd.entrada).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
-        const sai=rd.saida?new Date(rd.saida).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
-        html+=`<div class="estudio-check-row" style="flex-direction:column;align-items:flex-start;gap:4px">
-          <div style="display:flex;justify-content:space-between;width:100%">
-            <span style="color:var(--white);font-weight:600">${dt}</span>
-            <span style="color:var(--muted)">${total?ok+'/'+total+' OK'+(prob?' · '+prob+' problema(s)':''):'sem checklist'}</span>
-          </div>
-          <div class="estudio-horario">🕐 Entrada ${ent} · Saída ${sai}${rd.obsChecklist?' · 💬 '+_solicEsc(rd.obsChecklist):''}</div>
-        </div>`;
-      });
-      html+='</div>';
+      if(res.ok){
+        const fdoc=await res.json();
+        const ensaios=fdoc.fields?.ensaios?_fsParse(fdoc.fields.ensaios):{};
+        rd=ensaios[key]||null;
+      }
     }catch(e){}
+    const dtFmt=dataCiclo.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    let status,label;
+    if(rd&&rd.semEnsaio){status='sem-ensaio';label='Sem ensaio (avisado)';}
+    else if(rd&&(rd.entrada||Object.keys(rd.checklist||{}).length)){status='preenchido';label='Preenchido';}
+    else if(agora<agendado){status='sem-config';label='Ainda não chegou o horário';}
+    else if(agora<prazo){status='aguardando';label='Aguardando — prazo até '+prazo.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+    else{status='atrasado';label='⚠️ Atrasado — sem checklist';atrasados++;}
+    const check=(rd&&rd.checklist)||{};
+    const valores=Object.values(check);
+    const totalCk=valores.length,okCk=valores.filter(Boolean).length;
+    const ent=rd&&rd.entrada?new Date(rd.entrada).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+    const sai=rd&&rd.saida?new Date(rd.saida).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+    linhas.push(`<div class="estudio-check-row" style="flex-direction:column;align-items:flex-start;gap:4px">
+      <div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">
+        <span style="color:var(--white);font-weight:600">${g} · ${DIAS_SEMANA[dataCiclo.getDay()]} ${dtFmt} ${hora}</span>
+        <span class="estudio-status-badge ${status}">${label}</span>
+      </div>
+      <div class="estudio-horario">🕐 Entrada ${ent} · Saída ${sai}${totalCk?' · Checklist '+okCk+'/'+totalCk:''}${rd&&rd.obsChecklist?' · 💬 '+_solicEsc(rd.obsChecklist):''}</div>
+    </div>`);
   }
-  if(!hasAny)html+='<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum checklist enviado ainda.</p>';
+  html+=linhas.join('')||'<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum grupo cadastrado.</p>';
   wrap.innerHTML=html;
+  _atualizarBadgeEstudio(atrasados);
+}
+
+function _atualizarBadgeEstudio(n){
+  const b=document.getElementById('estudio-nav-badge');
+  if(!b)return;
+  if(n>0){b.textContent=n;b.style.display='inline-block';}
+  else{b.style.display='none';}
 }
 
 // Gera o HTML público como string (sem baixar)
@@ -4079,7 +4195,7 @@ function exportarPagina(){
     '  var grp=grupos[slug];',
     '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarCultosEstudio();else _rpMostrarCultos();',
+    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarEnsaio();else _rpMostrarCultos();',
     '}',
 
     'function _rpMostrarSolicMenu(){',
@@ -4160,46 +4276,48 @@ function exportarPagina(){
     '  _rpHtml(_rpHdr("_rpMostrarLogin")+\'<p class="rp-sub" style="margin-top:4px">Selecione o culto</p>\'+items);',
     '}',
 
-    'function _rpMostrarCultosEstudio(){',
-    '  _RP.state="cultos-estudio";_RP.cultoKey=null;_RP.cultoLabel=null;',
-    '  var todos=(CULTOS_ATUAL||[]).concat(CULTOS_PROX||[]);',
-    '  var meus=todos.filter(function(c){return c.grupos&&c.grupos.indexOf(_RP.nome)>=0;});',
-    '  meus.sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
-    '  var M={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
-    '  var hoje=new Date();',
-    '  var items=meus.map(function(c){',
-    '    var ml=((CULTOS_PROX||[]).indexOf(c)>=0)?MES_PROX:MES_ATUAL;',
-    '    var p=(ml||"").split(" ");var mo=M[p[0]]!==undefined?M[p[0]]:hoje.getMonth();var an=parseInt(p[1])||hoje.getFullYear();',
-    '    var dt=new Date(an,mo,parseInt(c.data));',
-    '    var diff=Math.round((dt-hoje)/86400000);',
-    '    var quando=diff<0?"Realizado":diff===0?"Hoje":diff===1?"Amanhã":"Em "+diff+" dias";',
-    '    var key="d"+String(c.data).padStart(2,"0")+"_h"+c.hora.replace(":","");',
-    '    var lbl=c.culto+" · Dia "+c.data+" · "+c.hora;',
-    '    return\'<div class="rp-culto-item" onclick="_rpAbrirEstudio(\\\'\'+key+\'\\\',\\\'\'+encodeURIComponent(lbl)+\'\\\')">\'',
-    '      +\'<div><div class="rp-culto-nome">\'+c.culto+\'</div><div class="rp-culto-sub">Dia \'+c.data+\' · \'+c.hora+\' · \'+ml+\'</div></div>\'',
-    '      +\'<span style="font-size:11px;color:#7a9aa8;white-space:nowrap">\'+quando+\'</span></div>\';',
-    '  }).join("");',
-    '  if(!items)items=\'<p style="font-size:13px;color:#7a9aa8;padding:12px 0">Nenhum culto encontrado para \'+_RP.nome+\' na escala publicada.</p>\';',
-    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Selecione o culto</p>\'+items);',
-    '}',
-    'function _rpAbrirEstudio(key,labelEnc){',
-    '  _RP.cultoKey=key;_RP.cultoLabel=decodeURIComponent(labelEnc);',
-    '  _rpHtml(_rpHdr("_rpMostrarCultosEstudio")+"<p class=\\"rp-sub\\"><i class=ph-hourglass></i> Carregando...</p>");',
+    'function _rpEnsaioYmd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}',
+    'function _rpMostrarEnsaio(){',
+    '  _RP.state="ensaio";',
+    '  var grp=(_RP.cfg&&_RP.cfg.grupos)?_RP.cfg.grupos[_RP.slug]:null;',
+    '  var dia=grp?grp.ensaioDia:null;',
+    '  if(dia===undefined||dia===null||dia===""){',
+    '    _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum dia de ensaio configurado para esse grupo. Fale com o coordenador.</p>\');',
+    '    return;',
+    '  }',
+    '  var hora=grp.ensaioHora||"19:30";',
+    '  var DIAS=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];',
+    '  var hoje=new Date();hoje.setHours(0,0,0,0);',
+    '  var diffAtras=(hoje.getDay()-parseInt(dia)+7)%7;',
+    '  var dataCiclo=new Date(hoje);dataCiclo.setDate(dataCiclo.getDate()-diffAtras);',
+    '  _RP.ensaioDataCiclo=dataCiclo;',
+    '  _RP.ensaioKey=_rpEnsaioYmd(dataCiclo);_RP.ensaioDiaLbl=DIAS[dataCiclo.getDay()];_RP.ensaioHora=hora;',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\"><i class=ph-hourglass></i> Carregando...</p>");',
     '  var pDoc=fetch("https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY).then(function(r){return r.ok?r.json():{};});',
     '  var pCfg=fetch(_RP_CHECKLIST_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};});',
     '  Promise.all([pDoc,pCfg]).then(function(res){',
     '    _RP.estudioDoc=res[0];_RP.checklistItens=res[1].itens||[];',
-    '    var cultos=res[0].fields&&res[0].fields.cultos?_rpFsParse(res[0].fields.cultos):{};',
-    '    _RP.estudioAtual=cultos[key]||{};',
+    '    var ensaios=res[0].fields&&res[0].fields.ensaios?_rpFsParse(res[0].fields.ensaios):{};',
+    '    _RP.estudioAtual=ensaios[_RP.ensaioKey]||{};',
     '    _rpRenderEstudio();',
-    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarCultosEstudio")+\'<p class="rp-sub">Erro ao carregar.</p>\');});',
+    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar.</p>\');});',
     '}',
     'function _rpRenderEstudio(){',
     '  var rd=_RP.estudioAtual||{};',
     '  var check=rd.checklist||{};',
     '  var ent=rd.entrada?new Date(rd.entrada).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):null;',
     '  var sai=rd.saida?new Date(rd.saida).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):null;',
-    '  var h=_rpHdr("_rpMostrarCultosEstudio");',
+    '  var h=_rpHdr("_rpMostrarHome");',
+    '  h+=\'<p class="rp-sub" style="margin-top:4px">Ensaio: \'+_RP.ensaioDiaLbl+\' \'+_RP.ensaioHora+\'</p>\';',
+    '  if(rd.semEnsaio){',
+    '    h+=\'<p class="rp-sub" style="color:#7a9aa8">Sem ensaio avisado para essa data.</p>\';',
+    '    h+=\'<button class="rp-btn-out" onclick="_rpMarcarSemEnsaio(false,0)">Desfazer aviso</button>\';',
+    '    _rpHtml(h);return;',
+    '  }',
+    '  h+=\'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">\'',
+    '    +\'<button class="rp-btn-out" onclick="_rpMarcarSemEnsaio(true,0)">❌ Sem ensaio nesta data</button>\'',
+    '    +\'<button class="rp-btn-out" onclick="_rpMarcarSemEnsaio(true,1)">📅 Avisar semana que vem</button>\'',
+    '    +\'</div>\';',
     '  h+=\'<div class="rp-sec">🕐 Horário</div>\';',
     '  h+=\'<div class="rp-horario-row">\'',
     '    +\'<button class="rp-horario-btn\'+(ent?" batido":"")+\'" onclick="_rpBaterHorario(\\\'entrada\\\')">Entrada<span class="rp-horario-hora">\'+(ent||"—")+\'</span></button>\'',
@@ -4209,9 +4327,8 @@ function exportarPagina(){
     '  if(!_RP.checklistItens.length){h+=\'<p class="rp-sub">Nenhum item configurado ainda.</p>\';}',
     '  else{',
     '    h+=_RP.checklistItens.map(function(it){',
-    '      var st=check[it]||"pendente";',
-    '      function btn(v,ico){return\'<button class="rp-check-btn\'+(st===v?" ativo-"+v:"")+\'" onclick="_rpSetCheck(\\\'\'+encodeURIComponent(it)+\'\\\',\\\'\'+v+\'\\\')">\'+ico+\'</button>\';}',
-    '      return\'<div class="rp-check-row"><div class="rp-check-nome">\'+it+\'</div><div class="rp-check-opts">\'+btn("ok","✅")+btn("pendente","➖")+btn("problema","⚠️")+\'</div></div>\';',
+    '      var marcado=!!check[it];',
+    '      return \'<label class="rp-check-row" style="cursor:pointer"><span class="rp-check-nome">\'+it+\'</span><input type="checkbox" style="width:20px;height:20px;accent-color:#2ab482" \'+(marcado?"checked":"")+\' onchange="_rpSetCheck(\\\'\'+encodeURIComponent(it)+\'\\\',this.checked)"></label>\';',
     '    }).join("");',
     '  }',
     '  h+=\'<label class="rp-obs-lbl" style="margin-top:12px;display:block">Observações</label>\';',
@@ -4219,44 +4336,54 @@ function exportarPagina(){
     '  h+=\'<button class="rp-btn" style="margin-top:14px" onclick="_rpSalvarEstudio()">💾 Salvar checklist</button>\';',
     '  _rpHtml(h);',
     '}',
-    'function _rpSetCheck(itemEnc,valor){',
+    'function _rpSetCheck(itemEnc,marcado){',
     '  var item=decodeURIComponent(itemEnc);',
     '  if(!_RP.estudioAtual)_RP.estudioAtual={};',
     '  if(!_RP.estudioAtual.checklist)_RP.estudioAtual.checklist={};',
-    '  _RP.estudioAtual.checklist[item]=valor;',
-    '  _rpRenderEstudio();',
+    '  _RP.estudioAtual.checklist[item]=!!marcado;',
+    '}',
+    'function _rpEnsaiosDoc(){',
+    '  var doc=_RP.estudioDoc||{};',
+    '  return doc.fields&&doc.fields.ensaios?_rpFsParse(doc.fields.ensaios):{};',
+    '}',
+    'function _rpSalvarEnsaiosDoc(ensaios){',
+    '  var body={fields:{ensaios:_rpFsEnc(ensaios)}};',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY;',
+    '  return fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){',
+    '    if(r.ok){_RP.estudioDoc=Object.assign({},_RP.estudioDoc,{fields:{ensaios:_rpFsEnc(ensaios)}});return true;}',
+    '    return r.text().then(function(t){alert("Erro: "+t);return false;});',
+    '  }).catch(function(e){alert("Erro: "+e.message);return false;});',
     '}',
     'function _rpBaterHorario(tipo){',
     '  var campo=tipo==="entrada"?"entrada":"saida";',
     '  var ts=Date.now();',
-    '  var doc=_RP.estudioDoc||{};',
-    '  var cultos=doc.fields&&doc.fields.cultos?_rpFsParse(doc.fields.cultos):{};',
-    '  var rd=cultos[_RP.cultoKey]||{};',
+    '  var ensaios=_rpEnsaiosDoc();',
+    '  var rd=ensaios[_RP.ensaioKey]||{};',
     '  rd[campo]=ts;',
-    '  cultos[_RP.cultoKey]=rd;',
-    '  var body={fields:{cultos:_rpFsEnc(cultos)}};',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY;',
-    '  fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
-    '    .then(function(r){',
-    '      if(r.ok){_RP.estudioDoc=Object.assign({},_RP.estudioDoc,{fields:{cultos:_rpFsEnc(cultos)}});_RP.estudioAtual=rd;_rpRenderEstudio();}',
-    '      else{return r.text().then(function(t){alert("Erro ao registrar: "+t);});}',
-    '    }).catch(function(e){alert("Erro: "+e.message);});',
+    '  ensaios[_RP.ensaioKey]=rd;',
+    '  _rpSalvarEnsaiosDoc(ensaios).then(function(ok){if(ok){_RP.estudioAtual=rd;_rpRenderEstudio();}});',
+    '}',
+    'function _rpMarcarSemEnsaio(valor,semanas){',
+    '  var alvo=new Date(_RP.ensaioDataCiclo);alvo.setDate(alvo.getDate()+(semanas||0)*7);',
+    '  var key=_rpEnsaioYmd(alvo);',
+    '  var ensaios=_rpEnsaiosDoc();',
+    '  var rd=ensaios[key]||{};',
+    '  rd.semEnsaio=!!valor;',
+    '  ensaios[key]=rd;',
+    '  _rpSalvarEnsaiosDoc(ensaios).then(function(ok){',
+    '    if(!ok)return;',
+    '    if(!semanas){_RP.estudioAtual=rd;_rpRenderEstudio();}',
+    '    else{alert(valor?"✅ Aviso registrado para semana que vem.":"Aviso desfeito.");}',
+    '  });',
     '}',
     'function _rpSalvarEstudio(){',
     '  var obs=document.getElementById("estudio-obs").value;',
-    '  var doc=_RP.estudioDoc||{};',
-    '  var cultos=doc.fields&&doc.fields.cultos?_rpFsParse(doc.fields.cultos):{};',
-    '  var rd=cultos[_RP.cultoKey]||{};',
+    '  var ensaios=_rpEnsaiosDoc();',
+    '  var rd=ensaios[_RP.ensaioKey]||{};',
     '  rd.checklist=(_RP.estudioAtual&&_RP.estudioAtual.checklist)||{};',
     '  rd.obsChecklist=obs;',
-    '  cultos[_RP.cultoKey]=rd;',
-    '  var body={fields:{cultos:_rpFsEnc(cultos)}};',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY;',
-    '  fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
-    '    .then(function(r){',
-    '      if(r.ok){_RP.estudioDoc=Object.assign({},_RP.estudioDoc,{fields:{cultos:_rpFsEnc(cultos)}});alert("✅ Checklist salvo!");}',
-    '      else{return r.text().then(function(t){alert("Erro ao salvar: "+t);});}',
-    '    }).catch(function(e){alert("Erro: "+e.message);});',
+    '  ensaios[_RP.ensaioKey]=rd;',
+    '  _rpSalvarEnsaiosDoc(ensaios).then(function(ok){if(ok)alert("✅ Checklist salvo!");});',
     '}',
 
     'function _rpAbrirEditor(key,labelEnc){',
