@@ -365,6 +365,18 @@ tr.esp-row .td-dia{color:#c03030;}
 .solic-just{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px;}
 .solic-actions{display:flex;gap:6px;}
 
+/* ── ESTÚDIO (checklist + horário) ── */
+.estudio-cfg{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px;}
+.estudio-cfg textarea{width:100%;min-height:140px;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:10px 12px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px;}
+.estudio-sub-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
+.estudio-sub-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;}
+.estudio-check-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;}
+.estudio-check-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.estudio-check-badge.ok{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
+.estudio-check-badge.pendente{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border);}
+.estudio-check-badge.problema{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
+.estudio-horario{font-size:11px;color:var(--muted);margin-top:6px;}
+
 /* ── DASHBOARD ── */
 .dash-hdr{margin-bottom:16px;}
 .dash-hdr h2{color:var(--teal);font-size:17px;}
@@ -734,6 +746,7 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
       <button class="nav-pill" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
       <button class="nav-pill" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
+      <button class="nav-pill" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
@@ -788,6 +801,9 @@ tr.esp-row .td-dia{color:#c03030;}
       </div>
       <div class="home-card" onclick="irPara('riders')">
         <div class="home-card-ico">🎛</div><div class="home-card-lbl">RT</div>
+      </div>
+      <div class="home-card" onclick="irPara('estudio')">
+        <div class="home-card-ico">📋</div><div class="home-card-lbl">Estúdio</div>
       </div>
     </div>
     <!-- Card última escala (aparece quando há sessão salva) -->
@@ -1101,6 +1117,22 @@ tr.esp-row .td-dia{color:#c03030;}
     <button class="btn btn-outline btn-sm" onclick="renderSolic()">↻ Atualizar</button>
   </div>
   <div id="solic-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div></div>
+</div>
+<!-- ESTÚDIO: CHECKLIST + HORÁRIO -->
+<div id="page-estudio" class="page">
+  <div class="riders-header">
+    <div>
+      <h2 style="color:var(--teal);font-size:17px">📋 Estúdio — Checklist e Horário</h2>
+      <p class="riders-desc">Defina os itens do checklist do estúdio. Os líderes marcam o status (OK / Pendente / Problema) e batem entrada/saída pela página pública, por culto.</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="salvarChecklistConfig()">💾 Salvar itens</button>
+  </div>
+  <div class="estudio-cfg">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Um item por linha</div>
+    <textarea id="checklist-itens" placeholder="Microfone sem fio 1&#10;Microfone sem fio 2&#10;Caixa de retorno&#10;Cabos P10&#10;Pedalboard&#10;Fone de ouvido (in-ear)"></textarea>
+    <span id="checklist-status" style="font-size:11px;color:var(--muted)"></span>
+  </div>
+  <div id="estudio-submissions"><p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Carregando envios...</p></div>
 </div>
 <!-- QR CODE -->
 <div id="page-qr" class="page">
@@ -3258,6 +3290,97 @@ async function _solicResponder(id,status){
   }catch(e){toast('❌ Erro: '+e.message);}
 }
 
+// ═══════════════════════════════════════════════
+// ESTÚDIO — CHECKLIST + HORÁRIO
+// ═══════════════════════════════════════════════
+async function renderEstudio(){
+  const ghToken=getGithubToken();
+  if(ghToken){
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{
+        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
+      });
+      if(r.ok){
+        const f=await r.json();
+        const cfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
+        document.getElementById('checklist-itens').value=(cfg.itens||[]).join('\n');
+      }
+    }catch(e){}
+  }
+  renderEstudioSubmissions();
+}
+
+async function salvarChecklistConfig(){
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
+  const itens=(document.getElementById('checklist-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const json=JSON.stringify({itens},null,2);
+  const content=btoa(unescape(encodeURIComponent(json)));
+  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
+  const st=document.getElementById('checklist-status');
+  try{
+    let sha=null;
+    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{headers});
+    if(getR.ok){const f=await getR.json();sha=f.sha;}
+    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{
+      method:'PUT',headers,
+      body:JSON.stringify({message:'Checklist do estúdio atualizado',content,...(sha?{sha}:{})})
+    });
+    if(!putR.ok){
+      const s=putR.status;
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');if(st)st.textContent='⚠️ Token expirado — reconfigure';configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
+    if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
+    toast('✅ Itens do checklist salvos!');
+  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+}
+
+async function renderEstudioSubmissions(){
+  const wrap=document.getElementById('estudio-submissions');
+  if(!wrap)return;
+  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Buscando envios...</p>';
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Checklists e Horários Enviados</h3>';
+  let hasAny=false;
+  for(const g of todos){
+    const slug=grupoSlug(g);
+    try{
+      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/estudio/${slug}?key=${_RIDER_KEY}`;
+      const res=await fetch(url);
+      if(!res.ok)continue;
+      const fdoc=await res.json();
+      if(!fdoc.fields?.cultos)continue;
+      const cultos=_fsParse(fdoc.fields.cultos);
+      const keys=Object.keys(cultos||{});
+      if(!keys.length)continue;
+      hasAny=true;
+      html+=`<div class="estudio-sub-section"><div class="estudio-sub-title">${g}</div>`;
+      keys.sort().reverse().slice(0,5).forEach(k=>{
+        const rd=cultos[k]||{};
+        const dt=k.replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');
+        const check=rd.checklist||{};
+        const valores=Object.values(check);
+        const total=valores.length;
+        const ok=valores.filter(v=>v==='ok').length;
+        const prob=valores.filter(v=>v==='problema').length;
+        const ent=rd.entrada?new Date(rd.entrada).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+        const sai=rd.saida?new Date(rd.saida).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+        html+=`<div class="estudio-check-row" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="display:flex;justify-content:space-between;width:100%">
+            <span style="color:var(--white);font-weight:600">${dt}</span>
+            <span style="color:var(--muted)">${total?ok+'/'+total+' OK'+(prob?' · '+prob+' problema(s)':''):'sem checklist'}</span>
+          </div>
+          <div class="estudio-horario">🕐 Entrada ${ent} · Saída ${sai}${rd.obsChecklist?' · 💬 '+_solicEsc(rd.obsChecklist):''}</div>
+        </div>`;
+      });
+      html+='</div>';
+    }catch(e){}
+  }
+  if(!hasAny)html+='<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum checklist enviado ainda.</p>';
+  wrap.innerHTML=html;
+}
+
 // Gera o HTML público como string (sem baixar)
 
 function gerarHTMLPublico(){
@@ -3614,6 +3737,20 @@ function exportarPagina(){
     ".rp-solic-badge.deferido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}",
     ".rp-solic-badge.indeferido{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}",
     "body.light .rp-home-card{background:#e8f0f8;border-color:#b0c8d8;}",
+    ".rp-check-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #2a3a4a;}",
+    ".rp-check-row:last-child{border-bottom:none;}",
+    ".rp-check-nome{font-size:13px;color:#edf4f4;flex:1;}",
+    ".rp-check-opts{display:flex;gap:4px;flex-shrink:0;}",
+    ".rp-check-btn{background:#162030;border:1px solid #2a3a4a;border-radius:7px;padding:5px 9px;font-size:14px;cursor:pointer;font-family:inherit;line-height:1;}",
+    ".rp-check-btn.ativo-ok{background:rgba(42,180,130,.2);border-color:#2ab482;}",
+    ".rp-check-btn.ativo-pendente{background:rgba(255,255,255,.12);border-color:#7a9aa8;}",
+    ".rp-check-btn.ativo-problema{background:rgba(192,57,43,.2);border-color:#e06060;}",
+    ".rp-horario-row{display:flex;gap:10px;margin-bottom:10px;}",
+    ".rp-horario-btn{flex:1;background:#162030;border:1px solid #2a3a4a;border-radius:9px;padding:12px 8px;text-align:center;cursor:pointer;font-family:inherit;color:#edf4f4;font-size:12px;font-weight:700;}",
+    ".rp-horario-btn:hover{border-color:#2ab482;}",
+    ".rp-horario-btn.batido{background:rgba(42,180,130,.15);border-color:#2ab482;color:#2ab482;}",
+    ".rp-horario-hora{display:block;font-size:15px;font-weight:800;margin-top:2px;}",
+    "body.light .rp-check-btn,body.light .rp-horario-btn{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
   ].join('\n');
 
   /* ── JS da página pública (var, sem template literals) ── */
@@ -3881,6 +4018,7 @@ function exportarPagina(){
     'var _RP={state:"login",flow:null,slug:null,nome:null,cultoKey:null,cultoLabel:null,cfg:null,fsDoc:null};',
     'var _RP_PROJ="escala-dml",_RP_KEY="AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
     'var _RP_CFG_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/rider-config.json";',
+    'var _RP_CHECKLIST_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/checklist-config.json";',
     'var _RP_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];',
     'function _rpSlug(n){return(n||"").toLowerCase().replace(/[àáâãä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ìíîï]/g,"i").replace(/[òóôõö]/g,"o").replace(/[ùúûü]/g,"u").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"");}',
     'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
@@ -3893,7 +4031,7 @@ function exportarPagina(){
 
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
-    '  var tag=_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
+    '  var tag=_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
     '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
     '  return\'<div class="rp-hdr-box"><div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
     '}',
@@ -3905,6 +4043,7 @@ function exportarPagina(){
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'solic\\\';_rpMostrarLogin()"><div class="rp-home-ico">📦</div><div class="rp-home-lbl">Solicitar Equipamento</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_rpMostrarComunicacoes()"><div class="rp-home-ico">📢</div><div class="rp-home-lbl">Comunicações</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'rider\\\';_rpMostrarLogin()"><div class="rp-home-ico">🎛</div><div class="rp-home-lbl">RT</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'estudio\\\';_rpMostrarLogin()"><div class="rp-home-ico">📋</div><div class="rp-home-lbl">Estúdio</div></div>\'',
     '    +\'</div>\');',
     '}',
     'function _rpMostrarComunicacoes(){',
@@ -3940,7 +4079,7 @@ function exportarPagina(){
     '  var grp=grupos[slug];',
     '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else _rpMostrarCultos();',
+    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarCultosEstudio();else _rpMostrarCultos();',
     '}',
 
     'function _rpMostrarSolicMenu(){',
@@ -4019,6 +4158,105 @@ function exportarPagina(){
     '  }).join("");',
     '  if(!items)items=\'<p style="font-size:13px;color:#7a9aa8;padding:12px 0">Nenhum culto encontrado para \'+_RP.nome+\' na escala publicada.</p>\';',
     '  _rpHtml(_rpHdr("_rpMostrarLogin")+\'<p class="rp-sub" style="margin-top:4px">Selecione o culto</p>\'+items);',
+    '}',
+
+    'function _rpMostrarCultosEstudio(){',
+    '  _RP.state="cultos-estudio";_RP.cultoKey=null;_RP.cultoLabel=null;',
+    '  var todos=(CULTOS_ATUAL||[]).concat(CULTOS_PROX||[]);',
+    '  var meus=todos.filter(function(c){return c.grupos&&c.grupos.indexOf(_RP.nome)>=0;});',
+    '  meus.sort(function(a,b){return parseInt(a.data)-parseInt(b.data);});',
+    '  var M={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
+    '  var hoje=new Date();',
+    '  var items=meus.map(function(c){',
+    '    var ml=((CULTOS_PROX||[]).indexOf(c)>=0)?MES_PROX:MES_ATUAL;',
+    '    var p=(ml||"").split(" ");var mo=M[p[0]]!==undefined?M[p[0]]:hoje.getMonth();var an=parseInt(p[1])||hoje.getFullYear();',
+    '    var dt=new Date(an,mo,parseInt(c.data));',
+    '    var diff=Math.round((dt-hoje)/86400000);',
+    '    var quando=diff<0?"Realizado":diff===0?"Hoje":diff===1?"Amanhã":"Em "+diff+" dias";',
+    '    var key="d"+String(c.data).padStart(2,"0")+"_h"+c.hora.replace(":","");',
+    '    var lbl=c.culto+" · Dia "+c.data+" · "+c.hora;',
+    '    return\'<div class="rp-culto-item" onclick="_rpAbrirEstudio(\\\'\'+key+\'\\\',\\\'\'+encodeURIComponent(lbl)+\'\\\')">\'',
+    '      +\'<div><div class="rp-culto-nome">\'+c.culto+\'</div><div class="rp-culto-sub">Dia \'+c.data+\' · \'+c.hora+\' · \'+ml+\'</div></div>\'',
+    '      +\'<span style="font-size:11px;color:#7a9aa8;white-space:nowrap">\'+quando+\'</span></div>\';',
+    '  }).join("");',
+    '  if(!items)items=\'<p style="font-size:13px;color:#7a9aa8;padding:12px 0">Nenhum culto encontrado para \'+_RP.nome+\' na escala publicada.</p>\';',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Selecione o culto</p>\'+items);',
+    '}',
+    'function _rpAbrirEstudio(key,labelEnc){',
+    '  _RP.cultoKey=key;_RP.cultoLabel=decodeURIComponent(labelEnc);',
+    '  _rpHtml(_rpHdr("_rpMostrarCultosEstudio")+"<p class=\\"rp-sub\\"><i class=ph-hourglass></i> Carregando...</p>");',
+    '  var pDoc=fetch("https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY).then(function(r){return r.ok?r.json():{};});',
+    '  var pCfg=fetch(_RP_CHECKLIST_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};});',
+    '  Promise.all([pDoc,pCfg]).then(function(res){',
+    '    _RP.estudioDoc=res[0];_RP.checklistItens=res[1].itens||[];',
+    '    var cultos=res[0].fields&&res[0].fields.cultos?_rpFsParse(res[0].fields.cultos):{};',
+    '    _RP.estudioAtual=cultos[key]||{};',
+    '    _rpRenderEstudio();',
+    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarCultosEstudio")+\'<p class="rp-sub">Erro ao carregar.</p>\');});',
+    '}',
+    'function _rpRenderEstudio(){',
+    '  var rd=_RP.estudioAtual||{};',
+    '  var check=rd.checklist||{};',
+    '  var ent=rd.entrada?new Date(rd.entrada).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):null;',
+    '  var sai=rd.saida?new Date(rd.saida).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):null;',
+    '  var h=_rpHdr("_rpMostrarCultosEstudio");',
+    '  h+=\'<div class="rp-sec">🕐 Horário</div>\';',
+    '  h+=\'<div class="rp-horario-row">\'',
+    '    +\'<button class="rp-horario-btn\'+(ent?" batido":"")+\'" onclick="_rpBaterHorario(\\\'entrada\\\')">Entrada<span class="rp-horario-hora">\'+(ent||"—")+\'</span></button>\'',
+    '    +\'<button class="rp-horario-btn\'+(sai?" batido":"")+\'" onclick="_rpBaterHorario(\\\'saida\\\')">Saída<span class="rp-horario-hora">\'+(sai||"—")+\'</span></button>\'',
+    '    +\'</div>\';',
+    '  h+=\'<div class="rp-sec">📋 Checklist do Estúdio</div>\';',
+    '  if(!_RP.checklistItens.length){h+=\'<p class="rp-sub">Nenhum item configurado ainda.</p>\';}',
+    '  else{',
+    '    h+=_RP.checklistItens.map(function(it){',
+    '      var st=check[it]||"pendente";',
+    '      function btn(v,ico){return\'<button class="rp-check-btn\'+(st===v?" ativo-"+v:"")+\'" onclick="_rpSetCheck(\\\'\'+encodeURIComponent(it)+\'\\\',\\\'\'+v+\'\\\')">\'+ico+\'</button>\';}',
+    '      return\'<div class="rp-check-row"><div class="rp-check-nome">\'+it+\'</div><div class="rp-check-opts">\'+btn("ok","✅")+btn("pendente","➖")+btn("problema","⚠️")+\'</div></div>\';',
+    '    }).join("");',
+    '  }',
+    '  h+=\'<label class="rp-obs-lbl" style="margin-top:12px;display:block">Observações</label>\';',
+    '  h+=\'<textarea class="rp-obs" id="estudio-obs" rows="3">\'+(rd.obsChecklist||"")+\'</textarea>\';',
+    '  h+=\'<button class="rp-btn" style="margin-top:14px" onclick="_rpSalvarEstudio()">💾 Salvar checklist</button>\';',
+    '  _rpHtml(h);',
+    '}',
+    'function _rpSetCheck(itemEnc,valor){',
+    '  var item=decodeURIComponent(itemEnc);',
+    '  if(!_RP.estudioAtual)_RP.estudioAtual={};',
+    '  if(!_RP.estudioAtual.checklist)_RP.estudioAtual.checklist={};',
+    '  _RP.estudioAtual.checklist[item]=valor;',
+    '  _rpRenderEstudio();',
+    '}',
+    'function _rpBaterHorario(tipo){',
+    '  var campo=tipo==="entrada"?"entrada":"saida";',
+    '  var ts=Date.now();',
+    '  var doc=_RP.estudioDoc||{};',
+    '  var cultos=doc.fields&&doc.fields.cultos?_rpFsParse(doc.fields.cultos):{};',
+    '  var rd=cultos[_RP.cultoKey]||{};',
+    '  rd[campo]=ts;',
+    '  cultos[_RP.cultoKey]=rd;',
+    '  var body={fields:{cultos:_rpFsEnc(cultos)}};',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY;',
+    '  fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
+    '    .then(function(r){',
+    '      if(r.ok){_RP.estudioDoc=Object.assign({},_RP.estudioDoc,{fields:{cultos:_rpFsEnc(cultos)}});_RP.estudioAtual=rd;_rpRenderEstudio();}',
+    '      else{return r.text().then(function(t){alert("Erro ao registrar: "+t);});}',
+    '    }).catch(function(e){alert("Erro: "+e.message);});',
+    '}',
+    'function _rpSalvarEstudio(){',
+    '  var obs=document.getElementById("estudio-obs").value;',
+    '  var doc=_RP.estudioDoc||{};',
+    '  var cultos=doc.fields&&doc.fields.cultos?_rpFsParse(doc.fields.cultos):{};',
+    '  var rd=cultos[_RP.cultoKey]||{};',
+    '  rd.checklist=(_RP.estudioAtual&&_RP.estudioAtual.checklist)||{};',
+    '  rd.obsChecklist=obs;',
+    '  cultos[_RP.cultoKey]=rd;',
+    '  var body={fields:{cultos:_rpFsEnc(cultos)}};',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY;',
+    '  fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
+    '    .then(function(r){',
+    '      if(r.ok){_RP.estudioDoc=Object.assign({},_RP.estudioDoc,{fields:{cultos:_rpFsEnc(cultos)}});alert("✅ Checklist salvo!");}',
+    '      else{return r.text().then(function(t){alert("Erro ao salvar: "+t);});}',
+    '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
 
     'function _rpAbrirEditor(key,labelEnc){',
@@ -4309,7 +4547,7 @@ function irPara(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,semana:10};
+  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,estudio:10,semana:11};
   document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
   if(p==='preview')renderPreview();
   if(p==='hist')renderHist();
@@ -4321,6 +4559,7 @@ function irPara(p){
   if(p==='colab')renderColaboradores();
   if(p==='riders')renderRiders();
   if(p==='solic')renderSolic();
+  if(p==='estudio')renderEstudio();
 }
 
 // ═══════════════════════════════════════════════
