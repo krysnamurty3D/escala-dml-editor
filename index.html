@@ -13,6 +13,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getMessaging, getToken }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
@@ -31,7 +33,8 @@ const db = getFirestore(app);
 window._fbAuth = auth;
 window._fbDb = db;
 window._fbGoogleProvider = new GoogleAuthProvider();
-window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged };
+window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged, getToken };
+try{ window._fbMessaging = getMessaging(app); }catch(e){ console.warn('FCM indisponível:', e); }
 
 // Monitora estado de autenticação
 onAuthStateChanged(auth, user => {
@@ -1133,6 +1136,10 @@ tr.esp-row .td-dia{color:#c03030;}
     <div>
       <h2 style="color:var(--teal);font-size:17px">📋 Estúdio — Ensaios, Checklist e Horário</h2>
       <p class="riders-desc">Defina o dia/horário fixo de ensaio e os itens do checklist. Os líderes marcam os itens, batem entrada/saída e podem avisar quando não houver ensaio, pela página pública.</p>
+    </div>
+    <div style="text-align:right">
+      <button class="btn btn-outline btn-sm" onclick="ativarNotificacoesCoordenador()">🔔 Ativar notificações</button>
+      <div id="push-coord-status" style="font-size:11px;color:var(--muted);margin-top:6px">⚪ Notificações não ativadas neste navegador</div>
     </div>
   </div>
   <div class="estudio-cfg">
@@ -3036,6 +3043,47 @@ async function publicarNetlify(){
       const t=await putRes.text();throw new Error(`GitHub ${status}: ${t}`);
     }
 
+    // 3. Garante o service worker do FCM (notificações push) no mesmo repositório
+    try{
+      const swContent=`importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
+  authDomain: "escala-dml.firebaseapp.com",
+  projectId: "escala-dml",
+  storageBucket: "escala-dml.firebasestorage.app",
+  messagingSenderId: "219409261265",
+  appId: "1:219409261265:web:d919096c27487df65bdbf0"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  const { title, body, url } = payload.data || {};
+  self.registration.showNotification(title || 'Escala DML', {
+    body: body || '',
+    icon: '/favicon.ico',
+    data: { url: url || '/' }
+  });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(clients.openWindow(url));
+});
+`;
+      let swSha=null;
+      const swGetRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/firebase-messaging-sw.js`,{headers});
+      if(swGetRes.ok){const f=await swGetRes.json();swSha=f.sha;}
+      const swContentB64=btoa(unescape(encodeURIComponent(swContent)));
+      await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/firebase-messaging-sw.js`,{
+        method:'PUT',headers,
+        body:JSON.stringify({message:'Service worker de notificações (FCM)',content:swContentB64,...(swSha?{sha:swSha}:{})})
+      });
+    }catch(e){console.warn('Falha ao publicar firebase-messaging-sw.js:',e);}
+
     mostrarLoad(false);
     toast('<i class=ph-globe></i> Publicado! escala-dml.netlify.app atualiza em instantes...');
   }catch(e){
@@ -3322,6 +3370,7 @@ function _estudioDataCiclo(diaSemana){
 function _estudioYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 async function renderEstudio(){
+  atualizarStatusPushCoordenador();
   const ghToken=getGithubToken();
   let cfg={};
   if(ghToken){
@@ -3495,6 +3544,38 @@ function _atualizarBadgeEstudio(n){
   if(!b)return;
   if(n>0){b.textContent=n;b.style.display='inline-block';}
   else{b.style.display='none';}
+}
+
+// ═══════════════════════════════════════════════
+// NOTIFICAÇÕES PUSH (FCM) — coordenador
+// ═══════════════════════════════════════════════
+const FCM_VAPID_KEY='BMx6z1hCdW1bKwCjmTYrgi-igDclRR70d8RGs83ifh3XoGclMfKDQYOsw9ZifPwAq99dTpWhm8oBt_yZzH2H2CI';
+
+async function ativarNotificacoesCoordenador(){
+  const st=document.getElementById('push-coord-status');
+  try{
+    if(!('serviceWorker' in navigator)||!('Notification' in window)){toast('❌ Este navegador não suporta notificações push');return;}
+    if(!window._fbMessaging){toast('❌ Serviço de notificações indisponível');return;}
+    const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){toast('⚠️ Permissão de notificação negada');if(st)st.textContent='⚫ Permissão negada';return;}
+    const {getToken,doc,setDoc}=window._fbFns;
+    const token=await getToken(window._fbMessaging,{vapidKey:FCM_VAPID_KEY,serviceWorkerRegistration:reg});
+    if(!token){toast('❌ Não foi possível gerar o token de notificação');return;}
+    await setDoc(doc(window._fbDb,'pushTokens',token),{papel:'coordenador',criadoEm:Date.now()},{merge:true});
+    localStorage.setItem('dml_push_token',token);
+    toast('✅ Notificações ativadas!');
+    if(st)st.textContent='🟢 Notificações ativas neste navegador';
+  }catch(e){toast('❌ Erro ao ativar notificações: '+e.message);console.error(e);}
+}
+
+function atualizarStatusPushCoordenador(){
+  const st=document.getElementById('push-coord-status');
+  if(!st)return;
+  const perm=('Notification' in window)?Notification.permission:'unsupported';
+  if(perm==='granted'&&localStorage.getItem('dml_push_token'))st.textContent='🟢 Notificações ativas neste navegador';
+  else if(perm==='denied')st.textContent='⚫ Permissão negada — habilite nas configurações do navegador';
+  else st.textContent='⚪ Notificações não ativadas neste navegador';
 }
 
 // Gera o HTML público como string (sem baixar)
@@ -4145,11 +4226,35 @@ function exportarPagina(){
     'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
     'function _rpInstrOpts(sel){return _RP_INSTRS.map(function(x){return\'<option value="\'+x+\'"\'+(x===sel?\' selected\':\'\')+\'>\'+x+\'</option>\';}).join("");}',
 
+    'var _rpFbApp=null,_rpMessaging=null;',
+    'try{',
+    '  _rpFbApp=firebase.initializeApp({apiKey:"AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",authDomain:"escala-dml.firebaseapp.com",projectId:"escala-dml",storageBucket:"escala-dml.firebasestorage.app",messagingSenderId:"219409261265",appId:"1:219409261265:web:d919096c27487df65bdbf0"});',
+    '  if(firebase.messaging.isSupported())_rpMessaging=firebase.messaging();',
+    '}catch(e){console.warn("FCM indisponível:",e);}',
+    'function _rpAtivarNotificacoes(){',
+    '  if(!_rpMessaging){alert("Este navegador não suporta notificações push.");return;}',
+    '  if(!_RP.slug){alert("Entre com o PIN do seu grupo antes de ativar as notificações.");return;}',
+    '  navigator.serviceWorker.register("/firebase-messaging-sw.js").then(function(reg){',
+    '    return Notification.requestPermission().then(function(perm){',
+    '      if(perm!=="granted"){alert("Permissão de notificação negada.");return;}',
+    '      return _rpMessaging.getToken({vapidKey:"BMx6z1hCdW1bKwCjmTYrgi-igDclRR70d8RGs83ifh3XoGclMfKDQYOsw9ZifPwAq99dTpWhm8oBt_yZzH2H2CI",serviceWorkerRegistration:reg}).then(function(token){',
+    '        if(!token)return;',
+    '        var body={fields:{grupo:{stringValue:_RP.slug},grupoNome:{stringValue:_RP.nome||""},criadoEm:{integerValue:String(Date.now())}}};',
+    '        var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/pushTokens/"+encodeURIComponent(token)+"?key="+_RP_KEY;',
+    '        return fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){',
+    '          if(r.ok){_RP.pushAtivo=true;alert("✅ Notificações ativadas para "+_RP.nome+"!");if(_RP.state==="ensaio"&&typeof _rpRenderEstudio==="function")_rpRenderEstudio();}',
+    '          else alert("Erro ao salvar token de notificação.");',
+    '        });',
+    '      });',
+    '    });',
+    '  }).catch(function(e){alert("Erro: "+e.message);});',
+    '}',
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
     '  var tag=_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
     '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
-    '  return\'<div class="rp-hdr-box"><div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
+    '  var sino=_RP.slug?\'<button style="background:none;border:none;color:#7a9aa8;font-size:19px;cursor:pointer;position:absolute;top:14px;right:16px" onclick="_rpAtivarNotificacoes()" title="Ativar notificações">\'+(_RP.pushAtivo?"🔔":"🔕")+\'</button>\':"";',
+    '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
     '}',
     'function _rpMostrarHome(){',
     '  _RP.state="home";_RP.flow=null;',
@@ -4528,6 +4633,8 @@ function exportarPagina(){
     +'<meta name="twitter:description" content="Confira a escala de louvor \u2014 '+mesLabel+'.">\n'
     +'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
     +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
+    +'<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"><\/script>\n'
+    +'<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"><\/script>\n'
     +'<style>\n'+CSS+'\n</style>\n'
     +'</head>\n<body>\n'
 
