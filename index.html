@@ -336,6 +336,27 @@ tr.esp-row .td-dia{color:#c03030;}
 .rider-sub-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
 .rider-sub-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;}
 
+/* ── HOME CARDS (app) ── */
+.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:700px;width:100%;margin-bottom:8px;}
+.home-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .15s;}
+.home-card:hover{border-color:var(--teal);background:var(--glow);transform:translateY(-2px);}
+.home-card-ico{font-size:28px;margin-bottom:8px;}
+.home-card-lbl{font-size:12px;font-weight:700;color:var(--white);}
+
+/* ── SOLICITAÇÕES DE EQUIPAMENTO ── */
+.solic-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.solic-info{flex:1;min-width:200px;}
+.solic-grupo{font-size:12px;font-weight:800;color:var(--teal);}
+.solic-item{font-size:13px;font-weight:700;color:var(--white);margin-top:2px;}
+.solic-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+.solic-motivo{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;}
+.solic-status{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.solic-status.pendente{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.4);}
+.solic-status.deferido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
+.solic-status.indeferido{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
+.solic-just{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px;}
+.solic-actions{display:flex;gap:6px;}
+
 /* ── DASHBOARD ── */
 .dash-hdr{margin-bottom:16px;}
 .dash-hdr h2{color:var(--teal);font-size:17px;}
@@ -704,6 +725,7 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('tmpl')">📋 Templates</button>
       <button class="nav-pill" onclick="irPara('colab')">👥 Colaboradores</button>
       <button class="nav-pill" onclick="irPara('riders')">🎛 Riders</button>
+      <button class="nav-pill" onclick="irPara('solic')">📦 Solicitações</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none">📆 Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
@@ -745,6 +767,21 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- UPLOAD -->
 <div id="page-upload" class="page active">
   <div class="upload-center">
+    <!-- Cards de navegação rápida (app) -->
+    <div class="home-cards">
+      <div class="home-card" onclick="irPara('upload')">
+        <div class="home-card-ico">🗓</div><div class="home-card-lbl">Escala</div>
+      </div>
+      <div class="home-card" onclick="irPara('solic')">
+        <div class="home-card-ico">📦</div><div class="home-card-lbl">Solicitações</div>
+      </div>
+      <div class="home-card" onclick="document.getElementById('aviso-panel-wrap').scrollIntoView({behavior:'smooth',block:'center'})">
+        <div class="home-card-ico">📢</div><div class="home-card-lbl">Comunicações</div>
+      </div>
+      <div class="home-card" onclick="irPara('riders')">
+        <div class="home-card-ico">🎛</div><div class="home-card-lbl">RT</div>
+      </div>
+    </div>
     <!-- Card última escala (aparece quando há sessão salva) -->
     <div id="card-ultima" style="display:none;width:100%;max-width:700px;margin-bottom:16px">
       <div class="upload-card ultima-card" onclick="abrirUltimaEscala()" style="flex-direction:row;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:rgba(42,180,130,.06);border-color:var(--teal-dim)">
@@ -777,7 +814,7 @@ tr.esp-row .td-dia{color:#c03030;}
     <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px">🗑 Limpar Escala Atual</button>
 
     <!-- Painel de Aviso para a página pública -->
-    <div style="width:100%;max-width:700px;margin-top:24px">
+    <div id="aviso-panel-wrap" style="width:100%;max-width:700px;margin-top:24px">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:8px">
@@ -1045,6 +1082,17 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
   </div>
   <div id="riders-submissions"></div>
+</div>
+<!-- SOLICITAÇÕES DE EQUIPAMENTO -->
+<div id="page-solic" class="page">
+  <div class="riders-header">
+    <div>
+      <h2 style="color:var(--teal);font-size:17px">📦 Solicitações de Equipamento</h2>
+      <p class="riders-desc">Pedidos enviados pelos líderes na página pública, para uso em cultos específicos. Defira ou indefira — ao indeferir, informe uma justificativa.</p>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="renderSolic()">↻ Atualizar</button>
+  </div>
+  <div id="solic-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div></div>
 </div>
 <!-- QR CODE -->
 <div id="page-qr" class="page">
@@ -3069,6 +3117,60 @@ async function renderRiderSubmissions(){
   wrap.innerHTML=html;
 }
 
+// ═══════════════════════════════════════════════
+// SOLICITAÇÕES DE EQUIPAMENTO
+// ═══════════════════════════════════════════════
+function _solicEsc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+async function renderSolic(){
+  const wrap=document.getElementById('solic-list');
+  if(!wrap)return;
+  wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div>';
+  try{
+    const {collection,getDocs,query,orderBy}=window._fbFns;
+    const snap=await getDocs(query(collection(window._fbDb,'solicitacoes'),orderBy('criadoEm','desc')));
+    const itens=[];
+    snap.forEach(d=>itens.push({id:d.id,...d.data()}));
+    if(!itens.length){wrap.innerHTML='<div class="empty-state"><div class="icon">📦</div><p>Nenhuma solicitação enviada ainda.</p></div>';return;}
+    itens.sort((a,b)=>((a.status||'pendente')==='pendente'?0:1)-((b.status||'pendente')==='pendente'?0:1));
+    wrap.innerHTML=itens.map(it=>{
+      const dt=it.data?new Date(it.data+'T00:00:00').toLocaleDateString('pt-BR'):'—';
+      const st=it.status||'pendente';
+      const stLbl=st==='deferido'?'✅ Deferido':st==='indeferido'?'❌ Indeferido':'🕓 Pendente';
+      return `<div class="solic-row">
+        <div class="solic-info">
+          <div class="solic-grupo">${_solicEsc(it.grupoNome||it.grupo||'—')}</div>
+          <div class="solic-item">${_solicEsc(it.item||'—')}</div>
+          <div class="solic-meta">Para dia ${dt}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
+          ${it.motivo?`<div class="solic-motivo">${_solicEsc(it.motivo)}</div>`:''}
+          ${it.justificativa?`<div class="solic-just">💬 ${_solicEsc(it.justificativa)}</div>`:''}
+        </div>
+        <span class="solic-status ${st}">${stLbl}</span>
+        <div class="solic-actions">
+          <button class="btn btn-outline btn-sm" onclick="_solicResponder('${it.id}','deferido')">✅ Deferir</button>
+          <button class="btn-danger" onclick="_solicResponder('${it.id}','indeferido')">❌ Indeferir</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
+}
+
+async function _solicResponder(id,status){
+  let justificativa='';
+  if(status==='indeferido'){
+    justificativa=(prompt('Justificativa do indeferimento (obrigatória):')||'').trim();
+    if(!justificativa){toast('⚠️ Justificativa é obrigatória para indeferir');return;}
+  }else{
+    justificativa=(prompt('Justificativa (opcional):','')||'').trim();
+  }
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._fbDb,'solicitacoes',id),{status,justificativa,respondidoEm:Date.now()},{merge:true});
+    toast(status==='deferido'?'✅ Solicitação deferida':'❌ Solicitação indeferida');
+    renderSolic();
+  }catch(e){toast('❌ Erro: '+e.message);}
+}
+
 // Gera o HTML público como string (sem baixar)
 
 function gerarHTMLPublico(){
@@ -3411,6 +3513,16 @@ function exportarPagina(){
     "body.light .rp-inp,.body.light .rp-sel{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
     "body.light .rp-cell{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
     "body.light .rp-culto-item{background:#e8f0f8;border-color:#b0c8d8;}",
+    ".rp-home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}",
+    ".rp-home-card{background:#162030;border:1px solid #2a3a4a;border-radius:12px;padding:18px 10px;text-align:center;cursor:pointer;transition:all .15s;}",
+    ".rp-home-card:hover{border-color:#2ab482;background:rgba(42,180,130,.08);}",
+    ".rp-home-ico{font-size:26px;margin-bottom:6px;}",
+    ".rp-home-lbl{font-size:12px;font-weight:700;color:#edf4f4;}",
+    ".rp-solic-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;}",
+    ".rp-solic-badge.pendente{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.4);}",
+    ".rp-solic-badge.deferido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}",
+    ".rp-solic-badge.indeferido{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}",
+    "body.light .rp-home-card{background:#e8f0f8;border-color:#b0c8d8;}",
   ].join('\n');
 
   /* ── JS da página pública (var, sem template literals) ── */
@@ -3649,45 +3761,66 @@ function exportarPagina(){
     '}',
     'iniciarRealizados();',
     // Aviso popup
-    '(function(){',
-    '  var AVISO_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/aviso.json";',
-    '  fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
-    '    if(!d||!d.ativo||!d.mensagem)return;',
-    '    var visto=localStorage.getItem("dml-aviso-id");',
-    '    if(visto===d.id)return;',
-    '    var ov=document.createElement("div");ov.className="aviso-overlay";ov.id="aviso-ov";',
-    '    ov.innerHTML=\'<div class="aviso-box">\'',
-    '      +\'<button class="aviso-fechar" onclick="fecharAviso()">&#x2715;</button>\'',
-    '      +(d.titulo?\'<div class="aviso-titulo">\'+d.titulo+\'</div>\':\'\')',
-    '      +\'<div class="aviso-msg">\'+d.mensagem+\'</div>\'',
-    '      +\'<div class="aviso-rodape"><button class="aviso-btn-ok" onclick="fecharAviso()">Entendido</button></div>\'',
-    '      +\'</div>\';',
-    '    document.body.appendChild(ov);',
-    '    window._avisoId=d.id;',
-    '  }).catch(function(){});',
-    '  window.fecharAviso=function(){',
-    '    var ov=document.getElementById("aviso-ov");if(ov)ov.remove();',
-    '    try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
-    '  };',
-    '})();',
+    'var AVISO_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/aviso.json";',
+    'function _mostrarAvisoOverlay(d){',
+    '  var ov=document.createElement("div");ov.className="aviso-overlay";ov.id="aviso-ov";',
+    '  ov.innerHTML=\'<div class="aviso-box">\'',
+    '    +\'<button class="aviso-fechar" onclick="fecharAviso()">&#x2715;</button>\'',
+    '    +(d.titulo?\'<div class="aviso-titulo">\'+d.titulo+\'</div>\':\'\')',
+    '    +\'<div class="aviso-msg">\'+d.mensagem+\'</div>\'',
+    '    +\'<div class="aviso-rodape"><button class="aviso-btn-ok" onclick="fecharAviso()">Entendido</button></div>\'',
+    '    +\'</div>\';',
+    '  document.body.appendChild(ov);',
+    '  window._avisoId=d.id;',
+    '}',
+    'function fecharAviso(){',
+    '  var ov=document.getElementById("aviso-ov");if(ov)ov.remove();',
+    '  try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
+    '}',
+    'fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '  if(!d||!d.ativo||!d.mensagem)return;',
+    '  var visto=localStorage.getItem("dml-aviso-id");',
+    '  if(visto===d.id)return;',
+    '  _mostrarAvisoOverlay(d);',
+    '}).catch(function(){});',
 
 // Rider Panel
-    'var _RP={state:"login",slug:null,nome:null,cultoKey:null,cultoLabel:null,cfg:null,fsDoc:null};',
+    'var _RP={state:"login",flow:null,slug:null,nome:null,cultoKey:null,cultoLabel:null,cfg:null,fsDoc:null};',
     'var _RP_PROJ="escala-dml",_RP_KEY="AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
     'var _RP_CFG_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/rider-config.json";',
     'var _RP_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];',
     'function _rpSlug(n){return(n||"").toLowerCase().replace(/[àáâãä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ìíîï]/g,"i").replace(/[òóôõö]/g,"o").replace(/[ùúûü]/g,"u").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"");}',
     'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
     'function _rpFsEnc(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==="boolean")return{booleanValue:v};if(typeof v==="number")return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==="string")return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_rpFsEnc)}};if(typeof v==="object"){var f={};Object.entries(v).forEach(function(e){f[e[0]]=_rpFsEnc(e[1]);});return{mapValue:{fields:f}};}return{stringValue:String(v)};}',
-    'function abrirRiderPanel(){document.getElementById("rp-overlay").style.display="flex";_rpMostrarLogin();}',
+    'function abrirRiderPanel(){_RP.flow="rider";document.getElementById("rp-overlay").style.display="flex";_rpMostrarLogin();}',
+    'function abrirHomeApp(){document.getElementById("rp-overlay").style.display="flex";_rpMostrarHome();}',
     'function fecharRiderPanel(){document.getElementById("rp-overlay").style.display="none";}',
     'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
     'function _rpInstrOpts(sel){return _RP_INSTRS.map(function(x){return\'<option value="\'+x+\'"\'+(x===sel?\' selected\':\'\')+\'>\'+x+\'</option>\';}).join("");}',
 
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()">&#8592;</button>\':"";',
-    '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">🎵</span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">🎛 RIDER TÉCNICO</span></div>\';',
+    '  var tag=_RP.flow==="solic"?"📦 SOLICITAÇÃO DE EQUIPAMENTO":"🎛 RIDER TÉCNICO";',
+    '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">🎵</span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
     '  return\'<div class="rp-hdr-box"><div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
+    '}',
+    'function _rpMostrarHome(){',
+    '  _RP.state="home";_RP.flow=null;',
+    '  _rpHtml(\'<div class="rp-hdr-box"><div class="rp-hdr-grupo">Departamento de Música e Louvor</div><div class="rp-hdr-culto"><span class="rp-hdr-tag">📱 ÁREA DO LÍDER</span></div></div>\'',
+    '    +\'<div class="rp-home-grid">\'',
+    '    +\'<div class="rp-home-card" onclick="fecharRiderPanel()"><div class="rp-home-ico">🗓</div><div class="rp-home-lbl">Escala</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'solic\\\';_rpMostrarLogin()"><div class="rp-home-ico">📦</div><div class="rp-home-lbl">Solicitar Equipamento</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="_rpMostrarComunicacoes()"><div class="rp-home-ico">📢</div><div class="rp-home-lbl">Comunicações</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'rider\\\';_rpMostrarLogin()"><div class="rp-home-ico">🎛</div><div class="rp-home-lbl">RT</div></div>\'',
+    '    +\'</div>\');',
+    '}',
+    'function _rpMostrarComunicacoes(){',
+    '  _RP.state="comunic";',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\" style=\\"margin-top:4px\\">&#9203; Carregando avisos...</p>");',
+    '  fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '    if(!d||!d.ativo||!d.mensagem){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum aviso no momento.</p>\');return;}',
+    '    _rpHtml(_rpHdr("_rpMostrarHome")+(d.titulo?\'<div class="rp-title">\'+d.titulo+\'</div>\':\'\')+\'<div class="rp-sub" style="color:#c8d8e8;white-space:pre-wrap;margin-top:8px">\'+d.mensagem+\'</div>\');',
+    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar aviso.</p>\');});',
     '}',
 
     'function _rpMostrarLogin(){',
@@ -3695,9 +3828,9 @@ function exportarPagina(){
     '  fetch(_RP_CFG_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(cfg){',
     '    _RP.cfg=cfg;',
     '    var grupos=cfg&&cfg.grupos?Object.values(cfg.grupos).filter(function(g){return g.pin;}).sort(function(a,b){return a.nome.localeCompare(b.nome);}):[];',
-    '    if(!grupos.length){_rpHtml(_rpHdr(null)+"<p class=\\"rp-sub\\">Nenhum grupo configurado ainda.</p>");return;}',
+    '    if(!grupos.length){_rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\">Nenhum grupo configurado ainda.</p>");return;}',
     '    var opts=grupos.map(function(g){return\'<option value="\'+_rpSlug(g.nome)+\'">\'+g.nome+\'</option>\';}).join("");',
-    '    _rpHtml(_rpHdr(null)',
+    '    _rpHtml(_rpHdr("_rpMostrarHome")',
     '      +\'<label class="rp-label" style="margin-top:2px">Grupo</label>\'',
     '      +\'<select class="rp-sel" id="rp-grupo">\'+opts+\'</select>\'',
     '      +\'<label class="rp-label">PIN</label>\'',
@@ -3714,7 +3847,62 @@ function exportarPagina(){
     '  var grp=grupos[slug];',
     '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  _rpMostrarCultos();',
+    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else _rpMostrarCultos();',
+    '}',
+
+    'function _rpMostrarSolicMenu(){',
+    '  _RP.state="solic-menu";',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Solicitações de \'+_RP.nome+\'</p><button class="rp-btn" onclick="_rpMostrarSolicNova()">➕ Nova solicitação</button><div id="rp-solic-lista"><p class="rp-sub">&#9203; Carregando...</p></div>\');',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents:runQuery?key="+_RP_KEY;',
+    '  var body={structuredQuery:{from:[{collectionId:"solicitacoes"}],where:{fieldFilter:{field:{fieldPath:"grupo"},op:"EQUAL",value:{stringValue:_RP.slug}}},limit:50}};',
+    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
+    '    .then(function(r){return r.ok?r.json():[];}).then(function(rows){',
+    '      var itens=(rows||[]).filter(function(r){return r.document;}).map(function(r){',
+    '        var f=r.document.fields||{};',
+    '        return{id:r.document.name.split("/").pop(),grupoNome:_rpFsParse(f.grupoNome),item:_rpFsParse(f.item),motivo:_rpFsParse(f.motivo),data:_rpFsParse(f.data),status:_rpFsParse(f.status)||"pendente",justificativa:_rpFsParse(f.justificativa),criadoEm:_rpFsParse(f.criadoEm)||0};',
+    '      });',
+    '      itens.sort(function(a,b){return b.criadoEm-a.criadoEm;});',
+    '      var el=document.getElementById("rp-solic-lista");if(!el)return;',
+    '      if(!itens.length){el.innerHTML=\'<p class="rp-sub" style="margin-top:10px">Nenhuma solicitação enviada ainda.</p>\';return;}',
+    '      el.innerHTML=itens.map(function(it){',
+    '        var stCls=it.status==="deferido"?"deferido":it.status==="indeferido"?"indeferido":"pendente";',
+    '        var stLbl=it.status==="deferido"?"✅ Deferido":it.status==="indeferido"?"❌ Indeferido":"🕓 Pendente";',
+    '        var dt=it.data?new Date(it.data+"T00:00:00").toLocaleDateString("pt-BR"):"—";',
+    '        return \'<div class="rp-culto-item" style="align-items:flex-start;flex-direction:column;cursor:default">\'',
+    '          +\'<div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">\'',
+    '          +\'<div class="rp-culto-nome">\'+(it.item||"—")+\'</div><span class="rp-solic-badge \'+stCls+\'">\'+stLbl+\'</span></div>\'',
+    '          +\'<div class="rp-culto-sub">Para dia \'+dt+(it.motivo?" · "+it.motivo:"")+\'</div>\'',
+    '          +(it.justificativa?\'<div class="rp-culto-sub" style="margin-top:4px;font-style:italic">💬 \'+it.justificativa+\'</div>\':\'\')',
+    '          +\'</div>\';',
+    '      }).join("");',
+    '    }).catch(function(){var el=document.getElementById("rp-solic-lista");if(el)el.innerHTML=\'<p class="rp-sub">Erro ao carregar.</p>\';});',
+    '}',
+    'function _rpMostrarSolicNova(){',
+    '  _RP.state="solic-nova";',
+    '  var hoje=new Date().toISOString().slice(0,10);',
+    '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")',
+    '    +\'<label class="rp-label" style="margin-top:2px">Data</label>\'',
+    '    +\'<input class="rp-inp" type="date" id="solic-data" min="\'+hoje+\'">\'',
+    '    +\'<label class="rp-label">Equipamento / Instrumento</label>\'',
+    '    +\'<input class="rp-inp" type="text" id="solic-item" placeholder="Ex: Violão, DI Box, Pedal...">\'',
+    '    +\'<label class="rp-label">Motivo</label>\'',
+    '    +\'<textarea class="rp-inp" id="solic-motivo" rows="3" style="resize:vertical" placeholder="Explique o motivo da solicitação"></textarea>\'',
+    '    +\'<div class="rp-err" id="solic-err" style="display:none">Preencha data, equipamento e motivo.</div>\'',
+    '    +\'<button class="rp-btn" onclick="_rpEnviarSolic()">Enviar solicitação</button>\');',
+    '}',
+    'function _rpEnviarSolic(){',
+    '  var data=document.getElementById("solic-data").value;',
+    '  var item=document.getElementById("solic-item").value.trim();',
+    '  var motivo=document.getElementById("solic-motivo").value.trim();',
+    '  if(!data||!item||!motivo){var e=document.getElementById("solic-err");if(e)e.style.display="block";return;}',
+    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,data:data,item:item,motivo:motivo,status:"pendente",criadoEm:Date.now()};',
+    '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/solicitacoes?key="+_RP_KEY;',
+    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
+    '    .then(function(r){',
+    '      if(r.ok){alert("✅ Solicitação enviada!");_rpMostrarSolicMenu();}',
+    '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
+    '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
 
     'function _rpMostrarCultos(){',
@@ -3878,7 +4066,7 @@ function exportarPagina(){
     +'<div class="logo-wrap">'+LOGO
     +'<div class="logo-txt"><div class="dept">Departamento de</div><div class="nome">M\u00FAsica e Louvor</div><div class="igreja">Igreja Evang\u00E9lica Congregacional Central</div></div>'
     +'</div>'
-    +'<button class="btn-rider-hdr" onclick="abrirRiderPanel()" title="Acesso L\u00EDderes">RT</button>'
+    +'<button class="btn-rider-hdr" onclick="abrirHomeApp()" title="\u00C1rea do L\u00EDder">\uD83D\uDCF1 App</button>'
     +'<div class="hdr-right">'
     +(()=>{
       const _AB={Janeiro:'JAN',Fevereiro:'FEV','Mar\u00E7o':'MAR',Marco:'MAR',Abril:'ABR',Maio:'MAI',Junho:'JUN',Julho:'JUL',Agosto:'AGO',Setembro:'SET',Outubro:'OUT',Novembro:'NOV',Dezembro:'DEZ'};
@@ -4016,7 +4204,7 @@ function irPara(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,semana:9};
+  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,semana:10};
   document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
   if(p==='preview')renderPreview();
   if(p==='hist')renderHist();
@@ -4027,6 +4215,7 @@ function irPara(p){
   if(p==='semana')renderSemana(0);
   if(p==='colab')renderColaboradores();
   if(p==='riders')renderRiders();
+  if(p==='solic')renderSolic();
 }
 
 // ═══════════════════════════════════════════════
