@@ -3569,9 +3569,151 @@ function gerarHTMLPublico(){
 }
 
 // ═══════════════════════════════════════════════
+// RENDER DE CARDS DE CULTO (versões independentes, usadas na sincronização
+// ao vivo da escala pública — não dependem do fechamento de exportarPagina)
 // ═══════════════════════════════════════════════
-// EXPORTAR PÁGINA PÚBLICA (para Netlify/WhatsApp)
+const _PUB_BC={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
+function _pubGc(g){
+  if(g===SH_LABEL)return _PUB_BC.sh;
+  const k=Object.entries(GRUPOS).find(([,l])=>l.includes(g));
+  if(!k)return _PUB_BC.musical;
+  if(k[0]==='Grupos Musicais')return _PUB_BC.musical;
+  if(k[0]==='Corais')return _PUB_BC.coral;
+  if(k[0]==='Grupos Vocais')return _PUB_BC.vocal;
+  if(k[0]==='Grupos de Coreografia')return _PUB_BC.coreo;
+  if(k[0]==='Cantores')return _PUB_BC.cantor;
+  return _PUB_BC.musical;
+}
+function _pubLg(g){return g===SH_LABEL?'S&amp;H':g.replace(/^CORAL\s+/,'C. ');}
+function _pubCardCulto(c,_mes){
+  const grupos=sortGrupos(c.grupos);
+  const MESES_N={Janeiro:'01',Fevereiro:'02',Marco:'03','Março':'03',Abril:'04',Maio:'05',Junho:'06',Julho:'07',Agosto:'08',Setembro:'09',Outubro:'10',Novembro:'11',Dezembro:'12'};
+  const pt=(_mes||'').split(' ');
+  const mn=MESES_N[pt[0]]||'01',an=pt[1]||new Date().getFullYear();
+  const dt=an+mn+c.data.padStart(2,'0');
+  const [hh,mm]=(c.hora||'00:00').split(':');
+  const dtS=dt+'T'+hh+(mm||'00')+'00';
+  const dtE=dt+'T'+(parseInt(hh)+2).toString().padStart(2,'0')+(mm||'00')+'00';
+  const gcUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='
+    +encodeURIComponent(c.culto+' — DML')+'&dates='+dtS+'/'+dtE
+    +'&details='+encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(_pubLg).join(', '));
+  const waT=encodeURIComponent('*'+c.culto+'*\nDia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'Dirigente: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(_pubLg).join(' | '));
+  const badges=grupos.map(g=>'<span class="badge" data-grupo="'+encodeURIComponent(g)+'" style="background:'+_pubGc(g)+'">'+_pubLg(g)+'</span>').join('');
+  return '<div class="culto-row" data-grupos="'+c.grupos.map(encodeURIComponent).join(',')+'" data-data="'+c.data+'">'
+    +'<div class="col-hora">'+c.hora+'</div>'
+    +'<div class="col-info">'
+    +'<div class="culto-nome">'+c.culto+'</div>'
+    +(c.dirigente?'<div class="culto-dir">'+c.dirigente+'</div>':'')
+    +'<div class="culto-countdown" data-data="'+c.data+'"></div>'
+    +(badges?'<div class="badges">'+badges+'</div>':'')
+    +'<div class="culto-actions">'
+    +'<a class="btn-acao" href="'+gcUrl+'" target="_blank"><i class=ph-calendar></i> Calendário</a>'
+    +'<a class="btn-acao" href="https://wa.me/?text='+waT+'" target="_blank"><i class=ph-share-network></i> Compartilhar</a>'
+    +'</div></div></div>';
+}
+function _pubGerarCards(_lista,_mes){
+  let html='',i=0;
+  while(i<_lista.length){
+    const c=_lista[i];
+    const isDom=/domingo/i.test(c.dia);
+    const isTer=/ter[cç]a/i.test(c.dia);
+    const isQui=/quinta/i.test(c.dia);
+    const isSab=/s[aá]b/i.test(c.dia);
+    const bk=c.especial?'esp-block':isDom?'dom-block':isTer?'ter-block':isQui?'qui-block':isSab?'sab-block':'';
+    const hk=c.especial?'esp-header':isDom?'dom-header':isTer?'ter-header':isQui?'qui-header':isSab?'sab-header':'';
+    const nxt=_lista[i+1];
+    const hasNxt=nxt&&nxt.data===c.data&&/domingo/i.test(nxt.dia);
+    const grps=(isDom&&hasNxt?[...c.grupos,...nxt.grupos]:c.grupos).map(encodeURIComponent).join(',');
+    if(isDom&&hasNxt){
+      html+='<div class="dia-block dom-block" data-grupos="'+grps+'" data-data="'+c.data+'">'
+        +'<div class="dia-header dom-header"><span class="dia-num">'+c.data+'</span><span class="dia-abrev">DOM</span></div>'
+        +'<div class="dia-cultos">'+_pubCardCulto(c,_mes)+_pubCardCulto(nxt,_mes)+'</div></div>';
+      i+=2;
+    } else {
+      html+='<div class="dia-block'+(bk?' '+bk:'')+'" data-grupos="'+grps+'" data-data="'+c.data+'">'
+        +'<div class="dia-header'+(hk?' '+hk:'')+'">'
+        +'<span class="dia-num">'+c.data+'</span>'
+        +'<span class="dia-abrev">'+c.dia.substring(0,3).toUpperCase()+'</span>'
+        +'</div><div class="dia-cultos">'+_pubCardCulto(c,_mes)+'</div></div>';
+      i++;
+    }
+  }
+  return html;
+}
+
 // ═══════════════════════════════════════════════
+// SINCRONIZAÇÃO AO VIVO DA ESCALA PÚBLICA (Firestore)
+// ═══════════════════════════════════════════════
+async function _resolverEscalaMes(lbl){
+  const _norm=s=>(s||'').toLowerCase().replace(/ç/g,'c').trim();
+  if(_norm(mesLabel)===_norm(lbl)){
+    let oculta=false;
+    if(sessaoId){
+      try{
+        let dd=null;
+        if(window._fbUser)dd=await getSessaoFirebase(sessaoId);
+        if(!dd){const raw=localStorage.getItem(SK(sessaoId));if(raw)dd=JSON.parse(raw);}
+        oculta=!!(dd&&dd.ocultaPublicacao);
+      }catch(e){}
+    }
+    if(!oculta){const cs=cultos.filter(c=>!c.oculto);if(cs.length)return{cultos:cs,mesLabel:lbl};}
+  }
+  if(window._fbDb&&window._fbFns){
+    try{
+      const {collection,getDocs}=window._fbFns;
+      const snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
+      let achado=null;
+      snap.forEach(d=>{
+        const dd=d.data();
+        if(dd.ocultaPublicacao)return;
+        if(_norm(dd.mesLabel)===_norm(lbl)){const cs=(dd.cultos||[]).filter(c=>!c.oculto);if(cs.length)achado={cultos:cs,mesLabel:lbl};}
+      });
+      if(achado)return achado;
+    }catch(e){}
+  }
+  const idx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
+  for(const id of idx){
+    try{
+      const ld=JSON.parse(localStorage.getItem(SK(id)));
+      if(ld&&!ld.ocultaPublicacao&&_norm(ld.mesLabel)===_norm(lbl)){
+        const cs=(ld.cultos||[]).filter(c=>!c.oculto);
+        if(cs.length)return{cultos:cs,mesLabel:lbl};
+      }
+    }catch(e){}
+  }
+  return null;
+}
+
+async function sincronizarEscalaPublica(){
+  try{
+    const _MPCAL=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const _today=new Date();
+    const _curIdx=_today.getMonth();const _curAno=_today.getFullYear();
+    const _nxtIdx=_curIdx===11?0:_curIdx+1;const _nxtAno=_curIdx===11?_curAno+1:_curAno;
+    const _curLbl=_MPCAL[_curIdx]+' '+_curAno;
+    const _nxtLbl=_MPCAL[_nxtIdx]+' '+_nxtAno;
+
+    const atual=await _resolverEscalaMes(_curLbl);
+    const prox=await _resolverEscalaMes(_nxtLbl);
+    const agoraFmt=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+    const simplify=c=>({data:c.data,dia:c.dia,hora:c.hora,culto:c.culto,dirigente:c.dirigente||'',grupos:c.grupos});
+
+    const dados={
+      atual:atual?{mesLabel:atual.mesLabel,cultos:atual.cultos.map(simplify),cardsHtml:_pubGerarCards(atual.cultos,atual.mesLabel),atualizadoEm:agoraFmt}:null,
+      proximo:prox?{mesLabel:prox.mesLabel,cultos:prox.cultos.map(simplify),cardsHtml:_pubGerarCards(prox.cultos,prox.mesLabel),atualizadoEm:agoraFmt}:null
+    };
+    const gruposUsados=[...new Set([...(atual?atual.cultos:[]),...(prox?prox.cultos:[])].flatMap(c=>c.grupos))];
+    const coresMap={};gruposUsados.forEach(g=>{coresMap[g]=_pubGc(g);});
+
+    const fields={
+      atual:_fsEncode(dados.atual),
+      proximo:_fsEncode(dados.proximo),
+      cores:_fsEncode(coresMap)
+    };
+    const url='https://firestore.googleapis.com/v1/projects/'+_RIDER_PROJ+'/databases/(default)/documents/escalaPublica/pagina?key='+_RIDER_KEY;
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
+  }catch(e){console.error('sincronizarEscalaPublica:',e);}
+}
 
 function exportarPagina(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para exportar');return;}
@@ -3912,13 +4054,13 @@ function exportarPagina(){
 
   /* ── JS da página pública (var, sem template literals) ── */
   const JS=[
-    'var CULTOS_ATUAL='+DADOS+';',
-    'var CULTOS_PROX='+(DADOS_PROX||'null')+';',
-    'var MES_ATUAL='+MES_STR+';',
-    'var MES_PROX='+(MES_STR_PROX||'null')+';',
+    'var CULTOS_ATUAL=[];',
+    'var CULTOS_PROX=null;',
+    'var MES_ATUAL="";',
+    'var MES_PROX=null;',
     'var CULTOS=CULTOS_ATUAL;',
     'var MES=MES_ATUAL;',
-    'var CORES='+CORES+';',
+    'var CORES={};',
     'var _RP_GRUPOS_LOUVOR='+JSON.stringify(gruposLouvor())+';',
     'var MESES={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
     'var filtroAtivo="todos";',
@@ -3954,13 +4096,16 @@ function exportarPagina(){
     '  });',
     '}',
 
-    // Insere dias-faltam nos headers
-    'document.querySelectorAll(".dia-header").forEach(function(h){',
-    '  var num=h.querySelector(".dia-num");if(!num)return;',
-    '  var s=document.createElement("span");s.className="dias-faltam";s.dataset.data=num.textContent.trim();',
-    '  h.appendChild(s);',
-    '});',
-    'atualizarContagens();setInterval(atualizarContagens,60000);',
+    // Insere dias-faltam nos headers (chamado após carregar a escala ao vivo)
+    'function _inserirDiasFaltam(){',
+    '  document.querySelectorAll(".dia-header").forEach(function(h){',
+    '    if(h.querySelector(".dias-faltam"))return;',
+    '    var num=h.querySelector(".dia-num");if(!num)return;',
+    '    var s=document.createElement("span");s.className="dias-faltam";s.dataset.data=num.textContent.trim();',
+    '    h.appendChild(s);',
+    '  });',
+    '}',
+    'setInterval(function(){if(CULTOS.length)atualizarContagens();},60000);',
 
     // Card próximo culto
     'function renderProximo(){',
@@ -3989,7 +4134,6 @@ function exportarPagina(){
     '    +"<div class=\\"proximo-countdown\\">"+ct+"</div>"',
     '    +"</div>";',
     '}',
-    'renderProximo();',
 
     // Semana
     'function renderSemana(){',
@@ -4007,7 +4151,6 @@ function exportarPagina(){
     '    return"<div class=\\"semana-row\\"><div class=\\"semana-num\\">"+c.data+"</div><div><div class=\\"sn\\">"+c.culto+"</div><div class=\\"sh\\">"+c.hora+(c.dirigente?" \u00B7 "+c.dirigente:"")+"</div></div></div>";',
     '  }).join("");',
     '}',
-    'renderSemana();',
 
     // Filtrar
     'function filtrar(grupo){',
@@ -4042,13 +4185,13 @@ function exportarPagina(){
     '  var cm=document.getElementById("comp-mes");if(cm)cm.style.display=grupo!=="todos"?"flex":"none";',
     '}',
 
-    // Badges clicáveis
-    'document.querySelectorAll(".badge[data-grupo]").forEach(function(b){',
-    '  b.addEventListener("click",function(e){',
-    '    e.stopPropagation();',
-    '    var g=decodeURIComponent(b.dataset.grupo);',
-    '    filtrar(filtroAtivo===g?"todos":g);',
-    '  });',
+    // Badges clicáveis (delegação — funciona mesmo com cards injetados depois)
+    'document.addEventListener("click",function(e){',
+    '  var b=e.target.closest?e.target.closest(".badge[data-grupo]"):null;',
+    '  if(!b)return;',
+    '  e.stopPropagation();',
+    '  var g=decodeURIComponent(b.dataset.grupo);',
+    '  filtrar(filtroAtivo===g?"todos":g);',
     '});',
 
     // Busca
@@ -4147,7 +4290,44 @@ function exportarPagina(){
     '  var rt=document.getElementById("realizados-toggle");if(rt)rt.classList.remove("aberto");',
     '  atualizarContagens();renderProximo();renderSemana();iniciarRealizados();',
     '}',
-    'iniciarRealizados();',
+
+    // Carrega a escala ao vivo do Firestore (sem precisar republicar o site a cada alteração)
+    'var ESCALA_PUB_URL="https://firestore.googleapis.com/v1/projects/escala-dml/databases/(default)/documents/escalaPublica/pagina?key=AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
+    'function _carregarEscalaPublica(){',
+    '  fetch(ESCALA_PUB_URL+"&_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(doc){',
+    '    var f=(doc&&doc.fields)||{};',
+    '    var atual=f.atual?_rpFsParse(f.atual):null;',
+    '    var prox=f.proximo?_rpFsParse(f.proximo):null;',
+    '    CORES=f.cores?_rpFsParse(f.cores):{};',
+    '    var mAtual=document.getElementById("main-atual");',
+    '    var mProx=document.getElementById("main-prox");',
+    '    var mesWrap=document.getElementById("mes-wrap");',
+    '    var upd=document.querySelector(".updated");',
+    '    if(atual&&atual.cultos&&atual.cultos.length){',
+    '      CULTOS_ATUAL=atual.cultos;MES_ATUAL=atual.mesLabel;CULTOS=CULTOS_ATUAL;MES=MES_ATUAL;',
+    '      if(mAtual)mAtual.innerHTML=atual.cardsHtml||"";',
+    '      document.title="Escala DML — "+atual.mesLabel;',
+    '      if(upd)upd.textContent="Atualizado em "+(atual.atualizadoEm||"");',
+    '    }else if(mAtual){',
+    '      mAtual.innerHTML=\'<div class="aguardando-escala"><div class="aguardando-icone"><i class=ph-calendar-x></i></div><div class="aguardando-titulo">Nenhuma escala publicada no momento</div><div class="aguardando-sub">Volte em breve.</div></div>\';',
+    '    }',
+    '    var temProx=!!(prox&&prox.cultos&&prox.cultos.length);',
+    '    if(temProx){',
+    '      CULTOS_PROX=prox.cultos;MES_PROX=prox.mesLabel;',
+    '      if(mProx)mProx.innerHTML=prox.cardsHtml||"";',
+    '      if(mesWrap)mesWrap.innerHTML=\'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\\\'atual\\\')">\'+(atual?atual.mesLabel:"")+\'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\\\'prox\\\')">\'+prox.mesLabel+\'</button></div>\';',
+    '      var bn=document.getElementById("btn-notif");if(bn)bn.style.display="none";',
+    '    }else if(mesWrap&&atual){',
+    '      mesWrap.innerHTML=\'<div class="mes-badge">\'+atual.mesLabel+\'</div>\';',
+    '    }',
+    '    _inserirDiasFaltam();atualizarContagens();renderProximo();renderSemana();iniciarRealizados();',
+    '  }).catch(function(e){console.error("Erro ao carregar escala:",e);',
+    '    var mAtual=document.getElementById("main-atual");',
+    '    if(mAtual)mAtual.innerHTML=\'<p style="padding:24px;text-align:center;color:#7a9aa8">Erro ao carregar a escala. Recarregue a página.</p>\';',
+    '  });',
+    '}',
+    '_carregarEscalaPublica();',
+
     // Aviso popup
     'var AVISO_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/aviso.json";',
     'function _mostrarAvisoOverlay(d){',
@@ -4675,13 +4855,13 @@ function exportarPagina(){
     +'<meta charset="UTF-8">\n'
     +'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">\n'
     +'<meta name="theme-color" content="#111820">\n'
-    +'<title>Escala DML \u2014 '+mesLabel+'</title>\n'
-    +'<meta property="og:title" content="Escala DML \u2014 '+mesLabel+'">\n'
-    +'<meta property="og:description" content="Confira a escala de louvor da Igreja Evang\u00e9lica Congregacional Central \u2014 '+mesLabel+'.">\n'
+    +'<title>Escala DML</title>\n'
+    +'<meta property="og:title" content="Escala DML">\n'
+    +'<meta property="og:description" content="Confira a escala de louvor da Igreja Evang\u00e9lica Congregacional Central.">\n'
     +'<meta property="og:type" content="website">\n'
     +'<meta name="twitter:card" content="summary">\n'
-    +'<meta name="twitter:title" content="Escala DML \u2014 '+mesLabel+'">\n'
-    +'<meta name="twitter:description" content="Confira a escala de louvor \u2014 '+mesLabel+'.">\n'
+    +'<meta name="twitter:title" content="Escala DML">\n'
+    +'<meta name="twitter:description" content="Confira a escala de louvor.">\n'
     +'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
     +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
     +'<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"><\/script>\n'
@@ -4696,7 +4876,7 @@ function exportarPagina(){
     +'</div>'
     +'<button class="btn-rider-hdr" id="btn-app-home" onclick="mostrarAppHome()" title="In\u00EDcio" style="display:none"><i class=ph-house></i> In\u00EDcio</button>'
     +'<div class="hdr-right">'
-    +(visProx?'':'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()"><i class=ph-bell-slash></i></button>')
+    +'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()"><i class=ph-bell-slash></i></button>'
     +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()"><i class=ph-moon></i></button>'
     +'</div>'
     +'</header>\n'
@@ -4715,12 +4895,8 @@ function exportarPagina(){
     // conteúdo da escala — oculto até clicar no card "Escala"
     +'<div id="app-escala-wrap" style="display:none">'
 
-    // mês (badge ou abas atual/próximo) — nome completo do mês
-    +'<div style="display:flex;justify-content:center;padding:14px 14px 0">'
-    +(visProx
-        ?'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\'atual\')">'+mesLabel+'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\'prox\')">'+mesProxLabel+'</button></div>'
-        :'<div class="mes-badge">'+mesLabel+'</div>')
-    +'</div>\n'
+    // mês (badge ou abas atual/próximo) — preenchido ao carregar a escala ao vivo
+    +'<div style="display:flex;justify-content:center;padding:14px 14px 0" id="mes-wrap"></div>\n'
 
     // busca
     +'<div class="busca-barra"><div class="busca-inner">'
@@ -4756,11 +4932,11 @@ function exportarPagina(){
     // btn mostrar todos
     +'<button class="btn-todos" id="btn-todos" onclick="filtrar(\'todos\')">\u2715 Mostrar todos</button>\n'
 
-    // cards
-    +'<main id="main-atual" class="aba-vis">\n'+gerarCards()+'\n</main>\n'
-    +(visProx?'<main id="main-prox" style="display:none">\n'+CARDS_PROX+'\n</main>\n':'')
+    // cards — preenchidos ao carregar a escala ao vivo do Firestore
+    +'<main id="main-atual" class="aba-vis">\n<div class="aguardando-escala"><div class="aguardando-icone"><i class=ph-hourglass></i></div><div class="aguardando-titulo">Carregando escala...</div></div>\n</main>\n'
+    +'<main id="main-prox" style="display:none">\n</main>\n'
     +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span><i class=ph-file-text></i> Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
-    +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
+    +'<div class="updated"></div>\n'
     +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
     +'</div>\n'
     +'<div id="rp-overlay" class="rp-overlay" style="display:none" onclick="if(event.target===this)fecharRiderPanel()"><div class="rp-panel" id="rp-panel"><button class="rp-close" onclick="fecharRiderPanel()">\u2715</button><div id="rp-content"></div></div></div>\n'
@@ -5784,7 +5960,9 @@ async function carregarDadosFirebase(){
 async function salvarSessao(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para salvar');return;}
   if(!sessaoId)sessaoId='s'+Date.now();
-  const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now()};
+  let _ocultaAnterior=false;
+  try{const _raw=localStorage.getItem(SK(sessaoId));if(_raw)_ocultaAnterior=!!JSON.parse(_raw).ocultaPublicacao;}catch(e){}
+  const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now(),ocultaPublicacao:_ocultaAnterior};
 
   // Salva versão antes de sobrescrever
   saveVersao(sessaoId,dados);
@@ -5812,6 +5990,7 @@ async function salvarSessao(){
 
   renderHist();
   mostrarCardUltima();
+  sincronizarEscalaPublica();
 }
 
 // ═══════════════════════════════════════════════
@@ -6042,6 +6221,7 @@ async function toggleOcultaPublicacao(id){
   if(window._fbUser)await salvarSessaoFirebase(id,dados);
   toast(dados.ocultaPublicacao?'<i class=ph-eye-slash></i> Escala oculta da publicação':'<i class=ph-eye></i> Escala liberada para publicação');
   renderHist();
+  sincronizarEscalaPublica();
 }
 
 // INIT

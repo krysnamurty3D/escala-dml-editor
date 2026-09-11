@@ -32,6 +32,12 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Escala pública ao vivo — a página pública lê direto daqui (sem republicar
+    // arquivo estático); o editor grava ao salvar/ocultar a escala
+    match /escalaPublica/{doc} {
+      allow read, write: if true;
+    }
+
     // Tokens de notificação push — público (líderes sem login se cadastram
     // pelo próprio token; o coordenador se cadastra autenticado, mas a
     // coleção fica aberta pelo mesmo motivo das demais acima)
