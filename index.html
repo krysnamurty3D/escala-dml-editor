@@ -4361,7 +4361,7 @@ function exportarPagina(){
     '}',
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
-    '  var tag=_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
+    '  var tag=_RP.state==="comunic"?"<i class=ph-megaphone></i> COMUNICAÇÕES":_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
     '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
     '  var sino=_RP.slug?\'<button style="background:none;border:none;color:#7a9aa8;font-size:19px;cursor:pointer;position:absolute;top:14px;right:16px" onclick="_rpAtivarNotificacoes()" title="Ativar notificações">\'+(_RP.pushAtivo?"🔔":"🔕")+\'</button>\':"";',
     '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
