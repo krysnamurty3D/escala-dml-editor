@@ -9,8 +9,8 @@ initializeApp();
 const db = getFirestore();
 
 const RIDER_CONFIG_URL = "https://raw.githubusercontent.com/krysnamurty3D/escala-dml-public/main/rider-config.json";
-const EDITOR_URL = "https://editor-dml.netlify.app";
-const PUBLICA_URL = "https://dml-escala.netlify.app";
+const EDITOR_URL = "https://krysnamurty3d.github.io/escala-dml-editor/";
+const PUBLICA_URL = "https://krysnamurty3d.github.io/escala-dml-public/";
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 async function sendToTokens(tokens, title, body, url) {
