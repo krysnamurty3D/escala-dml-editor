@@ -1,1 +1,139 @@
-__PLACEHOLDER_ESTUDIO__
+{
+  "documents": [
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/estudio/adonai",
+      "fields": {
+        "ensaios": {
+          "mapValue": {
+            "fields": {
+              "2026-09-05": {
+                "mapValue": {
+                  "fields": {
+                    "alertaCoordenadorEnviado": {
+                      "booleanValue": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-11T01:21:02.614143Z",
+      "updateTime": "2026-09-11T01:21:02.614143Z"
+    },
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/estudio/adorare",
+      "fields": {
+        "ensaios": {
+          "mapValue": {
+            "fields": {
+              "2026-09-07": {
+                "mapValue": {
+                  "fields": {
+                    "alertaCoordenadorEnviado": {
+                      "booleanValue": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-11T01:21:02.790799Z",
+      "updateTime": "2026-09-11T01:21:02.790799Z"
+    },
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/estudio/atrios_de_louvor",
+      "fields": {
+        "ensaios": {
+          "mapValue": {
+            "fields": {
+              "2026-09-09": {
+                "mapValue": {
+                  "fields": {
+                    "alertaCoordenadorEnviado": {
+                      "booleanValue": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-11T01:21:02.995743Z",
+      "updateTime": "2026-09-11T01:21:02.995743Z"
+    },
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/estudio/comunhao",
+      "fields": {
+        "ensaios": {
+          "mapValue": {
+            "fields": {
+              "2026-09-05": {
+                "mapValue": {
+                  "fields": {
+                    "alertaCoordenadorEnviado": {
+                      "booleanValue": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-11T01:21:03.151855Z",
+      "updateTime": "2026-09-11T01:21:03.151855Z"
+    },
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/estudio/coral_robert_kalley",
+      "fields": {
+        "cultos": {
+          "mapValue": {
+            "fields": {
+              "d06_h900": {
+                "mapValue": {
+                  "fields": {
+                    "entrada": {
+                      "integerValue": "1789060320162"
+                    },
+                    "saida": {
+                      "integerValue": "1789060325241"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-10T17:12:01.069333Z",
+      "updateTime": "2026-09-10T17:12:05.554972Z"
+    },
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/estudio/redencao",
+      "fields": {
+        "ensaios": {
+          "mapValue": {
+            "fields": {
+              "2026-09-05": {
+                "mapValue": {
+                  "fields": {
+                    "alertaCoordenadorEnviado": {
+                      "booleanValue": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-11T01:21:03.330575Z",
+      "updateTime": "2026-09-11T01:21:03.330575Z"
+    }
+  ]
+}

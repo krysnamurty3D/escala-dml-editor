@@ -1,1 +1,169 @@
-__PLACEHOLDER_RIDERCFG__
+{
+  "grupos": {
+    "semearte": {
+      "nome": "SEMEARTE",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "kyrios": {
+      "nome": "KYRIOS",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "coral_robert_kalley": {
+      "nome": "CORAL ROBERT KALLEY",
+      "pin": "1111",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "coral_cancao_de_paz": {
+      "nome": "CORAL CANÇÃO DE PAZ",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "coral_crescendo_em_cristo": {
+      "nome": "CORAL CRESCENDO EM CRISTO",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "quarteto_kerigma": {
+      "nome": "QUARTETO KERIGMA",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "levitas_do_senhor": {
+      "nome": "LEVITAS DO SENHOR",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "adoradoras_do_rei": {
+      "nome": "ADORADORAS DO REI",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "chama_ardente": {
+      "nome": "CHAMA ARDENTE",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "bandinha_de_casais": {
+      "nome": "BANDINHA DE CASAIS",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "thiago_e_gabrielly_lemos": {
+      "nome": "THIAGO E GABRIELLY LEMOS",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "rivailda": {
+      "nome": "RIVAILDA",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "diac_marcos_antonio": {
+      "nome": "DIAC. MARCOS ANTÔNIO",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "irma_goretti": {
+      "nome": "IRMÃ GORETTI",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "essinho": {
+      "nome": "ESSINHO",
+      "pin": ""
+    },
+    "tchai_e_vanderlea": {
+      "nome": "TCHAI E VANDERLÉA",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "daniel_e_jane": {
+      "nome": "DANIEL E JANE",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "programacao_exclusiva_da_men": {
+      "nome": "PROGRAMAÇÃO EXCLUSIVA DA MEN",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "programacao_exclusiva_da_uhc": {
+      "nome": "PROGRAMAÇÃO EXCLUSIVA DA UHC",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "panda": {
+      "nome": "PANDA",
+      "pin": "",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "adonai": {
+      "nome": "ADONAI",
+      "pin": "2177",
+      "ensaioDia": 6,
+      "ensaioHora": "10:00"
+    },
+    "adorare": {
+      "nome": "ADORARE",
+      "pin": "4754",
+      "ensaioDia": 1,
+      "ensaioHora": "19:30"
+    },
+    "atrios_de_louvor": {
+      "nome": "ÁTRIOS DE LOUVOR",
+      "pin": "2312",
+      "ensaioDia": 3,
+      "ensaioHora": "19:30"
+    },
+    "canto_novo": {
+      "nome": "CANTO NOVO",
+      "pin": "5425",
+      "ensaioDia": 5,
+      "ensaioHora": "19:20"
+    },
+    "comunhao": {
+      "nome": "COMUNHÃO",
+      "pin": "4983",
+      "ensaioDia": 6,
+      "ensaioHora": "16:00"
+    },
+    "louvor_congregacional": {
+      "nome": "LOUVOR CONGREGACIONAL",
+      "pin": "4945",
+      "ensaioDia": null,
+      "ensaioHora": "19:30"
+    },
+    "redencao": {
+      "nome": "REDENÇÃO",
+      "pin": "4268",
+      "ensaioDia": 6,
+      "ensaioHora": "08:00"
+    }
+  },
+  "contatos": {
+    "tecnico": "",
+    "midia": "",
+    "surdos": ""
+  }
+}

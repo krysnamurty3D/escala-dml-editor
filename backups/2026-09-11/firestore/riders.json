@@ -1,1 +1,207 @@
-__PLACEHOLDER_RIDERS__
+{
+  "documents": [
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/riders/coral_robert_kalley",
+      "fields": {
+        "cultos": {
+          "mapValue": {
+            "fields": {
+              "d16_h1800": {
+                "mapValue": {
+                  "fields": {
+                    "inputList": {
+                      "arrayValue": {}
+                    },
+                    "updatedAt": {
+                      "integerValue": "1786589583530"
+                    },
+                    "setList": {
+                      "arrayValue": {}
+                    },
+                    "voz": {
+                      "mapValue": {
+                        "fields": {
+                          "qtd": {
+                            "integerValue": "8"
+                          },
+                          "fone": {
+                            "booleanValue": true
+                          }
+                        }
+                      }
+                    },
+                    "obs": {
+                      "stringValue": ""
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-08-12T14:44:37.829448Z",
+      "updateTime": "2026-08-13T02:53:04.491285Z"
+    },
+    {
+      "name": "projects/escala-dml/databases/(default)/documents/riders/redencao",
+      "fields": {
+        "cultos": {
+          "mapValue": {
+            "fields": {
+              "d15_h1930": {
+                "mapValue": {
+                  "fields": {
+                    "setList": {
+                      "arrayValue": {
+                        "values": [
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "musica": {
+                                  "stringValue": "teste1"
+                                },
+                                "solo": {
+                                  "stringValue": "Rebeca"
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "musica": {
+                                  "stringValue": "teste2"
+                                },
+                                "solo": {
+                                  "stringValue": "Manuel"
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "musica": {
+                                  "stringValue": "teste3"
+                                },
+                                "solo": {
+                                  "stringValue": "Sara"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "obs": {
+                      "stringValue": ""
+                    },
+                    "inputList": {
+                      "arrayValue": {
+                        "values": [
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "instrumento": {
+                                  "stringValue": "BATERIA"
+                                },
+                                "fone": {
+                                  "booleanValue": true
+                                },
+                                "canta": {
+                                  "booleanValue": false
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "instrumento": {
+                                  "stringValue": "GUITARRA"
+                                },
+                                "fone": {
+                                  "booleanValue": true
+                                },
+                                "canta": {
+                                  "booleanValue": false
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "instrumento": {
+                                  "stringValue": "BAIXO"
+                                },
+                                "fone": {
+                                  "booleanValue": true
+                                },
+                                "canta": {
+                                  "booleanValue": false
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "instrumento": {
+                                  "stringValue": "TECLADO"
+                                },
+                                "fone": {
+                                  "booleanValue": true
+                                },
+                                "canta": {
+                                  "booleanValue": false
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "mapValue": {
+                              "fields": {
+                                "instrumento": {
+                                  "stringValue": "VIOLÃO"
+                                },
+                                "fone": {
+                                  "booleanValue": true
+                                },
+                                "canta": {
+                                  "booleanValue": true
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "updatedAt": {
+                      "integerValue": "1789050238782"
+                    },
+                    "voz": {
+                      "mapValue": {
+                        "fields": {
+                          "fone": {
+                            "booleanValue": true
+                          },
+                          "qtd": {
+                            "integerValue": "3"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "createTime": "2026-09-10T14:20:36.619085Z",
+      "updateTime": "2026-09-10T14:23:58.919926Z"
+    }
+  ]
+}

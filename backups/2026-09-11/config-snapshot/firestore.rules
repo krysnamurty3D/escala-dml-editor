@@ -1,1 +1,42 @@
-__PLACEHOLDER_RULES__
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Dados do usuário — apenas autenticado
+    match /usuarios/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Colaboradores e convites — autenticado
+    match /convites/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Riders — público (líderes sem login)
+    match /riders/{slug} {
+      allow read, write: if true;
+    }
+
+    // Solicitações de Equipamento — público (líderes sem login)
+    match /solicitacoes/{id} {
+      allow read, write: if true;
+    }
+
+    // Estúdio (checklist + horário de ensaio) — público (líderes sem login)
+    match /estudio/{slug} {
+      allow read, write: if true;
+    }
+
+    // Comunicações — agenda externa dos grupos — público (líderes sem login)
+    match /agendaExterna/{id} {
+      allow read, write: if true;
+    }
+
+    // Tokens de notificação push — público (líderes sem login se cadastram
+    // pelo próprio token; o coordenador se cadastra autenticado, mas a
+    // coleção fica aberta pelo mesmo motivo das demais acima)
+    match /pushTokens/{token} {
+      allow read, write: if true;
+    }
+  }
+}
