@@ -1163,7 +1163,7 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-qr" class="page">
   <div class="section-top"><h2 style="color:var(--teal);font-size:17px"><i class=ph-qr-code></i> QR Code da Escala</h2></div>
   <div class="qr-section"><h3>Link da página pública</h3>
-    <div class="qr-input-row"><input type="url" id="qr-url" placeholder="https://escala-dml.netlify.app" oninput="gerarQR()"><button class="btn btn-primary btn-sm" onclick="gerarQR()">Gerar QR</button></div>
+    <div class="qr-input-row"><input type="url" id="qr-url" placeholder="https://krysnamurty3d.github.io/escala-dml-public/" oninput="gerarQR()"><button class="btn btn-primary btn-sm" onclick="gerarQR()">Gerar QR</button></div>
     <div class="qr-canvas-wrap" id="qr-wrap" style="display:none"><canvas id="qr-canvas" width="240" height="240"></canvas><div class="qr-hint">Aponte a câmera do celular para o QR Code<br>ou baixe e imprima</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarQR()"><i class=ph-download-simple></i> Baixar PNG</button><button class="btn btn-ghost btn-sm" onclick="copiarLink()"><i class=ph-clipboard-text></i> Copiar Link</button></div></div>
   </div>
   <div class="qr-section"><h3><i class=ph-lightbulb></i> Como usar</h3><p style="font-size:13px;color:var(--muted);line-height:1.7">1. Exporte a página clicando em <strong style="color:var(--teal)"><i class=ph-globe></i> Página</strong><br>2. Publique no Netlify e copie o link<br>3. Cole o link acima e gere o QR Code<br>4. Baixe e compartilhe no grupo do WhatsApp ou imprima para o mural do DML</p></div>
@@ -3085,7 +3085,7 @@ self.addEventListener('notificationclick', (event) => {
     }catch(e){console.warn('Falha ao publicar firebase-messaging-sw.js:',e);}
 
     mostrarLoad(false);
-    toast('<i class=ph-globe></i> Publicado! escala-dml.netlify.app atualiza em instantes...');
+    toast('<i class=ph-globe></i> Publicado! krysnamurty3d.github.io/escala-dml-public atualiza em instantes...');
   }catch(e){
     mostrarLoad(false);
     console.error('Publish erro:',e);
@@ -3556,7 +3556,7 @@ async function ativarNotificacoesCoordenador(){
   try{
     if(!('serviceWorker' in navigator)||!('Notification' in window)){toast('❌ Este navegador não suporta notificações push');return;}
     if(!window._fbMessaging){toast('❌ Serviço de notificações indisponível');return;}
-    const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const reg=await navigator.serviceWorker.register('firebase-messaging-sw.js');
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){toast('⚠️ Permissão de notificação negada');if(st)st.textContent='⚫ Permissão negada';return;}
     const {getToken,doc,setDoc}=window._fbFns;
@@ -4234,7 +4234,7 @@ function exportarPagina(){
     'function _rpAtivarNotificacoes(){',
     '  if(!_rpMessaging){alert("Este navegador não suporta notificações push.");return;}',
     '  if(!_RP.slug){alert("Entre com o PIN do seu grupo antes de ativar as notificações.");return;}',
-    '  navigator.serviceWorker.register("/firebase-messaging-sw.js").then(function(reg){',
+    '  navigator.serviceWorker.register("firebase-messaging-sw.js").then(function(reg){',
     '    return Notification.requestPermission().then(function(perm){',
     '      if(perm!=="granted"){alert("Permissão de notificação negada.");return;}',
     '      return _rpMessaging.getToken({vapidKey:"BMx6z1hCdW1bKwCjmTYrgi-igDclRR70d8RGs83ifh3XoGclMfKDQYOsw9ZifPwAq99dTpWhm8oBt_yZzH2H2CI",serviceWorkerRegistration:reg}).then(function(token){',
