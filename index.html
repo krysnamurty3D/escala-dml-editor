@@ -4678,13 +4678,6 @@ function exportarPagina(){
     +'</div>'
     +'<button class="btn-rider-hdr" id="btn-app-home" onclick="mostrarAppHome()" title="In\u00EDcio" style="display:none">\uD83C\uDFE0 In\u00EDcio</button>'
     +'<div class="hdr-right">'
-    +(()=>{
-      const _AB={Janeiro:'JAN',Fevereiro:'FEV','Mar\u00E7o':'MAR',Marco:'MAR',Abril:'ABR',Maio:'MAI',Junho:'JUN',Julho:'JUL',Agosto:'AGO',Setembro:'SET',Outubro:'OUT',Novembro:'NOV',Dezembro:'DEZ'};
-      const _ab=l=>{if(!l)return l;const p=l.split(' ');return(_AB[p[0]]||p[0].slice(0,3).toUpperCase())+(p[1]?' | '+p[1].slice(2):'');};
-      return visProx
-        ?'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\'atual\')">'+_ab(mesLabel)+'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\'prox\')">'+_ab(mesProxLabel)+'</button></div>'
-        :'<div class="mes-badge">'+_ab(mesLabel)+'</div>';
-    })()
     +(visProx?'':'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()">&#128565;</button>')
     +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()">\uD83C\uDF19</button>'
     +'</div>'
@@ -4703,6 +4696,17 @@ function exportarPagina(){
 
     // conteúdo da escala — oculto até clicar no card "Escala"
     +'<div id="app-escala-wrap" style="display:none">'
+
+    // mês (badge ou abas atual/próximo)
+    +'<div style="display:flex;justify-content:center;padding:14px 14px 0">'
+    +(()=>{
+      const _AB={Janeiro:'JAN',Fevereiro:'FEV','Março':'MAR',Marco:'MAR',Abril:'ABR',Maio:'MAI',Junho:'JUN',Julho:'JUL',Agosto:'AGO',Setembro:'SET',Outubro:'OUT',Novembro:'NOV',Dezembro:'DEZ'};
+      const _ab=l=>{if(!l)return l;const p=l.split(' ');return(_AB[p[0]]||p[0].slice(0,3).toUpperCase())+(p[1]?' | '+p[1].slice(2):'');};
+      return visProx
+        ?'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\'atual\')">'+_ab(mesLabel)+'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\'prox\')">'+_ab(mesProxLabel)+'</button></div>'
+        :'<div class="mes-badge">'+_ab(mesLabel)+'</div>';
+    })()
+    +'</div>\n'
 
     // busca
     +'<div class="busca-barra"><div class="busca-inner">'
