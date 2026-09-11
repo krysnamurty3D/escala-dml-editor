@@ -803,13 +803,13 @@ tr.esp-row .td-dia{color:#c03030;}
   <div class="upload-center">
     <!-- Cards de navegação rápida (app) -->
     <div class="home-cards">
-      <div class="home-card" onclick="irPara('upload')">
+      <div class="home-card" onclick="irPara('escala-nova')">
         <div class="home-card-ico">🗓</div><div class="home-card-lbl">Escala</div>
       </div>
       <div class="home-card" onclick="irPara('solic')">
         <div class="home-card-ico">📦</div><div class="home-card-lbl">Solicitações</div>
       </div>
-      <div class="home-card" onclick="document.getElementById('aviso-panel-wrap').scrollIntoView({behavior:'smooth',block:'center'})">
+      <div class="home-card" onclick="irPara('comunic')">
         <div class="home-card-ico">📢</div><div class="home-card-lbl">Comunicações</div>
       </div>
       <div class="home-card" onclick="irPara('riders')">
@@ -819,6 +819,11 @@ tr.esp-row .td-dia{color:#c03030;}
         <div class="home-card-ico">📋</div><div class="home-card-lbl">Estúdio</div>
       </div>
     </div>
+  </div>
+</div>
+<!-- ESCALA: continuar editando / importar / criar -->
+<div id="page-escala-nova" class="page">
+  <div class="upload-center">
     <!-- Card última escala (aparece quando há sessão salva) -->
     <div id="card-ultima" style="display:none;width:100%;max-width:700px;margin-bottom:16px">
       <div class="upload-card ultima-card" onclick="abrirUltimaEscala()" style="flex-direction:row;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:rgba(42,180,130,.06);border-color:var(--teal-dim)">
@@ -849,32 +854,6 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
     <input type="file" id="file-input" accept=".docx" onchange="lerArquivo(event)">
     <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px"><i class=ph-trash></i> Limpar Escala Atual</button>
-
-    <!-- Painel de Aviso para a página pública -->
-    <div id="aviso-panel-wrap" style="width:100%;max-width:700px;margin-top:24px">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:18px"><i class=ph-megaphone></i></span>
-            <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Aviso na Página Pública</span>
-          </div>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--muted)">
-            <input type="checkbox" id="aviso-ativo" onchange="atualizarPainelAviso()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
-            Ativar aviso
-          </label>
-        </div>
-        <div id="aviso-campos" style="display:none">
-          <input id="aviso-titulo" type="text" placeholder="Título do aviso (ex: Atenção!)" maxlength="80"
-            style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;margin-bottom:10px;font-family:inherit;box-sizing:border-box">
-          <textarea id="aviso-texto" rows="3" placeholder="Mensagem do aviso..." maxlength="400"
-            style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
-          <span id="aviso-status" style="font-size:11px;color:var(--muted)"></span>
-          <button class="btn btn-outline btn-sm" onclick="salvarAviso()"> <i class=ph-floppy-disk></i> Salvar aviso</button>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1170,6 +1149,31 @@ tr.esp-row .td-dia{color:#c03030;}
 </div>
 <!-- COMUNICAÇÕES: AGENDA EXTERNA POR GRUPO -->
 <div id="page-comunicacoes" class="page">
+  <!-- Painel de Aviso para a página pública -->
+  <div id="aviso-panel-wrap" style="width:100%;max-width:700px;margin-bottom:24px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:18px"><i class=ph-megaphone></i></span>
+          <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Aviso na Página Pública</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--muted)">
+          <input type="checkbox" id="aviso-ativo" onchange="atualizarPainelAviso()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
+          Ativar aviso
+        </label>
+      </div>
+      <div id="aviso-campos" style="display:none">
+        <input id="aviso-titulo" type="text" placeholder="Título do aviso (ex: Atenção!)" maxlength="80"
+          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;margin-bottom:10px;font-family:inherit;box-sizing:border-box">
+        <textarea id="aviso-texto" rows="3" placeholder="Mensagem do aviso..." maxlength="400"
+          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+        <span id="aviso-status" style="font-size:11px;color:var(--muted)"></span>
+        <button class="btn btn-outline btn-sm" onclick="salvarAviso()"> <i class=ph-floppy-disk></i> Salvar aviso</button>
+      </div>
+    </div>
+  </div>
   <div class="riders-header">
     <div>
       <h2 style="color:var(--teal);font-size:17px">📢 Comunicações — Agenda Externa dos Grupos</h2>
@@ -4331,8 +4335,22 @@ function exportarPagina(){
     'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
     'function _rpFsEnc(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==="boolean")return{booleanValue:v};if(typeof v==="number")return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==="string")return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_rpFsEnc)}};if(typeof v==="object"){var f={};Object.entries(v).forEach(function(e){f[e[0]]=_rpFsEnc(e[1]);});return{mapValue:{fields:f}};}return{stringValue:String(v)};}',
     'function abrirRiderPanel(){_RP.flow="rider";document.getElementById("rp-overlay").style.display="flex";_rpMostrarLogin();}',
-    'function abrirHomeApp(){document.getElementById("rp-overlay").style.display="flex";_rpMostrarHome();}',
     'function fecharRiderPanel(){document.getElementById("rp-overlay").style.display="none";}',
+    'function mostrarAppEscala(){',
+    '  document.getElementById("app-home").style.display="none";',
+    '  document.getElementById("app-escala-wrap").style.display="block";',
+    '  var b=document.getElementById("btn-app-home");if(b)b.style.display="inline-block";',
+    '}',
+    'function mostrarAppHome(){',
+    '  document.getElementById("app-home").style.display="block";',
+    '  document.getElementById("app-escala-wrap").style.display="none";',
+    '  var b=document.getElementById("btn-app-home");if(b)b.style.display="none";',
+    '}',
+    'function _appAbrirModal(flow){',
+    '  document.getElementById("rp-overlay").style.display="flex";',
+    '  if(flow==="comunicacao")_rpMostrarComunicacoes();',
+    '  else{_RP.flow=flow;_rpMostrarLogin();}',
+    '}',
     'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
     'function _rpInstrOpts(sel){return _RP_INSTRS.map(function(x){return\'<option value="\'+x+\'"\'+(x===sel?\' selected\':\'\')+\'>\'+x+\'</option>\';}).join("");}',
 
@@ -4370,7 +4388,7 @@ function exportarPagina(){
     '  _RP.state="home";_RP.flow=null;',
     '  _rpHtml(\'<div class="rp-hdr-box"><div class="rp-hdr-grupo">Departamento de Música e Louvor</div><div class="rp-hdr-culto"><span class="rp-hdr-tag">📱 ÁREA DO LÍDER</span></div></div>\'',
     '    +\'<div class="rp-home-grid">\'',
-    '    +\'<div class="rp-home-card" onclick="fecharRiderPanel()"><div class="rp-home-ico">🗓</div><div class="rp-home-lbl">Escala</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="fecharRiderPanel();mostrarAppEscala()"><div class="rp-home-ico">🗓</div><div class="rp-home-lbl">Escala</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'solic\\\';_rpMostrarLogin()"><div class="rp-home-ico">📦</div><div class="rp-home-lbl">Solicitar Equipamento</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_rpMostrarComunicacoes()"><div class="rp-home-ico">📢</div><div class="rp-home-lbl">Comunicações</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'rider\\\';_rpMostrarLogin()"><div class="rp-home-ico">🎛</div><div class="rp-home-lbl">RT</div></div>\'',
@@ -4828,7 +4846,7 @@ function exportarPagina(){
     +'<div class="logo-wrap">'+LOGO
     +'<div class="logo-txt"><div class="dept">Departamento de</div><div class="nome">M\u00FAsica e Louvor</div><div class="igreja">Igreja Evang\u00E9lica Congregacional Central</div></div>'
     +'</div>'
-    +'<button class="btn-rider-hdr" onclick="abrirHomeApp()" title="\u00C1rea do L\u00EDder">\uD83D\uDCF1 App</button>'
+    +'<button class="btn-rider-hdr" id="btn-app-home" onclick="mostrarAppHome()" title="In\u00EDcio" style="display:none">\uD83C\uDFE0 In\u00EDcio</button>'
     +'<div class="hdr-right">'
     +(()=>{
       const _AB={Janeiro:'JAN',Fevereiro:'FEV','Mar\u00E7o':'MAR',Marco:'MAR',Abril:'ABR',Maio:'MAI',Junho:'JUN',Julho:'JUL',Agosto:'AGO',Setembro:'SET',Outubro:'OUT',Novembro:'NOV',Dezembro:'DEZ'};
@@ -4841,6 +4859,20 @@ function exportarPagina(){
     +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()">\uD83C\uDF19</button>'
     +'</div>'
     +'</header>\n'
+
+    // tela inicial — apenas os cards de acesso rápido
+    +'<div id="app-home">'
+    +'<div class="rp-home-grid" style="max-width:480px;margin:18px auto;padding:0 14px">'
+    +'<div class="rp-home-card" onclick="mostrarAppEscala()"><div class="rp-home-ico">🗓</div><div class="rp-home-lbl">Escala</div></div>'
+    +'<div class="rp-home-card" onclick="_appAbrirModal(\'solic\')"><div class="rp-home-ico">📦</div><div class="rp-home-lbl">Solicitações</div></div>'
+    +'<div class="rp-home-card" onclick="_appAbrirModal(\'comunicacao\')"><div class="rp-home-ico">📢</div><div class="rp-home-lbl">Comunicações</div></div>'
+    +'<div class="rp-home-card" onclick="_appAbrirModal(\'rider\')"><div class="rp-home-ico">🎛</div><div class="rp-home-lbl">RT</div></div>'
+    +'<div class="rp-home-card" onclick="_appAbrirModal(\'estudio\')"><div class="rp-home-ico">📋</div><div class="rp-home-lbl">Estúdio</div></div>'
+    +'</div>'
+    +'</div>\n'
+
+    // conteúdo da escala — oculto até clicar no card "Escala"
+    +'<div id="app-escala-wrap" style="display:none">'
 
     // busca
     +'<div class="busca-barra"><div class="busca-inner">'
@@ -4882,6 +4914,7 @@ function exportarPagina(){
     +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span><i class=ph-file-text></i> Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
     +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
     +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
+    +'</div>\n'
     +'<div id="rp-overlay" class="rp-overlay" style="display:none" onclick="if(event.target===this)fecharRiderPanel()"><div class="rp-panel" id="rp-panel"><button class="rp-close" onclick="fecharRiderPanel()">\u2715</button><div id="rp-content"></div></div></div>\n'
     +'<script>\n'+JS+'\n<\/script>\n'
     +'</body>\n</html>';
