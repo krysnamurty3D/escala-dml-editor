@@ -61,6 +61,18 @@ exports.onSolicitacaoCriada = onDocumentCreated("solicitacoes/{id}", async (even
   );
 });
 
+// ---------- Avisa o coordenador quando um grupo avisa uma agenda externa (Comunicações) ----------
+exports.onAgendaExternaCriada = onDocumentCreated("agendaExterna/{id}", async (event) => {
+  const a = event.data.data();
+  const tokens = await tokensCoordenador();
+  await sendToTokens(
+    tokens,
+    "📢 Nova agenda externa avisada",
+    `${a.grupoNome || a.grupo || "Grupo"}: ${a.local || "—"} (${a.dia || ""} ${a.horario || ""})`,
+    EDITOR_URL
+  );
+});
+
 // ---------- Avisa o coordenador quando um grupo mexe no checklist/horário do Estúdio ----------
 exports.onEstudioEscrito = onDocumentWritten("estudio/{slug}", async (event) => {
   if (!event.data.after.exists) return;

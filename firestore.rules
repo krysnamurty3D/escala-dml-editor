@@ -27,6 +27,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Comunicações — agenda externa dos grupos — público (líderes sem login)
+    match /agendaExterna/{id} {
+      allow read, write: if true;
+    }
+
     // Tokens de notificação push — público (líderes sem login se cadastram
     // pelo próprio token; o coordenador se cadastra autenticado, mas a
     // coleção fica aberta pelo mesmo motivo das demais acima)
