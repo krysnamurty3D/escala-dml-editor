@@ -88,7 +88,7 @@ exports.onEstudioEscrito = onDocumentWritten("estudio/{slug}", async (event) => 
   );
 });
 
-// ---------- Lembrete pro grupo perto do horário do ensaio (30–15 min antes) ----------
+// ---------- Lembrete pro grupo enviar o checklist, 1h40 depois que o ensaio começou ----------
 exports.lembretesEnsaio = onSchedule("every 15 minutes", async () => {
   let cfg;
   try { cfg = await buscarRiderConfig(); } catch (e) { console.error(e); return; }
@@ -97,23 +97,24 @@ exports.lembretesEnsaio = onSchedule("every 15 minutes", async () => {
   for (const [slug, g] of Object.entries(grupos)) {
     if (g.ensaioDia === undefined || g.ensaioDia === null || g.ensaioDia === "") continue;
     const dia = parseInt(g.ensaioDia);
-    if (agora.getDay() !== dia) continue;
+    const hoje = new Date(agora); hoje.setHours(0, 0, 0, 0);
+    const diffAtras = (hoje.getDay() - dia + 7) % 7;
+    const dataCiclo = new Date(hoje); dataCiclo.setDate(dataCiclo.getDate() - diffAtras);
+    const key = ymd(dataCiclo);
     const [hh, mm] = (g.ensaioHora || "19:30").split(":").map(Number);
-    const agendado = new Date(agora);
-    agendado.setHours(hh || 0, mm || 0, 0, 0);
-    const diffMin = (agendado - agora) / 60000;
-    if (diffMin <= 15 || diffMin > 30) continue;
-    const key = ymd(agora);
+    const agendado = new Date(dataCiclo); agendado.setHours(hh || 0, mm || 0, 0, 0);
+    const diffMin = (agora - agendado) / 60000;
+    if (diffMin < 100 || diffMin >= 115) continue;
     const ref = db.doc(`estudio/${slug}`);
     const snap = await ref.get();
     const ensaios = (snap.exists && snap.data().ensaios) || {};
     const rd = ensaios[key] || {};
-    if (rd.lembreteEnviado || rd.semEnsaio) continue;
+    if (rd.lembreteEnviado || rd.semEnsaio || rd.entrada || Object.keys(rd.checklist || {}).length) continue;
     const tokens = await tokensPorGrupo(slug);
     await sendToTokens(
       tokens,
-      "🔔 Ensaio em breve",
-      `${g.nome || slug}: hoje às ${g.ensaioHora}. Não esqueça do checklist do estúdio!`,
+      "🔔 Lembrete do checklist",
+      `${g.nome || slug}: não esqueça de preencher o checklist do estúdio!`,
       PUBLICA_URL
     );
     await ref.set({ ensaios: { [key]: { ...rd, lembreteEnviado: true } } }, { merge: true });
