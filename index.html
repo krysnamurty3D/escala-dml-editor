@@ -2965,22 +2965,40 @@ async function publicarNetlify(){
     const _norm=function(s){return (s||'').toLowerCase().replace(/ç/g,'c').trim();};
     window._visProxData=[];window._mesProxLabel=_nxtLbl;
     window._cultosParaPublicar=null;window._mesParaPublicar=_curLbl;
+
+    // Verifica se a escala atualmente aberta está marcada como "oculta da publicação"
+    let _sessaoAtualOculta=false;
+    if(sessaoId){
+      try{
+        let _dd=null;
+        if(window._fbUser)_dd=await getSessaoFirebase(sessaoId);
+        if(!_dd){const _raw=localStorage.getItem(SK(sessaoId));if(_raw)_dd=JSON.parse(_raw);}
+        _sessaoAtualOculta=!!(_dd&&_dd.ocultaPublicacao);
+      }catch(e){}
+    }
+    if(_sessaoAtualOculta&&_norm(mesLabel)===_norm(_curLbl)){
+      mostrarLoad(false);
+      toast('<i class=ph-eye-slash></i> Esta escala está oculta da publicação — desmarque em Histórico antes de publicar.');
+      return;
+    }
+
     // Se o mês atualmente aberto no editor é o mesmo que será publicado, usa os dados
     // AO VIVO da tela (podem ter edições ainda não salvas) em vez de buscar a versão salva.
     if(_norm(mesLabel)===_norm(_curLbl)){
       window._cultosParaPublicar=cultos.filter(function(c){return !c.oculto;});
     }
-    if(_norm(mesLabel)===_norm(_nxtLbl)){
+    if(_norm(mesLabel)===_norm(_nxtLbl)&&!_sessaoAtualOculta){
       window._visProxData=cultos.filter(function(c){return !c.oculto;});
     }
     const _liveCurAtivo=_norm(mesLabel)===_norm(_curLbl);
-    const _liveNxtAtivo=_norm(mesLabel)===_norm(_nxtLbl);
+    const _liveNxtAtivo=_norm(mesLabel)===_norm(_nxtLbl)&&!_sessaoAtualOculta;
     if(window._fbDb&&window._fbFns){
       try{
         const {collection,getDocs}=window._fbFns;
         const _snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
         _snap.forEach(function(d){
           var dd=d.data();var lbl=_norm(dd.mesLabel);
+          if(dd.ocultaPublicacao)return;
           if(lbl===_norm(_curLbl)&&!_liveCurAtivo){var _cp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_cp.length)window._cultosParaPublicar=_cp;}
           if(lbl===_norm(_nxtLbl)&&!_liveNxtAtivo){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
         });
@@ -2991,7 +3009,7 @@ async function publicarNetlify(){
       var _lsIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
       for(var _li=0;_li<_lsIdx.length;_li++){
         try{var _ld=JSON.parse(localStorage.getItem('dml_sess_'+_lsIdx[_li]));
-          if(_ld&&_norm(_ld.mesLabel)===_norm(_curLbl)){window._cultosParaPublicar=(_ld.cultos||[]).filter(function(c){return !c.oculto;});break;}
+          if(_ld&&!_ld.ocultaPublicacao&&_norm(_ld.mesLabel)===_norm(_curLbl)){window._cultosParaPublicar=(_ld.cultos||[]).filter(function(c){return !c.oculto;});break;}
         }catch(e){}
       }
     }
@@ -5998,10 +6016,12 @@ async function renderHist(busca=''){
   filtrados.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
   grid.innerHTML=filtrados.map(d=>{
     const id=d.id;
+    const oculta=!!d.ocultaPublicacao;
     const top3=[...new Set((d.cultos||[]).flatMap(c=>c.grupos||[]))].filter(g=>g!==SH_LABEL).slice(0,3);
     return`<div class="hist-card">
       <div class="hist-mes">${d.mesLabel||'Sem título'}</div>
       <div class="hist-meta">${(d.cultos||[]).filter(c=>!c.oculto).length} cultos</div>
+      ${oculta?'<div style="font-size:10px;font-weight:700;color:#d4a017;margin-top:2px"><i class=ph-eye-slash></i> Oculta da publicação</div>':''}
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">
         ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
       </div>
@@ -6009,10 +6029,23 @@ async function renderHist(busca=''){
         <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')"><i class=ph-pencil-simple></i> Abrir</button>
         <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')"><i class=ph-eye></i> Ver</button>
         <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')"><i class=ph-clipboard-text></i> Duplicar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleOcultaPublicacao('${id}')" title="${oculta?'Permitir publicar esta escala':'Ocultar esta escala da publicação'}"><i class="${oculta?'ph-eye':'ph-eye-slash'}"></i></button>
         <button class="btn-danger" onclick="excluirSessao('${id}')"><i class=ph-trash></i></button>
       </div>
     </div>`;
   }).join('');
+}
+
+async function toggleOcultaPublicacao(id){
+  let dados=null;
+  if(window._fbUser)dados=await getSessaoFirebase(id);
+  if(!dados){const raw=localStorage.getItem(SK(id));if(raw)dados=JSON.parse(raw);}
+  if(!dados){toast('<i class=ph-warning></i> Escala não encontrada');return;}
+  dados.ocultaPublicacao=!dados.ocultaPublicacao;
+  localStorage.setItem(SK(id),JSON.stringify(dados));
+  if(window._fbUser)await salvarSessaoFirebase(id,dados);
+  toast(dados.ocultaPublicacao?'<i class=ph-eye-slash></i> Escala oculta da publicação':'<i class=ph-eye></i> Escala liberada para publicação');
+  renderHist();
 }
 
 // INIT
