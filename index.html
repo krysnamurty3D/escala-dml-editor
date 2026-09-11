@@ -759,6 +759,7 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
       <button class="nav-pill" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
       <button class="nav-pill" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio<span class="nav-badge" id="estudio-nav-badge" style="display:none"></span></button>
+      <button class="nav-pill" onclick="irPara('comunic')"><i class=ph-megaphone></i> Comunicações</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
@@ -1124,9 +1125,17 @@ tr.esp-row .td-dia{color:#c03030;}
   <div class="riders-header">
     <div>
       <h2 style="color:var(--teal);font-size:17px">📦 Solicitações de Equipamento</h2>
-      <p class="riders-desc">Pedidos enviados pelos líderes na página pública, para uso em cultos específicos. Defira ou indefira — ao indeferir, informe uma justificativa.</p>
+      <p class="riders-desc">Pedidos enviados pelos líderes na página pública. Defira ou indefira — ao indeferir, informe uma justificativa.</p>
     </div>
     <button class="btn btn-outline btn-sm" onclick="renderSolic()">↻ Atualizar</button>
+  </div>
+  <div class="estudio-cfg">
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🎸 Instrumentos/equipamentos disponíveis para solicitar (um por linha)</div>
+    <textarea id="instrumentos-itens" placeholder="Violão&#10;Cavaquinho&#10;DI Box&#10;Pedal de looper&#10;Microfone sem fio extra"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span id="instrumentos-status" style="font-size:11px;color:var(--muted)"></span>
+      <button class="btn btn-primary btn-sm" onclick="salvarInstrumentosConfig()">💾 Salvar instrumentos</button>
+    </div>
   </div>
   <div id="solic-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div></div>
 </div>
@@ -1158,6 +1167,17 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
   </div>
   <div id="estudio-submissions"><p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Carregando envios...</p></div>
+</div>
+<!-- COMUNICAÇÕES: AGENDA EXTERNA POR GRUPO -->
+<div id="page-comunicacoes" class="page">
+  <div class="riders-header">
+    <div>
+      <h2 style="color:var(--teal);font-size:17px">📢 Comunicações — Agenda Externa dos Grupos</h2>
+      <p class="riders-desc">Compromissos fora da igreja (dia, horário e local) avisados pelos próprios grupos, corais e cantores na página pública. Histórico por grupo, visível apenas aqui.</p>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="renderComunicacoesAdmin()">↻ Atualizar</button>
+  </div>
+  <div id="comunicacoes-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div></div>
 </div>
 <!-- QR CODE -->
 <div id="page-qr" class="page">
@@ -1328,6 +1348,7 @@ function loadGrupos(){
 function saveGrupos(g){localStorage.setItem('dml_grupos',JSON.stringify(g));}
 let GRUPOS=loadGrupos();
 const todosGrupos=()=>Object.values(GRUPOS).flat();
+const gruposLouvor=()=>GRUPOS['Grupos Musicais']||[];
 
 function getBadgeOrder(){
   const g=GRUPOS;
@@ -3309,6 +3330,19 @@ async function renderRiderSubmissions(){
 function _solicEsc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
 async function renderSolic(){
+  const ghToken=getGithubToken();
+  if(ghToken){
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/instrumentos-config.json`,{
+        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
+      });
+      if(r.ok){
+        const f=await r.json();
+        const cfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
+        if(document.getElementById('instrumentos-itens'))document.getElementById('instrumentos-itens').value=(cfg.itens||[]).join('\n');
+      }
+    }catch(e){}
+  }
   const wrap=document.getElementById('solic-list');
   if(!wrap)return;
   wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div>';
@@ -3321,15 +3355,20 @@ async function renderSolic(){
     itens.sort((a,b)=>((a.status||'pendente')==='pendente'?0:1)-((b.status||'pendente')==='pendente'?0:1));
     wrap.innerHTML=itens.map(it=>{
       const dt=it.data?new Date(it.data+'T00:00:00').toLocaleDateString('pt-BR'):'—';
+      const dtDev=it.dataDevolucao?new Date(it.dataDevolucao+'T00:00:00').toLocaleDateString('pt-BR'):null;
       const st=it.status||'pendente';
       const stLbl=st==='deferido'?'✅ Deferido':st==='indeferido'?'❌ Indeferido':'🕓 Pendente';
+      const nomesItens=(it.itens&&it.itens.length?it.itens:(it.item?[it.item]:[])).map(_solicEsc).join(', ')||'—';
+      const historico=it.historico||[];
       return `<div class="solic-row">
         <div class="solic-info">
           <div class="solic-grupo">${_solicEsc(it.grupoNome||it.grupo||'—')}</div>
-          <div class="solic-item">${_solicEsc(it.item||'—')}</div>
-          <div class="solic-meta">Para dia ${dt}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
+          <div class="solic-item">${nomesItens}</div>
+          <div class="solic-meta">Para dia ${dt}${dtDev?' · devolução até '+dtDev:''}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
           ${it.motivo?`<div class="solic-motivo">${_solicEsc(it.motivo)}</div>`:''}
           ${it.justificativa?`<div class="solic-just">💬 ${_solicEsc(it.justificativa)}</div>`:''}
+          ${historico.length?`<button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">🕐 Ver histórico (${historico.length})</button>
+          <div style="display:none;margin-top:6px">${historico.map(h=>`<div class="solic-just">${new Date(h.em).toLocaleString('pt-BR')} — ${h.status}${h.justificativa?': '+_solicEsc(h.justificativa):''}</div>`).join('')}</div>`:''}
         </div>
         <span class="solic-status ${st}">${stLbl}</span>
         <div class="solic-actions">
@@ -3341,6 +3380,32 @@ async function renderSolic(){
   }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
 }
 
+async function salvarInstrumentosConfig(){
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
+  const itens=(document.getElementById('instrumentos-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const json=JSON.stringify({itens},null,2);
+  const content=btoa(unescape(encodeURIComponent(json)));
+  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
+  const st=document.getElementById('instrumentos-status');
+  try{
+    let sha=null;
+    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/instrumentos-config.json`,{headers});
+    if(getR.ok){const f=await getR.json();sha=f.sha;}
+    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/instrumentos-config.json`,{
+      method:'PUT',headers,
+      body:JSON.stringify({message:'Instrumentos disponíveis atualizados',content,...(sha?{sha}:{})})
+    });
+    if(!putR.ok){
+      const s=putR.status;
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');if(st)st.textContent='⚠️ Token expirado — reconfigure';configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
+    if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
+    toast('✅ Instrumentos salvos!');
+  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+}
+
 async function _solicResponder(id,status){
   let justificativa='';
   if(status==='indeferido'){
@@ -3350,11 +3415,52 @@ async function _solicResponder(id,status){
     justificativa=(prompt('Justificativa (opcional):','')||'').trim();
   }
   try{
-    const {doc,setDoc}=window._fbFns;
-    await setDoc(doc(window._fbDb,'solicitacoes',id),{status,justificativa,respondidoEm:Date.now()},{merge:true});
+    const {doc,getDoc,setDoc}=window._fbFns;
+    const ref=doc(window._fbDb,'solicitacoes',id);
+    const snap=await getDoc(ref);
+    const atual=snap.exists()?snap.data():{};
+    const historico=(atual.historico||[]).concat([{status,justificativa,em:Date.now()}]);
+    await setDoc(ref,{status,justificativa,respondidoEm:Date.now(),historico},{merge:true});
     toast(status==='deferido'?'✅ Solicitação deferida':'❌ Solicitação indeferida');
     renderSolic();
   }catch(e){toast('❌ Erro: '+e.message);}
+}
+
+// ═══════════════════════════════════════════════
+// COMUNICAÇÕES — AGENDA EXTERNA DOS GRUPOS (histórico, apenas editor)
+// ═══════════════════════════════════════════════
+async function renderComunicacoesAdmin(){
+  const wrap=document.getElementById('comunicacoes-list');
+  if(!wrap)return;
+  wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div>';
+  try{
+    const {collection,getDocs,query,orderBy}=window._fbFns;
+    const snap=await getDocs(query(collection(window._fbDb,'agendaExterna'),orderBy('criadoEm','desc')));
+    const itens=[];
+    snap.forEach(d=>itens.push({id:d.id,...d.data()}));
+    if(!itens.length){wrap.innerHTML='<div class="empty-state"><div class="icon">📢</div><p>Nenhuma agenda externa enviada ainda.</p></div>';return;}
+    const porGrupo={};
+    itens.forEach(it=>{
+      const g=it.grupoNome||it.grupo||'—';
+      (porGrupo[g]=porGrupo[g]||[]).push(it);
+    });
+    const grupos=Object.keys(porGrupo).sort((a,b)=>a.localeCompare(b));
+    wrap.innerHTML=grupos.map(g=>{
+      const linhas=porGrupo[g].map(it=>{
+        const dt=it.dia?new Date(it.dia+'T00:00:00').toLocaleDateString('pt-BR'):'—';
+        return `<div class="solic-row">
+          <div class="solic-info">
+            <div class="solic-item">${_solicEsc(it.local||'—')}</div>
+            <div class="solic-meta">Dia ${dt}${it.horario?' · '+_solicEsc(it.horario):''}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="estudio-cfg" style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${_solicEsc(g)}</div>
+        ${linhas}
+      </div>`;
+    }).join('');
+  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
 }
 
 // ═══════════════════════════════════════════════
@@ -3402,8 +3508,8 @@ async function renderEstudio(){
 function renderEnsaioDiasGrid(){
   const grid=document.getElementById('ensaio-dias-grid');
   if(!grid)return;
-  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
-  if(!todos.length){grid.innerHTML='<div class="empty-state"><div class="icon">⚙️</div><p>Nenhum grupo cadastrado em ⚙️ Grupos.</p></div>';return;}
+  const todos=gruposLouvor();
+  if(!todos.length){grid.innerHTML='<div class="empty-state"><div class="icon">⚙️</div><p>Nenhum grupo cadastrado em "Grupos Musicais" (⚙️ Grupos).</p></div>';return;}
   const grupos=_riderCfg.grupos||{};
   grid.innerHTML=todos.map(g=>{
     const slug=grupoSlug(g);
@@ -3424,7 +3530,7 @@ function renderEnsaioDiasGrid(){
 async function salvarEnsaioDias(){
   const ghToken=getGithubToken();
   if(!ghToken){configurarTokens();return;}
-  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  const todos=gruposLouvor();
   const grupos=Object.assign({},_riderCfg.grupos||{});
   todos.forEach(g=>{
     const slug=grupoSlug(g);
@@ -3484,7 +3590,7 @@ async function renderEstudioSubmissions(){
   const wrap=document.getElementById('estudio-submissions');
   if(!wrap)return;
   wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Verificando ensaios...</p>';
-  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
+  const todos=gruposLouvor();
   const grupos=_riderCfg.grupos||{};
   let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Situação dos ensaios (ciclo atual)</h3>';
   let atrasados=0;
@@ -3887,6 +3993,8 @@ function exportarPagina(){
     ".rp-btn-out{background:rgba(42,180,130,.1);color:#2ab482;border:1px solid #2ab482;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}",
     ".rp-btn-out:hover{background:rgba(42,180,130,.2);}",
     ".rp-err{font-size:12px;color:#e06060;margin-bottom:10px;}",
+    ".rp-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(42,180,130,.12);border:1px solid #2ab482;color:#2ab482;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:600;}",
+    ".rp-chip a{cursor:pointer;color:#2ab482;font-weight:800;}",
     ".rp-culto-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#162030;border:1px solid #2a3a4a;border-radius:9px;margin-bottom:8px;cursor:pointer;}",
     ".rp-culto-item:hover{border-color:#2ab482;}",
     ".rp-culto-nome{font-size:13px;font-weight:700;color:#edf4f4;}",
@@ -3959,6 +4067,7 @@ function exportarPagina(){
     'var CULTOS=CULTOS_ATUAL;',
     'var MES=MES_ATUAL;',
     'var CORES='+CORES+';',
+    'var _RP_GRUPOS_LOUVOR='+JSON.stringify(gruposLouvor())+';',
     'var MESES={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
     'var filtroAtivo="todos";',
 
@@ -4216,6 +4325,7 @@ function exportarPagina(){
     'var _RP_PROJ="escala-dml",_RP_KEY="AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
     'var _RP_CFG_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/rider-config.json";',
     'var _RP_CHECKLIST_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/checklist-config.json";',
+    'var _RP_INSTRUMENTOS_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/instrumentos-config.json";',
     'var _RP_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];',
     'function _rpSlug(n){return(n||"").toLowerCase().replace(/[àáâãä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ìíîï]/g,"i").replace(/[òóôõö]/g,"o").replace(/[ùúûü]/g,"u").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"");}',
     'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
@@ -4251,7 +4361,7 @@ function exportarPagina(){
     '}',
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
-    '  var tag=_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
+    '  var tag=_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
     '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
     '  var sino=_RP.slug?\'<button style="background:none;border:none;color:#7a9aa8;font-size:19px;cursor:pointer;position:absolute;top:14px;right:16px" onclick="_rpAtivarNotificacoes()" title="Ativar notificações">\'+(_RP.pushAtivo?"🔔":"🔕")+\'</button>\':"";',
     '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
@@ -4267,13 +4377,14 @@ function exportarPagina(){
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'estudio\\\';_rpMostrarLogin()"><div class="rp-home-ico">📋</div><div class="rp-home-lbl">Estúdio</div></div>\'',
     '    +\'</div>\');',
     '}',
+    'function _rpBtnAgendaExterna(){return\'<button class="rp-btn-out" style="width:100%;margin-top:16px" onclick="_RP.flow=\\\'comunicacao\\\';_rpMostrarLogin()">📅 Avisar agenda externa do meu grupo</button>\';}',
     'function _rpMostrarComunicacoes(){',
     '  _RP.state="comunic";',
     '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\" style=\\"margin-top:4px\\">&#9203; Carregando avisos...</p>");',
     '  fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
-    '    if(!d||!d.ativo||!d.mensagem){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum aviso no momento.</p>\');return;}',
-    '    _rpHtml(_rpHdr("_rpMostrarHome")+(d.titulo?\'<div class="rp-title">\'+d.titulo+\'</div>\':\'\')+\'<div class="rp-sub" style="color:#c8d8e8;white-space:pre-wrap;margin-top:8px">\'+d.mensagem+\'</div>\');',
-    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar aviso.</p>\');});',
+    '    if(!d||!d.ativo||!d.mensagem){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum aviso no momento.</p>\'+_rpBtnAgendaExterna());return;}',
+    '    _rpHtml(_rpHdr("_rpMostrarHome")+(d.titulo?\'<div class="rp-title">\'+d.titulo+\'</div>\':\'\')+\'<div class="rp-sub" style="color:#c8d8e8;white-space:pre-wrap;margin-top:8px">\'+d.mensagem+\'</div>\'+_rpBtnAgendaExterna());',
+    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar aviso.</p>\'+_rpBtnAgendaExterna());});',
     '}',
 
     'function _rpMostrarLogin(){',
@@ -4281,6 +4392,7 @@ function exportarPagina(){
     '  fetch(_RP_CFG_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(cfg){',
     '    _RP.cfg=cfg;',
     '    var grupos=cfg&&cfg.grupos?Object.values(cfg.grupos).filter(function(g){return g.pin;}).sort(function(a,b){return a.nome.localeCompare(b.nome);}):[];',
+    '    if(_RP.flow==="estudio")grupos=grupos.filter(function(g){return _RP_GRUPOS_LOUVOR.indexOf(g.nome)>=0;});',
     '    if(!grupos.length){_rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\">Nenhum grupo configurado ainda.</p>");return;}',
     '    var opts=grupos.map(function(g){return\'<option value="\'+_rpSlug(g.nome)+\'">\'+g.nome+\'</option>\';}).join("");',
     '    _rpHtml(_rpHdr("_rpMostrarHome")',
@@ -4300,7 +4412,35 @@ function exportarPagina(){
     '  var grp=grupos[slug];',
     '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarEnsaio();else _rpMostrarCultos();',
+    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarEnsaio();else if(_RP.flow==="comunicacao")_rpMostrarAgendaExterna();else _rpMostrarCultos();',
+    '}',
+    'function _rpMostrarAgendaExterna(){',
+    '  _RP.state="agenda-externa";',
+    '  var hoje=new Date().toISOString().slice(0,10);',
+    '  _rpHtml(_rpHdr("_rpMostrarComunicacoes")',
+    '    +\'<p class="rp-sub" style="margin-top:4px">Avise um compromisso extra igreja de \'+_RP.nome+\'</p>\'',
+    '    +\'<label class="rp-label" style="margin-top:2px">Dia</label>\'',
+    '    +\'<input class="rp-inp" type="date" id="agenda-dia" min="\'+hoje+\'">\'',
+    '    +\'<label class="rp-label">Horário</label>\'',
+    '    +\'<input class="rp-inp" type="time" id="agenda-horario">\'',
+    '    +\'<label class="rp-label">Local / Nome da Denominação</label>\'',
+    '    +\'<input class="rp-inp" type="text" id="agenda-local" placeholder="Ex: Igreja Batista Central, Praça XV...">\'',
+    '    +\'<div class="rp-err" id="agenda-err" style="display:none">Preencha dia, horário e local.</div>\'',
+    '    +\'<button class="rp-btn" onclick="_rpEnviarAgendaExterna()">Enviar aviso</button>\');',
+    '}',
+    'function _rpEnviarAgendaExterna(){',
+    '  var dia=document.getElementById("agenda-dia").value;',
+    '  var horario=document.getElementById("agenda-horario").value;',
+    '  var local=document.getElementById("agenda-local").value.trim();',
+    '  if(!dia||!horario||!local){var e=document.getElementById("agenda-err");if(e)e.style.display="block";return;}',
+    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,dia:dia,horario:horario,local:local,criadoEm:Date.now()};',
+    '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/agendaExterna?key="+_RP_KEY;',
+    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
+    '    .then(function(r){',
+    '      if(r.ok){alert("✅ Agenda enviada! Obrigado por avisar.");_rpMostrarComunicacoes();}',
+    '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
+    '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
 
     'function _rpMostrarSolicMenu(){',
@@ -4312,7 +4452,8 @@ function exportarPagina(){
     '    .then(function(r){return r.ok?r.json():[];}).then(function(rows){',
     '      var itens=(rows||[]).filter(function(r){return r.document;}).map(function(r){',
     '        var f=r.document.fields||{};',
-    '        return{id:r.document.name.split("/").pop(),grupoNome:_rpFsParse(f.grupoNome),item:_rpFsParse(f.item),motivo:_rpFsParse(f.motivo),data:_rpFsParse(f.data),status:_rpFsParse(f.status)||"pendente",justificativa:_rpFsParse(f.justificativa),criadoEm:_rpFsParse(f.criadoEm)||0};',
+    '        var arrItens=f.itens?_rpFsParse(f.itens):(f.item?[_rpFsParse(f.item)]:[]);',
+    '        return{id:r.document.name.split("/").pop(),grupoNome:_rpFsParse(f.grupoNome),itens:arrItens,motivo:_rpFsParse(f.motivo),data:_rpFsParse(f.data),dataDevolucao:_rpFsParse(f.dataDevolucao),status:_rpFsParse(f.status)||"pendente",justificativa:_rpFsParse(f.justificativa),criadoEm:_rpFsParse(f.criadoEm)||0};',
     '      });',
     '      itens.sort(function(a,b){return b.criadoEm-a.criadoEm;});',
     '      var el=document.getElementById("rp-solic-lista");if(!el)return;',
@@ -4321,34 +4462,78 @@ function exportarPagina(){
     '        var stCls=it.status==="deferido"?"deferido":it.status==="indeferido"?"indeferido":"pendente";',
     '        var stLbl=it.status==="deferido"?"✅ Deferido":it.status==="indeferido"?"❌ Indeferido":"🕓 Pendente";',
     '        var dt=it.data?new Date(it.data+"T00:00:00").toLocaleDateString("pt-BR"):"—";',
+    '        var dtDev=it.dataDevolucao?new Date(it.dataDevolucao+"T00:00:00").toLocaleDateString("pt-BR"):null;',
+    '        var nomes=(it.itens||[]).join(", ")||"—";',
     '        return \'<div class="rp-culto-item" style="align-items:flex-start;flex-direction:column;cursor:default">\'',
     '          +\'<div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">\'',
-    '          +\'<div class="rp-culto-nome">\'+(it.item||"—")+\'</div><span class="rp-solic-badge \'+stCls+\'">\'+stLbl+\'</span></div>\'',
-    '          +\'<div class="rp-culto-sub">Para dia \'+dt+(it.motivo?" · "+it.motivo:"")+\'</div>\'',
+    '          +\'<div class="rp-culto-nome">\'+nomes+\'</div><span class="rp-solic-badge \'+stCls+\'">\'+stLbl+\'</span></div>\'',
+    '          +\'<div class="rp-culto-sub">Para dia \'+dt+(dtDev?" · devolução até "+dtDev:"")+(it.motivo?" · "+it.motivo:"")+\'</div>\'',
     '          +(it.justificativa?\'<div class="rp-culto-sub" style="margin-top:4px;font-style:italic">💬 \'+it.justificativa+\'</div>\':\'\')',
     '          +\'</div>\';',
     '      }).join("");',
     '    }).catch(function(){var el=document.getElementById("rp-solic-lista");if(el)el.innerHTML=\'<p class="rp-sub">Erro ao carregar.</p>\';});',
     '}',
     'function _rpMostrarSolicNova(){',
-    '  _RP.state="solic-nova";',
+    '  _RP.state="solic-nova";_RP.solicItens=[];',
     '  var hoje=new Date().toISOString().slice(0,10);',
+    '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")+\'<p class="rp-sub" style="margin-top:4px">&#9203; Carregando itens dispon&#237;veis...</p>\');',
+    '  fetch(_RP_INSTRUMENTOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};}).then(function(cfg){',
+    '    _RP.instrumentosDisponiveis=cfg.itens||[];',
+    '    _rpRenderSolicNova(hoje);',
+    '  });',
+    '}',
+    'function _rpRenderSolicNova(hoje){',
+    '  var opts=(_RP.instrumentosDisponiveis||[]).map(function(x){return\'<option value="\'+x+\'">\'+x+\'</option>\';}).join("")+\'<option value="__outro__">Outro (digitar)...</option>\';',
+    '  var chips=(_RP.solicItens||[]).map(function(it,i){return\'<span class="rp-chip">\'+it+\' <a onclick="_rpRemoverItemSolic(\'+i+\')">&times;</a></span>\';}).join("");',
     '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")',
     '    +\'<label class="rp-label" style="margin-top:2px">Data</label>\'',
     '    +\'<input class="rp-inp" type="date" id="solic-data" min="\'+hoje+\'">\'',
     '    +\'<label class="rp-label">Equipamento / Instrumento</label>\'',
-    '    +\'<input class="rp-inp" type="text" id="solic-item" placeholder="Ex: Violão, DI Box, Pedal...">\'',
+    '    +\'<div style="display:flex;gap:6px">\'',
+    '    +\'<select class="rp-sel" id="solic-item-sel" style="flex:1;margin-bottom:0">\'+opts+\'</select>\'',
+    '    +\'<button class="rp-btn-out" style="width:auto" onclick="_rpAdicionarItemSolic()">+ Adicionar</button>\'',
+    '    +\'</div>\'',
+    '    +\'<input class="rp-inp" type="text" id="solic-item-custom" style="display:none;margin-top:8px" placeholder="Digite o nome do equipamento">\'',
+    '    +\'<div id="solic-itens-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">\'+chips+\'</div>\'',
     '    +\'<label class="rp-label">Motivo</label>\'',
     '    +\'<textarea class="rp-inp" id="solic-motivo" rows="3" style="resize:vertical" placeholder="Explique o motivo da solicitação"></textarea>\'',
-    '    +\'<div class="rp-err" id="solic-err" style="display:none">Preencha data, equipamento e motivo.</div>\'',
+    '    +\'<label class="rp-label">Dia para devolução</label>\'',
+    '    +\'<input class="rp-inp" type="date" id="solic-data-devolucao" min="\'+hoje+\'">\'',
+    '    +\'<div class="rp-err" id="solic-err" style="display:none">Preencha data, ao menos um equipamento e motivo.</div>\'',
     '    +\'<button class="rp-btn" onclick="_rpEnviarSolic()">Enviar solicitação</button>\');',
+    '  var sel=document.getElementById("solic-item-sel");',
+    '  if(sel)sel.onchange=function(){var c=document.getElementById("solic-item-custom");if(c)c.style.display=sel.value==="__outro__"?"block":"none";};',
+    '}',
+    'function _rpSolicPreservarCampos(fn){',
+    '  var data=document.getElementById("solic-data")?document.getElementById("solic-data").value:"";',
+    '  var dataDev=document.getElementById("solic-data-devolucao")?document.getElementById("solic-data-devolucao").value:"";',
+    '  var motivo=document.getElementById("solic-motivo")?document.getElementById("solic-motivo").value:"";',
+    '  var hoje=new Date().toISOString().slice(0,10);',
+    '  fn();',
+    '  _rpRenderSolicNova(hoje);',
+    '  if(document.getElementById("solic-data"))document.getElementById("solic-data").value=data;',
+    '  if(document.getElementById("solic-data-devolucao"))document.getElementById("solic-data-devolucao").value=dataDev;',
+    '  if(document.getElementById("solic-motivo"))document.getElementById("solic-motivo").value=motivo;',
+    '}',
+    'function _rpAdicionarItemSolic(){',
+    '  _rpSolicPreservarCampos(function(){',
+    '    var sel=document.getElementById("solic-item-sel");',
+    '    var val=sel.value==="__outro__"?(document.getElementById("solic-item-custom").value||"").trim():sel.value;',
+    '    if(!val)return;',
+    '    _RP.solicItens=_RP.solicItens||[];',
+    '    if(_RP.solicItens.indexOf(val)<0)_RP.solicItens.push(val);',
+    '  });',
+    '}',
+    'function _rpRemoverItemSolic(i){',
+    '  _rpSolicPreservarCampos(function(){_RP.solicItens.splice(i,1);});',
     '}',
     'function _rpEnviarSolic(){',
     '  var data=document.getElementById("solic-data").value;',
-    '  var item=document.getElementById("solic-item").value.trim();',
+    '  var itens=_RP.solicItens||[];',
     '  var motivo=document.getElementById("solic-motivo").value.trim();',
-    '  if(!data||!item||!motivo){var e=document.getElementById("solic-err");if(e)e.style.display="block";return;}',
-    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,data:data,item:item,motivo:motivo,status:"pendente",criadoEm:Date.now()};',
+    '  var dataDevolucao=document.getElementById("solic-data-devolucao").value;',
+    '  if(!data||!itens.length||!motivo){var e=document.getElementById("solic-err");if(e)e.style.display="block";return;}',
+    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,data:data,itens:itens,dataDevolucao:dataDevolucao||null,motivo:motivo,status:"pendente",criadoEm:Date.now()};',
     '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
     '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/solicitacoes?key="+_RP_KEY;',
     '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
@@ -4781,7 +4966,7 @@ function irPara(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,estudio:10,semana:11};
+  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,estudio:10,comunic:11,semana:12};
   document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
   if(p==='preview')renderPreview();
   if(p==='hist')renderHist();
@@ -4794,6 +4979,7 @@ function irPara(p){
   if(p==='riders')renderRiders();
   if(p==='solic')renderSolic();
   if(p==='estudio')renderEstudio();
+  if(p==='comunic')renderComunicacoesAdmin();
 }
 
 // ═══════════════════════════════════════════════
