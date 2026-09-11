@@ -15,6 +15,8 @@ import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, quer
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getMessaging, getToken }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+import { getFunctions, httpsCallable }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
@@ -28,12 +30,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const fns = getFunctions(app);
 
 // Expõe globalmente para o script principal
 window._fbAuth = auth;
 window._fbDb = db;
 window._fbGoogleProvider = new GoogleAuthProvider();
-window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged, getToken };
+window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged, getToken, httpsCallable };
+window._fbFunctions = fns;
 try{ window._fbMessaging = getMessaging(app); }catch(e){ console.warn('FCM indisponível:', e); }
 
 // Monitora estado de autenticação
@@ -2932,58 +2936,23 @@ async function exportarImagem(){
 }
 
 // ═══════════════════════════════════════════════
-// PUBLICAR NO NETLIFY (deploy automático)
+// PUBLICAR NO GITHUB PAGES (via Cloud Function — token fica no servidor)
 // ═══════════════════════════════════════════════
-const NETLIFY_TOKEN=''; // configurado nas configurações
-const NETLIFY_SITE_ID='584aff64-553e-4a7c-938b-b7dcfdf4f494';
 const GITHUB_REPO='escala-dml-public';
 const GITHUB_USER='krysnamurty3D';
 
-
-
-function getGithubToken(){return localStorage.getItem('dml_gh_token')||'';}
-function getNetlifyToken(){return localStorage.getItem('dml_nl_token')||'';}
-
-function configurarTokens(){
-  const existente=getGithubToken();
-  const modal=document.createElement('div');
-  modal.style.cssText='position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:500;display:flex;align-items:center;justify-content:center';
-  modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:480px;max-width:96vw">
-    <h3 style="color:var(--teal);margin-bottom:16px"><i class=ph-key></i> Configurar Publicação</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-      Cole seu <strong style="color:var(--white)">GitHub Personal Access Token</strong> abaixo.<br>
-      Fica salvo apenas no seu navegador — nunca no código.
-    </p>
-    <div style="margin-bottom:14px">
-      <label style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px">GitHub Token (permissão: repo)</label>
-      <input type="password" id="cfg-gh-token" placeholder="ghp_..." value="${existente}"
-        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font);box-sizing:border-box">
-    </div>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:16px">
-      Para gerar: github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → marque <strong style="color:var(--white)">repo</strong>
-    </p>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarTokens(this)">Salvar e Publicar</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-  setTimeout(()=>document.getElementById('cfg-gh-token')?.focus(),100);
-}
-
-async function salvarTokens(btn){
-  const gh=document.getElementById('cfg-gh-token').value.trim();
-  if(!gh){alert('Cole o token do GitHub');return;}
-  localStorage.setItem('dml_gh_token',gh);
-  btn.closest('div[style*="fixed"]').remove();
-  await publicarNetlify();
+// Publica um arquivo em escala-dml-public. O token do GitHub fica guardado
+// com segurança no Firebase (Secret Manager), nunca no navegador — assim não
+// depende de localStorage, que pode ser apagado pelo próprio navegador.
+async function publicarArquivoRemoto(path,content,message){
+  const {httpsCallable}=window._fbFns;
+  const fn=httpsCallable(window._fbFunctions,'publicarArquivo');
+  const res=await fn({path,content,message});
+  return res.data;
 }
 
 async function publicarNetlify(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para publicar');return;}
-  const ghToken=getGithubToken();
-  console.log('publicarNetlify — token:', ghToken?'presente':'ausente');
-  if(!ghToken){configurarTokens();return;}
   mostrarLoad(true);
   try{
     // Sempre publica mes atual do calendario + proximo mes (independente do que esta carregado)
@@ -3039,36 +3008,10 @@ async function publicarNetlify(){
     console.log('HTML gerado:', html?html.length+' chars':'vazio');
     if(!html){mostrarLoad(false);toast('<i class=ph-warning></i> Erro ao gerar HTML');return;}
 
-    const owner=GITHUB_USER;
-    const repo=GITHUB_REPO;
-    const headers={
-      'Authorization':`Bearer ${ghToken}`,
-      'Accept':'application/vnd.github+json',
-      'Content-Type':'application/json'
-    };
+    // 1. Envia o index.html
+    await publicarArquivoRemoto('index.html',html,`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`);
 
-    // 1. Pega SHA atual do index.html
-    let sha=null;
-    const getRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{headers});
-    if(getRes.ok){const f=await getRes.json();sha=f.sha;}
-
-    // 2. Envia arquivo
-    const content=btoa(unescape(encodeURIComponent(html)));
-    const putRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{
-      method:'PUT',headers,
-      body:JSON.stringify({
-        message:`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`,
-        content,
-        ...(sha?{sha}:{})
-      })
-    });
-    if(!putRes.ok){
-      const status=putRes.status;
-      if(status===401||status===403){localStorage.removeItem('dml_gh_token');mostrarLoad(false);toast('<i class=ph-key></i> Token GitHub expirado ou inválido — reconfigure');configurarTokens();return;}
-      const t=await putRes.text();throw new Error(`GitHub ${status}: ${t}`);
-    }
-
-    // 3. Garante o service worker do FCM (notificações push) no mesmo repositório
+    // 2. Garante o service worker do FCM (notificações push) no mesmo repositório
     try{
       const swContent=`importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
@@ -3099,14 +3042,7 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(clients.openWindow(url));
 });
 `;
-      let swSha=null;
-      const swGetRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/firebase-messaging-sw.js`,{headers});
-      if(swGetRes.ok){const f=await swGetRes.json();swSha=f.sha;}
-      const swContentB64=btoa(unescape(encodeURIComponent(swContent)));
-      await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/firebase-messaging-sw.js`,{
-        method:'PUT',headers,
-        body:JSON.stringify({message:'Service worker de notificações (FCM)',content:swContentB64,...(swSha?{sha:swSha}:{})})
-      });
+      await publicarArquivoRemoto('firebase-messaging-sw.js',swContent,'Service worker de notificações (FCM)');
     }catch(e){console.warn('Falha ao publicar firebase-messaging-sw.js:',e);}
 
     mostrarLoad(false);
@@ -3114,8 +3050,7 @@ self.addEventListener('notificationclick', (event) => {
   }catch(e){
     mostrarLoad(false);
     console.error('Publish erro:',e);
-    if(e.message.includes('401')||e.message.includes('403')){localStorage.removeItem('dml_gh_token');toast('<i class=ph-key></i> Token GitHub expirado — reconfigure');configurarTokens();}
-    else toast('<i class=ph-x-circle></i> Erro ao publicar: '+e.message);
+    toast('<i class=ph-x-circle></i> Erro ao publicar: '+(e.message||e));
   }
 }
 
@@ -3129,17 +3064,11 @@ function atualizarPainelAviso(){
 
 async function carregarAvisoAtual(){
   const st=document.getElementById('aviso-status');
-  const ghToken=getGithubToken();
-  if(!ghToken){if(st)st.innerHTML='<i class=ph-warning></i> Token GitHub não configurado';return;}
   if(st)st.textContent='Carregando...';
   try{
-    const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
-      headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
-    });
-    if(r.status===401||r.status===403){if(st)st.innerHTML='<i class=ph-warning></i> Token expirado — reconfigure';return;}
+    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/aviso.json?_=${Date.now()}`);
     if(!r.ok){if(st)st.textContent='';return;}
-    const f=await r.json();
-    const dados=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
+    const dados=await r.json();
     document.getElementById('aviso-ativo').checked=!!dados.ativo;
     document.getElementById('aviso-titulo').value=dados.titulo||'';
     document.getElementById('aviso-texto').value=dados.mensagem||'';
@@ -3149,38 +3078,22 @@ async function carregarAvisoAtual(){
 }
 
 async function salvarAviso(){
-  const ghToken=getGithubToken();
-  if(!ghToken){configurarTokens();return;}
   const ativo=document.getElementById('aviso-ativo').checked;
   const titulo=(document.getElementById('aviso-titulo').value||'').trim();
   const mensagem=(document.getElementById('aviso-texto').value||'').trim();
   if(ativo&&!mensagem){toast('<i class=ph-warning></i> Digite a mensagem do aviso');return;}
   const dados={ativo,titulo,mensagem,id:'aviso-'+Date.now()};
-  const json=JSON.stringify(dados,null,2);
-  const content=btoa(unescape(encodeURIComponent(json)));
-  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   try{
-    let sha=null;
-    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{headers});
-    if(getR.ok){const f=await getR.json();sha=f.sha;}
-    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
-      method:'PUT',headers,
-      body:JSON.stringify({message:'Aviso atualizado',content,...(sha?{sha}:{})})
-    });
-    if(!putR.ok){
-      const s=putR.status;
-      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').innerHTML='<i class=ph-warning></i> Token expirado — reconfigure';configurarTokens();return;}
-      throw new Error(await putR.text());
-    }
+    await publicarArquivoRemoto('aviso.json',JSON.stringify(dados,null,2),'Aviso atualizado');
     const statusTxt=ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
-    document.getElementById('aviso-status').textContent=statusTxt;
+    document.getElementById('aviso-status').innerHTML=statusTxt;
     toast(ativo?'<i class=ph-check-circle></i> Aviso ativado':'<i class=ph-check-circle></i> Aviso desativado');
-  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar aviso: '+e.message);}
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar aviso: '+(e.message||e));}
 }
 
 // Carrega aviso ao entrar na página inicial
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(carregarAvisoAtual,1500);});
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{if(getGithubToken()&&typeof renderEstudio==='function')renderEstudio();},2500);});
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{if(typeof renderEstudio==='function')renderEstudio();},2500);});
 
 // ═══════════════════════════════════════════════
 // RIDERS TÉCNICOS
@@ -3222,15 +3135,10 @@ async function renderRiders(){
   const grid=document.getElementById('riders-grid');
   if(!grid)return;
   _riderCfg={};
-  const ghToken=getGithubToken();
-  if(ghToken){
-    try{
-      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
-        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
-      });
-      if(r.ok){const f=await r.json();_riderCfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));}
-    }catch(e){}
-  }
+  try{
+    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/rider-config.json?_=${Date.now()}`);
+    if(r.ok)_riderCfg=await r.json();
+  }catch(e){}
   // Preenche contatos
   const cont=_riderCfg.contatos||{};
   if(document.getElementById('cont-tecnico'))document.getElementById('cont-tecnico').value=cont.tecnico||'';
@@ -3256,8 +3164,6 @@ async function renderRiders(){
 }
 
 async function salvarRiderConfig(){
-  const ghToken=getGithubToken();
-  if(!ghToken){configurarTokens();return;}
   const todos=todosGrupos().filter(g=>g!==SH_LABEL);
   const grupos=Object.assign({},_riderCfg.grupos||{});
   todos.forEach(g=>{
@@ -3271,24 +3177,10 @@ async function salvarRiderConfig(){
     surdos:(document.getElementById('cont-surdos')?.value||'').trim()
   };
   _riderCfg=Object.assign({},_riderCfg,{grupos,contatos});
-  const json=JSON.stringify(_riderCfg,null,2);
-  const content=btoa(unescape(encodeURIComponent(json)));
-  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   try{
-    let sha=null;
-    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{headers});
-    if(getR.ok){const f=await getR.json();sha=f.sha;}
-    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
-      method:'PUT',headers,
-      body:JSON.stringify({message:'Rider config atualizado',content,...(sha?{sha}:{})})
-    });
-    if(!putR.ok){
-      const st=putR.status;
-      if(st===401||st===403){localStorage.removeItem('dml_gh_token');configurarTokens();return;}
-      throw new Error(await putR.text());
-    }
+    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Rider config atualizado');
     toast('<i class=ph-check-circle></i> PINs salvos com sucesso!');
-  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+e.message);}
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+(e.message||e));}
 }
 
 async function renderRiderSubmissions(){
@@ -3334,19 +3226,13 @@ async function renderRiderSubmissions(){
 function _solicEsc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
 async function renderSolic(){
-  const ghToken=getGithubToken();
-  if(ghToken){
-    try{
-      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/instrumentos-config.json`,{
-        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
-      });
-      if(r.ok){
-        const f=await r.json();
-        const cfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
-        if(document.getElementById('instrumentos-itens'))document.getElementById('instrumentos-itens').value=(cfg.itens||[]).join('\n');
-      }
-    }catch(e){}
-  }
+  try{
+    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/instrumentos-config.json?_=${Date.now()}`);
+    if(r.ok){
+      const cfg=await r.json();
+      if(document.getElementById('instrumentos-itens'))document.getElementById('instrumentos-itens').value=(cfg.itens||[]).join('\n');
+    }
+  }catch(e){}
   const wrap=document.getElementById('solic-list');
   if(!wrap)return;
   wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div>';
@@ -3385,29 +3271,13 @@ async function renderSolic(){
 }
 
 async function salvarInstrumentosConfig(){
-  const ghToken=getGithubToken();
-  if(!ghToken){configurarTokens();return;}
   const itens=(document.getElementById('instrumentos-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  const json=JSON.stringify({itens},null,2);
-  const content=btoa(unescape(encodeURIComponent(json)));
-  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   const st=document.getElementById('instrumentos-status');
   try{
-    let sha=null;
-    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/instrumentos-config.json`,{headers});
-    if(getR.ok){const f=await getR.json();sha=f.sha;}
-    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/instrumentos-config.json`,{
-      method:'PUT',headers,
-      body:JSON.stringify({message:'Instrumentos disponíveis atualizados',content,...(sha?{sha}:{})})
-    });
-    if(!putR.ok){
-      const s=putR.status;
-      if(s===401||s===403){localStorage.removeItem('dml_gh_token');if(st)st.textContent='⚠️ Token expirado — reconfigure';configurarTokens();return;}
-      throw new Error(await putR.text());
-    }
+    await publicarArquivoRemoto('instrumentos-config.json',JSON.stringify({itens},null,2),'Instrumentos disponíveis atualizados');
     if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
     toast('✅ Instrumentos salvos!');
-  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+  }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
 }
 
 async function _solicResponder(id,status){
@@ -3481,26 +3351,18 @@ function _estudioYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padSta
 
 async function renderEstudio(){
   atualizarStatusPushCoordenador();
-  const ghToken=getGithubToken();
   let cfg={};
-  if(ghToken){
-    try{
-      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
-        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
-      });
-      if(r.ok){const f=await r.json();cfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));}
-    }catch(e){}
-    try{
-      const r2=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{
-        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
-      });
-      if(r2.ok){
-        const f2=await r2.json();
-        const chkCfg=JSON.parse(decodeURIComponent(escape(atob(f2.content.replace(/\n/g,'')))));
-        if(document.getElementById('checklist-itens'))document.getElementById('checklist-itens').value=(chkCfg.itens||[]).join('\n');
-      }
-    }catch(e){}
-  }
+  try{
+    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/rider-config.json?_=${Date.now()}`);
+    if(r.ok)cfg=await r.json();
+  }catch(e){}
+  try{
+    const r2=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/checklist-config.json?_=${Date.now()}`);
+    if(r2.ok){
+      const chkCfg=await r2.json();
+      if(document.getElementById('checklist-itens'))document.getElementById('checklist-itens').value=(chkCfg.itens||[]).join('\n');
+    }
+  }catch(e){}
   if(document.getElementById('checklist-itens')&&!document.getElementById('checklist-itens').value.trim()){
     document.getElementById('checklist-itens').value='BATERIA\nBAIXO\nTECLADO\nMICROFONES\nMESA DE SOM\nAMPLIFICADOR\nDIRECT BOXES';
   }
@@ -3532,8 +3394,6 @@ function renderEnsaioDiasGrid(){
 }
 
 async function salvarEnsaioDias(){
-  const ghToken=getGithubToken();
-  if(!ghToken){configurarTokens();return;}
   const todos=gruposLouvor();
   const grupos=Object.assign({},_riderCfg.grupos||{});
   todos.forEach(g=>{
@@ -3544,50 +3404,20 @@ async function salvarEnsaioDias(){
     grupos[slug]=Object.assign({},atual,{nome:g,ensaioDia:(diaSel===''||diaSel===undefined)?null:parseInt(diaSel),ensaioHora:hora});
   });
   _riderCfg=Object.assign({},_riderCfg,{grupos});
-  const json=JSON.stringify(_riderCfg,null,2);
-  const content=btoa(unescape(encodeURIComponent(json)));
-  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   try{
-    let sha=null;
-    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{headers});
-    if(getR.ok){const f=await getR.json();sha=f.sha;}
-    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
-      method:'PUT',headers,
-      body:JSON.stringify({message:'Dias de ensaio atualizados',content,...(sha?{sha}:{})})
-    });
-    if(!putR.ok){
-      const s=putR.status;
-      if(s===401||s===403){localStorage.removeItem('dml_gh_token');configurarTokens();return;}
-      throw new Error(await putR.text());
-    }
+    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Dias de ensaio atualizados');
     toast('✅ Dias de ensaio salvos!');
-  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+  }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
 }
 
 async function salvarChecklistConfig(){
-  const ghToken=getGithubToken();
-  if(!ghToken){configurarTokens();return;}
   const itens=(document.getElementById('checklist-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  const json=JSON.stringify({itens},null,2);
-  const content=btoa(unescape(encodeURIComponent(json)));
-  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   const st=document.getElementById('checklist-status');
   try{
-    let sha=null;
-    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{headers});
-    if(getR.ok){const f=await getR.json();sha=f.sha;}
-    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/checklist-config.json`,{
-      method:'PUT',headers,
-      body:JSON.stringify({message:'Checklist do estúdio atualizado',content,...(sha?{sha}:{})})
-    });
-    if(!putR.ok){
-      const s=putR.status;
-      if(s===401||s===403){localStorage.removeItem('dml_gh_token');if(st)st.textContent='⚠️ Token expirado — reconfigure';configurarTokens();return;}
-      throw new Error(await putR.text());
-    }
+    await publicarArquivoRemoto('checklist-config.json',JSON.stringify({itens},null,2),'Checklist do estúdio atualizado');
     if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
     toast('✅ Itens do checklist salvos!');
-  }catch(e){toast('❌ Erro ao salvar: '+e.message);}
+  }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
 }
 
 async function renderEstudioSubmissions(){

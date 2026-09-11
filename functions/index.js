@@ -1,17 +1,58 @@
-// Cloud Functions for Escala DML — push notifications (FCM)
+// Cloud Functions for Escala DML — push notifications (FCM) + publicação
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 
 initializeApp();
 const db = getFirestore();
 
+const GITHUB_TOKEN = defineSecret("GITHUB_TOKEN");
+const GITHUB_OWNER = "krysnamurty3D";
+const GITHUB_PUBLIC_REPO = "escala-dml-public";
 const RIDER_CONFIG_URL = "https://raw.githubusercontent.com/krysnamurty3D/escala-dml-public/main/rider-config.json";
 const EDITOR_URL = "https://krysnamurty3d.github.io/escala-dml-editor/";
 const PUBLICA_URL = "https://krysnamurty3d.github.io/escala-dml-public/";
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+// ---------- Publica um arquivo em escala-dml-public usando o token do GitHub guardado no servidor ----------
+// Evita depender de um token salvo no localStorage do navegador do editor (que pode ser apagado
+// pelo próprio navegador — ex: Safari limpando dados de sites pouco visitados).
+exports.publicarArquivo = onCall({ secrets: [GITHUB_TOKEN] }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "É preciso estar logado no editor.");
+  }
+  const { path, content, message } = request.data || {};
+  if (!path || typeof content !== "string") {
+    throw new HttpsError("invalid-argument", "Parâmetros path e content são obrigatórios.");
+  }
+  const headers = {
+    Authorization: `Bearer ${GITHUB_TOKEN.value()}`,
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json"
+  };
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_PUBLIC_REPO}/contents/${path}`;
+  let sha = null;
+  const getRes = await fetch(url, { headers });
+  if (getRes.ok) {
+    const f = await getRes.json();
+    sha = f.sha;
+  }
+  const contentB64 = Buffer.from(content, "utf8").toString("base64");
+  const putRes = await fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ message: message || `Atualiza ${path}`, content: contentB64, ...(sha ? { sha } : {}) })
+  });
+  if (!putRes.ok) {
+    const t = await putRes.text();
+    throw new HttpsError("internal", `GitHub ${putRes.status}: ${t}`);
+  }
+  return { ok: true };
+});
 
 async function sendToTokens(tokens, title, body, url) {
   if (!tokens.length) return;
