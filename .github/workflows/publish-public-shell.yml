@@ -1,0 +1,21 @@
+name: Publica shell da página pública
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "scripts/publicar-shell.js"
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Publica index.html em escala-dml-public
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: node scripts/publicar-shell.js
