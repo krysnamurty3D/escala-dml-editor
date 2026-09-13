@@ -350,6 +350,8 @@ tr.esp-row .td-dia{color:#c03030;}
 .rider-pin-inp:focus{outline:none;border-color:var(--teal);}
 .rider-sub-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
 .rider-sub-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;}
+.rider-sub-cat{margin-bottom:20px;}
+.rider-sub-cat-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
 
 /* ── HOME CARDS (app) ── */
 .home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:700px;width:100%;margin-bottom:8px;}
@@ -630,6 +632,34 @@ tr.esp-row .td-dia{color:#c03030;}
   border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #loading-overlay p{color:var(--teal);font-size:13px;}
+
+/* ── RESPONSIVO: iPad e iPhone ── */
+@media(max-width:1024px){
+  main{padding:16px;}
+  header{flex-wrap:wrap;row-gap:8px;padding:8px 14px;}
+  .hdr-right{width:100%;}
+  .nav-pills{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;max-width:100%;scrollbar-width:thin;}
+  .nav-pills::-webkit-scrollbar{height:4px;}
+  .nav-pills::-webkit-scrollbar-thumb{background:var(--teal-dim);border-radius:4px;}
+  .nav-pill{flex:0 0 auto;}
+  .edit-layout{grid-template-columns:1fr;}
+  .sidebar-panel{position:static;top:auto;}
+  .dash-grid,.dash-charts-wrap{grid-template-columns:1fr;}
+  .c-header{grid-template-columns:22px 54px 60px 1fr auto;}
+  .c-header .c-cell:nth-child(3){display:none;}
+  .c-cell.flex1{min-width:0;}
+}
+@media(max-width:480px){
+  main{padding:12px;}
+  header{padding:8px 10px;}
+  .logo-txt .name{font-size:12px;}
+  .logo-wrap svg{height:28px;}
+  .user-badge span{max-width:64px;}
+  .c-header{grid-template-columns:16px 42px 46px 1fr auto;}
+  .c-actions{gap:0;padding:0 2px;}
+  .modal{padding:18px 16px;}
+  .qr-input-row input{min-width:0;}
+}
 
 /* ── PRINT A4 ── */
 @media print{
@@ -1287,6 +1317,21 @@ tr.esp-row .td-dia{color:#c03030;}
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fecharModal('modal-esp')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarEsp()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RIDER PREENCHIDO -->
+<div class="modal-overlay" id="modal-rider">
+  <div class="modal" style="width:600px;max-width:94vw;max-height:88vh;overflow-y:auto">
+    <h3><i class=ph-clipboard-text></i> <span id="rider-modal-title">Rider Técnico</span></h3>
+    <div id="rider-modal-body"></div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="excluirRiderEditor()"><i class=ph-trash></i> Excluir</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="fecharModal('modal-rider')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarRiderEditor()">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3206,41 +3251,171 @@ async function salvarRiderConfig(){
   }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+(e.message||e));}
 }
 
+function _riderFmtChave(k){return(k||'').replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');}
+
 async function renderRiderSubmissions(){
   const wrap=document.getElementById('riders-submissions');
   if(!wrap)return;
   wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0"><i class=ph-hourglass></i> Buscando riders enviados...</p>';
-  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
   let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px"><i class=ph-clipboard-text></i> Riders Preenchidos</h3>';
   let hasAny=false;
-  for(const g of todos){
-    const slug=grupoSlug(g);
-    try{
-      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
-      const res=await fetch(url);
-      if(!res.ok)continue;
-      const fdoc=await res.json();
-      if(!fdoc.fields?.cultos)continue;
-      const cultos=_fsParse(fdoc.fields.cultos);
-      const keys=Object.keys(cultos||{});
-      if(!keys.length)continue;
-      hasAny=true;
-      html+=`<div class="rider-sub-section"><div class="rider-sub-title">${g}</div>`;
-      keys.sort().reverse().slice(0,5).forEach(k=>{
-        const rd=cultos[k]||{};
-        const inpCount=(rd.inputList||[]).length;
-        const setCount=(rd.setList||[]).length;
-        const dt=k.replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');
-        html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px">
-          <span style="color:var(--white);font-weight:600">${dt}</span>
-          <span style="color:var(--muted)">${inpCount} inputs · ${setCount} músicas</span>
-        </div>`;
-      });
-      html+='</div>';
-    }catch(e){}
+  for(const[cat,lista]of Object.entries(GRUPOS)){
+    const gruposCat=lista.filter(g=>g!==SH_LABEL);
+    if(!gruposCat.length)continue;
+    let catHtml='';
+    for(const g of gruposCat){
+      const slug=grupoSlug(g);
+      try{
+        const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
+        const res=await fetch(url);
+        if(!res.ok)continue;
+        const fdoc=await res.json();
+        if(!fdoc.fields?.cultos)continue;
+        const cultos=_fsParse(fdoc.fields.cultos);
+        const keys=Object.keys(cultos||{});
+        if(!keys.length)continue;
+        hasAny=true;
+        catHtml+=`<div class="rider-sub-section"><div class="rider-sub-title">${g}</div>`;
+        keys.sort().reverse().slice(0,5).forEach(k=>{
+          const rd=cultos[k]||{};
+          const inpCount=(rd.inputList||[]).length;
+          const setCount=(rd.setList||[]).length;
+          const dt=_riderFmtChave(k);
+          catHtml+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;gap:8px">
+            <span style="color:var(--white);font-weight:600;flex:1">${dt}</span>
+            <span style="color:var(--muted)">${inpCount} inputs · ${setCount} músicas</span>
+            <button class="btn btn-outline btn-sm" onclick="abrirRiderEditor('${slug}','${g.replace(/'/g,"\\'")}','${k}')"><i class=ph-pencil-simple></i> Ver/Editar</button>
+          </div>`;
+        });
+        catHtml+='</div>';
+      }catch(e){}
+    }
+    if(catHtml)html+=`<div class="rider-sub-cat"><h4 class="rider-sub-cat-title">${cat}</h4>${catHtml}</div>`;
   }
   if(!hasAny)html+='<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum rider enviado ainda. Os líderes preenchem pela página pública.</p>';
   wrap.innerHTML=html;
+}
+
+// ── Editar/excluir um rider preenchido (modal) ──
+const RIDER_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];
+let _riderEd=null; // {slug, grupoNome, key, data:{inputList,setList,obs,voz}}
+
+function _riderInstrOpts(sel){
+  return RIDER_INSTRS.map(x=>`<option value="${x}"${x===sel?' selected':''}>${x}</option>`).join('');
+}
+
+async function abrirRiderEditor(slug,grupoNome,key){
+  try{
+    const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
+    const res=await fetch(url);
+    const fdoc=res.ok?await res.json():null;
+    const cultos=fdoc&&fdoc.fields&&fdoc.fields.cultos?_fsParse(fdoc.fields.cultos):{};
+    const rd=cultos[key]||{};
+    _riderEd={slug,grupoNome,key,data:{
+      inputList:(rd.inputList||[]).map(r=>({...r})),
+      setList:rd.setList&&rd.setList.length?rd.setList.map(r=>({...r})):[{musica:'',solo:''}],
+      obs:rd.obs||'',
+      voz:rd.voz||{qtd:1,fone:false}
+    }};
+    document.getElementById('rider-modal-title').textContent=`${grupoNome} — ${_riderFmtChave(key)}`;
+    _riderEdRender();
+    document.getElementById('modal-rider').classList.add('open');
+  }catch(e){toast('<i class=ph-warning></i> Erro ao carregar rider: '+e.message);}
+}
+
+function _riderEdColeta(){
+  if(!_riderEd)return null;
+  const vozQtd=document.getElementById('rided-voz-qtd');
+  const vozFone=document.getElementById('rided-voz-fone');
+  const voz={qtd:vozQtd?parseInt(vozQtd.value)||1:1,fone:!!(vozFone&&vozFone.checked)};
+  const inputList=[];
+  _riderEd.data.inputList.forEach((_,i)=>{
+    const ins=document.getElementById('rided-ins-'+i);
+    const fone=document.getElementById('rided-fone-'+i);
+    const canta=document.getElementById('rided-canta-'+i);
+    if(ins)inputList.push({instrumento:ins.value,fone:!!(fone&&fone.checked),canta:!!(canta&&canta.checked)});
+  });
+  const setList=[];
+  _riderEd.data.setList.forEach((_,i)=>{
+    const m=document.getElementById('rided-mus-'+i),s=document.getElementById('rided-sol-'+i);
+    if(m)setList.push({musica:m.value,solo:s?s.value:''});
+  });
+  const obsEl=document.getElementById('rided-obs');
+  return{inputList,setList:setList.length?setList:[{musica:'',solo:''}],obs:obsEl?obsEl.value.trim():'',voz};
+}
+
+function _riderEdRender(){
+  const d=_riderEd.data;
+  const vozOpts=[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option value="${n}"${n===(d.voz.qtd||1)?' selected':''}>${n}</option>`).join('');
+  const inpRows=d.inputList.map((r,i)=>`
+    <div class="config-row" style="gap:8px">
+      <select id="rided-ins-${i}" style="flex:1">${_riderInstrOpts(r.instrumento||'GUITARRA')}</select>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="rided-fone-${i}" ${r.fone?'checked':''}> <i class=ph-headphones></i></label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="rided-canta-${i}" ${r.canta?'checked':''}> <i class=ph-microphone></i></label>
+      <button class="btn-danger" onclick="riderEdRemInp(${i})"><i class=ph-x></i></button>
+    </div>`).join('');
+  const setRows=d.setList.map((r,i)=>`
+    <div class="config-row" style="gap:8px">
+      <input type="text" value="${(r.musica||'').replace(/"/g,'&quot;')}" placeholder="Música" id="rided-mus-${i}" style="flex:2">
+      <input type="text" value="${(r.solo||'').replace(/"/g,'&quot;')}" placeholder="Solo (opc.)" id="rided-sol-${i}" style="flex:1">
+      <button class="btn-danger" onclick="riderEdRemSet(${i})"><i class=ph-x></i></button>
+    </div>`).join('');
+  document.getElementById('rider-modal-body').innerHTML=`
+    <div class="form-row">
+      <label><i class=ph-microphone></i> Vozes</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <select id="rided-voz-qtd">${vozOpts}</select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="rided-voz-fone" ${d.voz.fone?'checked':''}> <i class=ph-headphones></i> Fone</label>
+      </div>
+    </div>
+    <div class="form-row">
+      <label><i class=ph-sliders-horizontal></i> Instrumentos</label>
+      ${inpRows||'<p style="font-size:12px;color:var(--muted)">Nenhum instrumento</p>'}
+      <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="riderEdAddInp()">+ Adicionar instrumento</button>
+    </div>
+    <div class="form-row"><label>Observações</label><textarea id="rided-obs" class="nota-input">${(d.obs||'').replace(/</g,'&lt;')}</textarea></div>
+    <div class="form-row">
+      <label><i class=ph-music-note></i> Set List</label>
+      ${setRows}
+      <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="riderEdAddSet()">+ Adicionar música</button>
+    </div>`;
+}
+
+function riderEdAddInp(){_riderEd.data=_riderEdColeta();_riderEd.data.inputList.push({instrumento:'GUITARRA',fone:false,canta:false});_riderEdRender();}
+function riderEdRemInp(i){_riderEd.data=_riderEdColeta();_riderEd.data.inputList.splice(i,1);_riderEdRender();}
+function riderEdAddSet(){_riderEd.data=_riderEdColeta();_riderEd.data.setList.push({musica:'',solo:''});_riderEdRender();}
+function riderEdRemSet(i){_riderEd.data=_riderEdColeta();_riderEd.data.setList.splice(i,1);if(!_riderEd.data.setList.length)_riderEd.data.setList=[{musica:'',solo:''}];_riderEdRender();}
+
+async function salvarRiderEditor(){
+  if(!_riderEd)return;
+  const d=_riderEdColeta();
+  try{
+    const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${_riderEd.slug}?key=${_RIDER_KEY}`;
+    const res=await fetch(url);
+    const fdoc=res.ok?await res.json():null;
+    const cultos=fdoc&&fdoc.fields&&fdoc.fields.cultos?_fsParse(fdoc.fields.cultos):{};
+    cultos[_riderEd.key]={inputList:d.inputList.filter(r=>r.instrumento),setList:d.setList.filter(r=>(r.musica||'').trim()),obs:d.obs,voz:d.voz,updatedAt:Date.now()};
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{cultos:_fsEncode(cultos)}})});
+    toast('<i class=ph-check-circle></i> Rider salvo!');
+    fecharModal('modal-rider');
+    renderRiderSubmissions();
+  }catch(e){toast('<i class=ph-warning></i> Erro ao salvar: '+e.message);}
+}
+
+async function excluirRiderEditor(){
+  if(!_riderEd)return;
+  if(!confirm('Excluir este rider preenchido? Essa ação não pode ser desfeita.'))return;
+  try{
+    const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${_riderEd.slug}?key=${_RIDER_KEY}`;
+    const res=await fetch(url);
+    const fdoc=res.ok?await res.json():null;
+    const cultos=fdoc&&fdoc.fields&&fdoc.fields.cultos?_fsParse(fdoc.fields.cultos):{};
+    delete cultos[_riderEd.key];
+    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{cultos:_fsEncode(cultos)}})});
+    toast('<i class=ph-trash></i> Rider excluído');
+    fecharModal('modal-rider');
+    renderRiderSubmissions();
+  }catch(e){toast('<i class=ph-warning></i> Erro ao excluir: '+e.message);}
 }
 
 // ═══════════════════════════════════════════════
