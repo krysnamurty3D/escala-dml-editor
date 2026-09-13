@@ -33,15 +33,6 @@ function gerarHTML() {
   const logoLinha = linhas.find(l => /^\s*const LOGO=/.test(l));
   if (!logoLinha) throw new Error('LOGO não encontrado');
 
-  // O array JS chama gruposLouvor() (config de nomes de grupos musicais)
-  // ao montar a página pública. Essa config normalmente mora no
-  // localStorage do navegador do admin, que este script (rodando no CI)
-  // não tem acesso — então usamos o GRUPOS_DEFAULT do próprio index.html
-  // como base. Isso só afeta o filtro de grupos da aba Estúdio do painel
-  // RT; se os nomes dos grupos forem alterados no editor, é preciso
-  // publicar manualmente uma vez para refletir a mudança aqui também.
-  const gruposBloco = extrairBloco(linhas, /^const GRUPOS_DEFAULT = \{/, /^\};$/);
-
   const cssBloco = extrairBloco(linhas, /^\s*const CSS=\[/, /^\s*\]\.join\('\\n'\);/);
   const jsBloco = extrairBloco(linhas, /^\s*const JS=\[/, /^\s*\]\.join\('\\n'\);/);
   const hBloco = extrairBloco(linhas, /^\s*const H='<!DOCTYPE html>/, /^\s*\+'<\/body>\\n<\/html>';/);
@@ -49,7 +40,7 @@ function gerarHTML() {
   // eslint-disable-next-line no-new-func
   const fn = new Function(
     'GITHUB_USER', 'GITHUB_REPO',
-    `${gruposBloco.src}\nfunction gruposLouvor(){return GRUPOS_DEFAULT['Grupos Musicais']||[];}\n${logoLinha}\n${cssBloco.src}\n${jsBloco.src}\n${hBloco.src}\nreturn H;`
+    `${logoLinha}\n${cssBloco.src}\n${jsBloco.src}\n${hBloco.src}\nreturn H;`
   );
   const out = fn(GITHUB_USER, GITHUB_REPO);
   if (typeof out !== 'string' || !out.startsWith('<!DOCTYPE html>')) {

@@ -2616,6 +2616,8 @@ function adicionarGrupo(){
   if(GRUPOS[cat].includes(nome)){toast('<i class=ph-warning></i> Já existe');return;}
   GRUPOS[cat].push(nome);
   saveGrupos(GRUPOS);
+  salvarConfigFirebase();
+  sincronizarEscalaPublica();
   document.getElementById('novo-grupo-nome').value='';
   renderConfig();toast('<i class=ph-check-circle></i> Grupo adicionado!');
 }
@@ -2624,7 +2626,10 @@ function removerGrupo(cat,nome){
   if(!confirm(`Remover "${nome}" da categoria "${cat}"?`))return;
   GRUPOS[cat]=GRUPOS[cat].filter(g=>g!==nome);
   if(!GRUPOS[cat].length)delete GRUPOS[cat];
-  saveGrupos(GRUPOS);renderConfig();toast('<i class=ph-trash></i> Removido');
+  saveGrupos(GRUPOS);
+  salvarConfigFirebase();
+  sincronizarEscalaPublica();
+  renderConfig();toast('<i class=ph-trash></i> Removido');
 }
 
 // ═══════════════════════════════════════════════
@@ -3708,7 +3713,8 @@ async function sincronizarEscalaPublica(){
     const fields={
       atual:_fsEncode(dados.atual),
       proximo:_fsEncode(dados.proximo),
-      cores:_fsEncode(coresMap)
+      cores:_fsEncode(coresMap),
+      gruposLouvor:_fsEncode(gruposLouvor())
     };
     const url='https://firestore.googleapis.com/v1/projects/'+_RIDER_PROJ+'/databases/(default)/documents/escalaPublica/pagina?key='+_RIDER_KEY;
     await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
@@ -4061,7 +4067,7 @@ function exportarPagina(){
     'var CULTOS=CULTOS_ATUAL;',
     'var MES=MES_ATUAL;',
     'var CORES={};',
-    'var _RP_GRUPOS_LOUVOR='+JSON.stringify(gruposLouvor())+';',
+    'var _RP_GRUPOS_LOUVOR=[];',
     'var MESES={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
     'var filtroAtivo="todos";',
 
@@ -4291,6 +4297,7 @@ function exportarPagina(){
     '    var atual=f.atual?_rpFsParse(f.atual):null;',
     '    var prox=f.proximo?_rpFsParse(f.proximo):null;',
     '    CORES=f.cores?_rpFsParse(f.cores):{};',
+    '    if(f.gruposLouvor)_RP_GRUPOS_LOUVOR=_rpFsParse(f.gruposLouvor)||[];',
     '    var mAtual=document.getElementById("main-atual");',
     '    var mProx=document.getElementById("main-prox");',
     '    var mesWrap=document.getElementById("mes-wrap");',
