@@ -353,6 +353,20 @@ tr.esp-row .td-dia{color:#c03030;}
 .rider-sub-cat{margin-bottom:20px;}
 .rider-sub-cat-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
 
+/* ── Editor de rider preenchido (modal) ── */
+.rided-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--border);}
+.rided-row:last-child{border-bottom:none;}
+.rided-sel,.rided-inp{background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--white);font-size:17px;padding:8px 10px;font-family:var(--font);outline:none;}
+.rided-sel:focus,.rided-inp:focus{border-color:var(--teal-dim);}
+.rided-sel{flex:1;min-width:130px;cursor:pointer;}
+.rided-chk{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:15px;color:var(--muted);}
+.rided-chk input[type=checkbox]{accent-color:var(--teal);width:18px;height:18px;cursor:pointer;}
+.rided-textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--white);font-size:16px;padding:9px 11px;font-family:var(--font);resize:vertical;min-height:64px;}
+.rided-textarea:focus{outline:none;border-color:var(--teal-dim);}
+.rided-rm{margin-left:auto;font-size:16px;}
+
 /* ── HOME CARDS (app) ── */
 .home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:700px;width:100%;margin-bottom:8px;}
 .home-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .15s;}
@@ -3348,36 +3362,36 @@ function _riderEdRender(){
   const d=_riderEd.data;
   const vozOpts=[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option value="${n}"${n===(d.voz.qtd||1)?' selected':''}>${n}</option>`).join('');
   const inpRows=d.inputList.map((r,i)=>`
-    <div class="config-row" style="gap:8px">
-      <select id="rided-ins-${i}" style="flex:1">${_riderInstrOpts(r.instrumento||'GUITARRA')}</select>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="rided-fone-${i}" ${r.fone?'checked':''}> <i class=ph-headphones></i></label>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="rided-canta-${i}" ${r.canta?'checked':''}> <i class=ph-microphone></i></label>
-      <button class="btn-danger" onclick="riderEdRemInp(${i})"><i class=ph-x></i></button>
+    <div class="rided-row">
+      <select id="rided-ins-${i}" class="rided-sel">${_riderInstrOpts(r.instrumento||'GUITARRA')}</select>
+      <label class="rided-chk"><input type="checkbox" id="rided-fone-${i}" ${r.fone?'checked':''}> <i class=ph-headphones></i> Fone</label>
+      <label class="rided-chk"><input type="checkbox" id="rided-canta-${i}" ${r.canta?'checked':''}> <i class=ph-microphone></i> Canta</label>
+      <button class="btn-danger rided-rm" onclick="riderEdRemInp(${i})"><i class=ph-x></i></button>
     </div>`).join('');
   const setRows=d.setList.map((r,i)=>`
-    <div class="config-row" style="gap:8px">
-      <input type="text" value="${(r.musica||'').replace(/"/g,'&quot;')}" placeholder="Música" id="rided-mus-${i}" style="flex:2">
-      <input type="text" value="${(r.solo||'').replace(/"/g,'&quot;')}" placeholder="Solo (opc.)" id="rided-sol-${i}" style="flex:1">
-      <button class="btn-danger" onclick="riderEdRemSet(${i})"><i class=ph-x></i></button>
+    <div class="rided-row">
+      <input type="text" value="${(r.musica||'').replace(/"/g,'&quot;')}" placeholder="Música" id="rided-mus-${i}" class="rided-inp" style="flex:2;min-width:160px">
+      <input type="text" value="${(r.solo||'').replace(/"/g,'&quot;')}" placeholder="Solo (opc.)" id="rided-sol-${i}" class="rided-inp" style="flex:1;min-width:120px">
+      <button class="btn-danger rided-rm" onclick="riderEdRemSet(${i})"><i class=ph-x></i></button>
     </div>`).join('');
   document.getElementById('rider-modal-body').innerHTML=`
     <div class="form-row">
       <label><i class=ph-microphone></i> Vozes</label>
-      <div style="display:flex;align-items:center;gap:10px">
-        <select id="rided-voz-qtd">${vozOpts}</select>
-        <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="rided-voz-fone" ${d.voz.fone?'checked':''}> <i class=ph-headphones></i> Fone</label>
+      <div class="rided-row">
+        <select id="rided-voz-qtd" class="rided-sel" style="flex:0 0 90px">${vozOpts}</select>
+        <label class="rided-chk"><input type="checkbox" id="rided-voz-fone" ${d.voz.fone?'checked':''}> <i class=ph-headphones></i> Fone</label>
       </div>
     </div>
     <div class="form-row">
       <label><i class=ph-sliders-horizontal></i> Instrumentos</label>
-      ${inpRows||'<p style="font-size:12px;color:var(--muted)">Nenhum instrumento</p>'}
-      <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="riderEdAddInp()">+ Adicionar instrumento</button>
+      ${inpRows||'<p style="font-size:15px;color:var(--muted)">Nenhum instrumento</p>'}
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="riderEdAddInp()">+ Adicionar instrumento</button>
     </div>
-    <div class="form-row"><label>Observações</label><textarea id="rided-obs" class="nota-input">${(d.obs||'').replace(/</g,'&lt;')}</textarea></div>
+    <div class="form-row"><label>Observações</label><textarea id="rided-obs" class="rided-textarea">${(d.obs||'').replace(/</g,'&lt;')}</textarea></div>
     <div class="form-row">
       <label><i class=ph-music-note></i> Set List</label>
       ${setRows}
-      <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="riderEdAddSet()">+ Adicionar música</button>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="riderEdAddSet()">+ Adicionar música</button>
     </div>`;
 }
 
