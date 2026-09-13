@@ -3823,12 +3823,12 @@ function exportarPagina(){
     "body.light{background:#f0f4f8;color:#1a2535;}",
     // header
     "header{background:#1e2d40;border-bottom:3px solid #2ab482;padding:14px 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 20px rgba(0,0,0,.5);}",
-    ".logo-wrap{justify-self:center;}",
+    ".logo-wrap{justify-self:center;grid-column:2;}",
     ".logo-wrap{display:flex;align-items:center;gap:10px;}",
     ".logo-txt .dept{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#7a9aa8;}",
     ".logo-txt .nome{font-size:16px;font-weight:800;color:#3dbfb8;}",
     ".logo-txt .igreja{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;}",
-    ".hdr-right{display:flex;align-items:center;gap:8px;justify-self:end;}",
+    ".hdr-right{display:flex;align-items:center;gap:8px;justify-self:end;grid-column:3;}",
     ".mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;border-radius:20px;padding:8px 18px;font-size:16px;font-weight:800;}",
     "[class^='ph-'],[class*=' ph-']{font-family:'Phosphor';font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;}",
     "[class^='ph-']::before,[class*=' ph-']::before{font-family:'Phosphor' !important;}",
@@ -4002,7 +4002,7 @@ function exportarPagina(){
     ".rp-rm{background:none;border:none;color:#e06060;cursor:pointer;font-size:15px;padding:3px 5px;}",
     ".rp-add{background:none;border:1px dashed #2a3a4a;color:#7a9aa8;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;width:100%;margin-bottom:12px;}",
     ".rp-add:hover{border-color:#2ab482;color:#2ab482;}",
-    ".btn-rider-hdr{background:rgba(42,180,130,.12);border:1px solid rgba(42,180,130,.4);border-radius:20px;color:#2ab482;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:inherit;justify-self:start;white-space:nowrap;display:flex;align-items:center;gap:5px;}",
+    ".btn-rider-hdr{background:rgba(42,180,130,.12);border:1px solid rgba(42,180,130,.4);border-radius:20px;color:#2ab482;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:inherit;justify-self:start;grid-column:1;white-space:nowrap;display:flex;align-items:center;gap:5px;}",
     ".btn-rider-hdr:hover{background:rgba(42,180,130,.22);}",
     ".rp-hdr-box{background:linear-gradient(135deg,#0a1e30,#1a2d40);border-bottom:2px solid #2ab482;padding:18px 20px 14px;margin:-22px -20px 20px;border-radius:12px 12px 0 0;}",
     ".rp-hdr-grupo{font-size:17px;font-weight:900;color:#2ab482;letter-spacing:.5px;margin-bottom:4px;}",
@@ -4230,14 +4230,6 @@ function exportarPagina(){
     '  var txt="*Escala DML \u2014 "+MES+"*"+(g!=="todos"?"\\n*Grupo: "+g+"*":"")+"\\n\\n"+linhas.join("\\n")+"\\n\\n"+_link;',
     '  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");',
     '}',
-
-    // Tema
-    'function toggleTheme(){',
-    '  var l=document.body.classList.toggle("light");',
-    '  var b=document.getElementById("btn-theme");if(b)b.innerHTML=l?"<i class=ph-moon></i>":"<i class=ph-sun></i>";',
-    '  try{localStorage.setItem("dml-theme",l?"light":"dark");}catch(e){}',
-    '}',
-    'try{if(localStorage.getItem("dml-theme")==="light"){document.body.classList.add("light");var tb=document.getElementById("btn-theme");if(tb)tb.innerHTML="<i class=ph-moon></i>";}}catch(e){}',
 
     // OneSignal
     'window.OneSignalDeferred=window.OneSignalDeferred||[];',
@@ -4877,7 +4869,6 @@ function exportarPagina(){
     +'<button class="btn-rider-hdr" id="btn-app-home" onclick="mostrarAppHome()" title="In\u00EDcio" style="display:none"><i class=ph-house></i> In\u00EDcio</button>'
     +'<div class="hdr-right">'
     +'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()"><i class=ph-bell-slash></i></button>'
-    +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()"><i class=ph-moon></i></button>'
     +'</div>'
     +'</header>\n'
 
