@@ -2315,7 +2315,10 @@ async function processarFilaSync(){
   localStorage.setItem('dml_fila_sync','[]');
   for(const item of fila){
     try{
-      if(item.tipo==='sessao') await salvarSessaoFirebase(item.id,item.dados);
+      if(item.tipo==='sessao'){
+        const ok=await salvarSessaoFirebase(item.id,item.dados);
+        if(!ok)_filaSyncPendente.push(item);
+      }
       else if(item.tipo==='config') await salvarConfigFirebase();
     }catch(e){
       _filaSyncPendente.push(item);
@@ -6027,6 +6030,7 @@ window.onFbAuthReady=async function(user){
     carregarDadosFirebase();
     carregarNotepadFirebase();
     mostrarCardUltima();
+    processarFilaSync();
   } else {
     loginScreen?.classList.remove('hidden');
     if(badge)badge.style.display='none';
@@ -6049,13 +6053,14 @@ function setSyncStatus(s){
 
 // ── Salvar sessão no Firestore
 async function salvarSessaoFirebase(id, dados){
-  if(!fbReady()||!window._fbUser)return;
+  if(!fbReady()||!window._fbUser)return false;
   setSyncStatus('saving');
   try{
     const {doc,setDoc}=window._fbFns;
     await setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/sessoes`,id), dados);
     setSyncStatus('ok');
-  }catch(e){setSyncStatus('err');console.error(e);}
+    return true;
+  }catch(e){setSyncStatus('err');console.error(e);return false;}
 }
 
 // ── Carregar índice de sessões
@@ -6161,9 +6166,18 @@ async function salvarSessao(){
 
   if(_online&&window._fbUser){
     // Online — salva no Firebase direto
-    await salvarSessaoFirebase(sessaoId,dados);
+    const ok=await salvarSessaoFirebase(sessaoId,dados);
     salvarConfigFirebase();
-    toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
+    if(ok){
+      toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
+    }else{
+      // Falha real ao gravar em usuarios/{uid}/sessoes — não mentir que salvou.
+      // Guarda na fila e já tenta de novo uma vez, mesmo estando online.
+      _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
+      localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
+      toast('<i class=ph-warning></i> Falha ao salvar na nuvem — salvo só neste aparelho. Vamos tentar de novo automaticamente.');
+      setTimeout(processarFilaSync,3000);
+    }
   } else if(window._fbUser){
     // Offline — adiciona à fila de sync
     _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
