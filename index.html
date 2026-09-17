@@ -13,10 +13,6 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getMessaging, getToken }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
-import { getFunctions, httpsCallable }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
@@ -30,15 +26,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const fns = getFunctions(app);
 
 // Expõe globalmente para o script principal
 window._fbAuth = auth;
 window._fbDb = db;
 window._fbGoogleProvider = new GoogleAuthProvider();
-window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged, getToken, httpsCallable };
-window._fbFunctions = fns;
-try{ window._fbMessaging = getMessaging(app); }catch(e){ console.warn('FCM indisponível:', e); }
+window._fbFns = { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, orderBy, signInWithPopup, signOut, onAuthStateChanged };
 
 // Monitora estado de autenticação
 onAuthStateChanged(auth, user => {
@@ -350,64 +343,6 @@ tr.esp-row .td-dia{color:#c03030;}
 .rider-pin-inp:focus{outline:none;border-color:var(--teal);}
 .rider-sub-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
 .rider-sub-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;}
-.rider-sub-cat{margin-bottom:20px;}
-.rider-sub-cat-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
-
-/* ── Editor de rider preenchido (modal) ── */
-.rided-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--border);}
-.rided-row:last-child{border-bottom:none;}
-.rided-sel,.rided-inp{background:var(--bg);border:1px solid var(--border);border-radius:6px;
-  color:var(--white);font-size:17px;padding:8px 10px;font-family:var(--font);outline:none;}
-.rided-sel:focus,.rided-inp:focus{border-color:var(--teal-dim);}
-.rided-sel{flex:1;min-width:130px;cursor:pointer;}
-.rided-chk{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:15px;color:var(--muted);}
-.rided-chk input[type=checkbox]{accent-color:var(--teal);width:18px;height:18px;cursor:pointer;}
-.rided-textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
-  color:var(--white);font-size:16px;padding:9px 11px;font-family:var(--font);resize:vertical;min-height:64px;}
-.rided-textarea:focus{outline:none;border-color:var(--teal-dim);}
-.rided-rm{margin-left:auto;font-size:16px;}
-
-/* ── HOME CARDS (app) ── */
-.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:700px;width:100%;margin-bottom:8px;}
-.home-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .15s;}
-.home-card:hover{border-color:var(--teal);background:var(--glow);transform:translateY(-2px);}
-.home-card-ico{font-size:28px;margin-bottom:8px;}
-.home-card-lbl{font-size:12px;font-weight:700;color:var(--white);}
-
-/* ── SOLICITAÇÕES DE EQUIPAMENTO ── */
-.solic-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.solic-info{flex:1;min-width:200px;}
-.solic-grupo{font-size:12px;font-weight:800;color:var(--teal);}
-.solic-item{font-size:13px;font-weight:700;color:var(--white);margin-top:2px;}
-.solic-meta{font-size:11px;color:var(--muted);margin-top:3px;}
-.solic-motivo{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;}
-.solic-status{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap;}
-.solic-status.pendente{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.4);}
-.solic-status.deferido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
-.solic-status.indeferido{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
-.solic-just{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px;}
-.solic-actions{display:flex;gap:6px;}
-
-/* ── ESTÚDIO (checklist + horário) ── */
-.estudio-cfg{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px;}
-.estudio-cfg textarea{width:100%;min-height:140px;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:10px 12px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px;}
-.estudio-sub-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
-.estudio-sub-title{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;}
-.estudio-check-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;}
-.estudio-check-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;}
-.estudio-check-badge.ok{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
-.estudio-check-badge.pendente{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border);}
-.estudio-check-badge.problema{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
-.estudio-horario{font-size:11px;color:var(--muted);margin-top:6px;}
-.ensaio-dia-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.ensaio-dia-row select,.ensaio-dia-row input[type=time]{background:var(--navy);border:1px solid var(--border);border-radius:7px;color:var(--white);font-size:12px;padding:6px 8px;font-family:inherit;}
-.estudio-status-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap;}
-.estudio-status-badge.preenchido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}
-.estudio-status-badge.aguardando{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.4);}
-.estudio-status-badge.atrasado{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}
-.estudio-status-badge.sem-ensaio{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--border);}
-.estudio-status-badge.sem-config{background:rgba(255,255,255,.05);color:var(--muted);border:1px dashed var(--border);}
-.nav-badge{background:#e06060;color:#fff;font-size:9px;font-weight:800;border-radius:10px;padding:1px 6px;margin-left:4px;}
 
 /* ── DASHBOARD ── */
 .dash-hdr{margin-bottom:16px;}
@@ -647,34 +582,6 @@ tr.esp-row .td-dia{color:#c03030;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #loading-overlay p{color:var(--teal);font-size:13px;}
 
-/* ── RESPONSIVO: iPad e iPhone ── */
-@media(max-width:1024px){
-  main{padding:16px;}
-  header{flex-wrap:wrap;row-gap:8px;padding:8px 14px;}
-  .hdr-right{width:100%;}
-  .nav-pills{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;max-width:100%;scrollbar-width:thin;}
-  .nav-pills::-webkit-scrollbar{height:4px;}
-  .nav-pills::-webkit-scrollbar-thumb{background:var(--teal-dim);border-radius:4px;}
-  .nav-pill{flex:0 0 auto;}
-  .edit-layout{grid-template-columns:1fr;}
-  .sidebar-panel{position:static;top:auto;}
-  .dash-grid,.dash-charts-wrap{grid-template-columns:1fr;}
-  .c-header{grid-template-columns:22px 54px 60px 1fr auto;}
-  .c-header .c-cell:nth-child(3){display:none;}
-  .c-cell.flex1{min-width:0;}
-}
-@media(max-width:480px){
-  main{padding:12px;}
-  header{padding:8px 10px;}
-  .logo-txt .name{font-size:12px;}
-  .logo-wrap svg{height:28px;}
-  .user-badge span{max-width:64px;}
-  .c-header{grid-template-columns:16px 42px 46px 1fr auto;}
-  .c-actions{gap:0;padding:0 2px;}
-  .modal{padding:18px 16px;}
-  .qr-input-row input{min-width:0;}
-}
-
 /* ── PRINT A4 ── */
 @media print{
   @page{size:A4 landscape;margin:0;}
@@ -805,9 +712,6 @@ tr.esp-row .td-dia{color:#c03030;}
       <button class="nav-pill" onclick="irPara('tmpl')"><i class=ph-clipboard-text></i> Templates</button>
       <button class="nav-pill" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
       <button class="nav-pill" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
-      <button class="nav-pill" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
-      <button class="nav-pill" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio<span class="nav-badge" id="estudio-nav-badge" style="display:none"></span></button>
-      <button class="nav-pill" onclick="irPara('comunic')"><i class=ph-megaphone></i> Comunicações</button>
       <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
@@ -849,29 +753,6 @@ tr.esp-row .td-dia{color:#c03030;}
 <!-- UPLOAD -->
 <div id="page-upload" class="page active">
   <div class="upload-center">
-    <!-- Cards de navegação rápida (app) -->
-    <div class="home-cards">
-      <div class="home-card" onclick="irPara('escala-nova')">
-        <div class="home-card-ico">🗓</div><div class="home-card-lbl">Escala</div>
-      </div>
-      <div class="home-card" onclick="irPara('solic')">
-        <div class="home-card-ico">📦</div><div class="home-card-lbl">Solicitações</div>
-      </div>
-      <div class="home-card" onclick="irPara('comunic')">
-        <div class="home-card-ico">📢</div><div class="home-card-lbl">Comunicações</div>
-      </div>
-      <div class="home-card" onclick="irPara('riders')">
-        <div class="home-card-ico">🎛</div><div class="home-card-lbl">RT</div>
-      </div>
-      <div class="home-card" onclick="irPara('estudio')">
-        <div class="home-card-ico">📋</div><div class="home-card-lbl">Estúdio</div>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- ESCALA: continuar editando / importar / criar -->
-<div id="page-escala-nova" class="page">
-  <div class="upload-center">
     <!-- Card última escala (aparece quando há sessão salva) -->
     <div id="card-ultima" style="display:none;width:100%;max-width:700px;margin-bottom:16px">
       <div class="upload-card ultima-card" onclick="abrirUltimaEscala()" style="flex-direction:row;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:rgba(42,180,130,.06);border-color:var(--teal-dim)">
@@ -902,6 +783,32 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
     <input type="file" id="file-input" accept=".docx" onchange="lerArquivo(event)">
     <button class="btn btn-danger" id="btn-limpar" onclick="limparEscala()" style="display:none;margin-top:8px"><i class=ph-trash></i> Limpar Escala Atual</button>
+
+    <!-- Painel de Aviso para a página pública -->
+    <div style="width:100%;max-width:700px;margin-top:24px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px"><i class=ph-megaphone></i></span>
+            <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Aviso na Página Pública</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--muted)">
+            <input type="checkbox" id="aviso-ativo" onchange="atualizarPainelAviso()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
+            Ativar aviso
+          </label>
+        </div>
+        <div id="aviso-campos" style="display:none">
+          <input id="aviso-titulo" type="text" placeholder="Título do aviso (ex: Atenção!)" maxlength="80"
+            style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;margin-bottom:10px;font-family:inherit;box-sizing:border-box">
+          <textarea id="aviso-texto" rows="3" placeholder="Mensagem do aviso..." maxlength="400"
+            style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+          <span id="aviso-status" style="font-size:11px;color:var(--muted)"></span>
+          <button class="btn btn-outline btn-sm" onclick="salvarAviso()"> <i class=ph-floppy-disk></i> Salvar aviso</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1147,95 +1054,11 @@ tr.esp-row .td-dia{color:#c03030;}
   </div>
   <div id="riders-submissions"></div>
 </div>
-<!-- SOLICITAÇÕES DE EQUIPAMENTO -->
-<div id="page-solic" class="page">
-  <div class="riders-header">
-    <div>
-      <h2 style="color:var(--teal);font-size:17px">📦 Solicitações de Equipamento</h2>
-      <p class="riders-desc">Pedidos enviados pelos líderes na página pública. Defira ou indefira — ao indeferir, informe uma justificativa.</p>
-    </div>
-    <button class="btn btn-outline btn-sm" onclick="renderSolic()">↻ Atualizar</button>
-  </div>
-  <div class="estudio-cfg">
-    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🎸 Instrumentos/equipamentos disponíveis para solicitar (um por linha)</div>
-    <textarea id="instrumentos-itens" placeholder="Violão&#10;Cavaquinho&#10;DI Box&#10;Pedal de looper&#10;Microfone sem fio extra"></textarea>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span id="instrumentos-status" style="font-size:11px;color:var(--muted)"></span>
-      <button class="btn btn-primary btn-sm" onclick="salvarInstrumentosConfig()">💾 Salvar instrumentos</button>
-    </div>
-  </div>
-  <div id="solic-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div></div>
-</div>
-<!-- ESTÚDIO: CHECKLIST + HORÁRIO -->
-<div id="page-estudio" class="page">
-  <div class="riders-header">
-    <div>
-      <h2 style="color:var(--teal);font-size:17px">📋 Estúdio — Ensaios, Checklist e Horário</h2>
-      <p class="riders-desc">Defina o dia/horário fixo de ensaio e os itens do checklist. Os líderes marcam os itens, batem entrada/saída e podem avisar quando não houver ensaio, pela página pública.</p>
-    </div>
-    <div style="text-align:right">
-      <button class="btn btn-outline btn-sm" onclick="ativarNotificacoesCoordenador()">🔔 Ativar notificações</button>
-      <div id="push-coord-status" style="font-size:11px;color:var(--muted);margin-top:6px">⚪ Notificações não ativadas neste navegador</div>
-    </div>
-  </div>
-  <div class="estudio-cfg">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">🗓 Dia e horário fixo de ensaio</div>
-      <button class="btn btn-outline btn-sm" onclick="salvarEnsaioDias()">💾 Salvar dias de ensaio</button>
-    </div>
-    <div class="riders-grid" id="ensaio-dias-grid"><div class="empty-state"><div class="icon">⏳</div><p>Carregando grupos...</p></div></div>
-  </div>
-  <div class="estudio-cfg">
-    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">✅ Itens do checklist (um por linha)</div>
-    <textarea id="checklist-itens" placeholder="BATERIA&#10;BAIXO&#10;TECLADO&#10;MICROFONES&#10;MESA DE SOM&#10;AMPLIFICADOR&#10;DIRECT BOXES"></textarea>
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <span id="checklist-status" style="font-size:11px;color:var(--muted)"></span>
-      <button class="btn btn-primary btn-sm" onclick="salvarChecklistConfig()">💾 Salvar itens</button>
-    </div>
-  </div>
-  <div id="estudio-submissions"><p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Carregando envios...</p></div>
-</div>
-<!-- COMUNICAÇÕES: AGENDA EXTERNA POR GRUPO -->
-<div id="page-comunicacoes" class="page">
-  <!-- Painel de Aviso para a página pública -->
-  <div id="aviso-panel-wrap" style="width:100%;max-width:700px;margin-bottom:24px">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:18px"><i class=ph-megaphone></i></span>
-          <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Aviso na Página Pública</span>
-        </div>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--muted)">
-          <input type="checkbox" id="aviso-ativo" onchange="atualizarPainelAviso()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
-          Ativar aviso
-        </label>
-      </div>
-      <div id="aviso-campos" style="display:none">
-        <input id="aviso-titulo" type="text" placeholder="Título do aviso (ex: Atenção!)" maxlength="80"
-          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;margin-bottom:10px;font-family:inherit;box-sizing:border-box">
-        <textarea id="aviso-texto" rows="3" placeholder="Mensagem do aviso..." maxlength="400"
-          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
-        <span id="aviso-status" style="font-size:11px;color:var(--muted)"></span>
-        <button class="btn btn-outline btn-sm" onclick="salvarAviso()"> <i class=ph-floppy-disk></i> Salvar aviso</button>
-      </div>
-    </div>
-  </div>
-  <div class="riders-header">
-    <div>
-      <h2 style="color:var(--teal);font-size:17px">📢 Comunicações — Agenda Externa dos Grupos</h2>
-      <p class="riders-desc">Compromissos fora da igreja (dia, horário e local) avisados pelos próprios grupos, corais e cantores na página pública. Histórico por grupo, visível apenas aqui.</p>
-    </div>
-    <button class="btn btn-outline btn-sm" onclick="renderComunicacoesAdmin()">↻ Atualizar</button>
-  </div>
-  <div id="comunicacoes-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div></div>
-</div>
 <!-- QR CODE -->
 <div id="page-qr" class="page">
   <div class="section-top"><h2 style="color:var(--teal);font-size:17px"><i class=ph-qr-code></i> QR Code da Escala</h2></div>
   <div class="qr-section"><h3>Link da página pública</h3>
-    <div class="qr-input-row"><input type="url" id="qr-url" placeholder="https://krysnamurty3d.github.io/escala-dml-public/" oninput="gerarQR()"><button class="btn btn-primary btn-sm" onclick="gerarQR()">Gerar QR</button></div>
+    <div class="qr-input-row"><input type="url" id="qr-url" placeholder="https://escala-dml.netlify.app" oninput="gerarQR()"><button class="btn btn-primary btn-sm" onclick="gerarQR()">Gerar QR</button></div>
     <div class="qr-canvas-wrap" id="qr-wrap" style="display:none"><canvas id="qr-canvas" width="240" height="240"></canvas><div class="qr-hint">Aponte a câmera do celular para o QR Code<br>ou baixe e imprima</div><div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="baixarQR()"><i class=ph-download-simple></i> Baixar PNG</button><button class="btn btn-ghost btn-sm" onclick="copiarLink()"><i class=ph-clipboard-text></i> Copiar Link</button></div></div>
   </div>
   <div class="qr-section"><h3><i class=ph-lightbulb></i> Como usar</h3><p style="font-size:13px;color:var(--muted);line-height:1.7">1. Exporte a página clicando em <strong style="color:var(--teal)"><i class=ph-globe></i> Página</strong><br>2. Publique no Netlify e copie o link<br>3. Cole o link acima e gere o QR Code<br>4. Baixe e compartilhe no grupo do WhatsApp ou imprima para o mural do DML</p></div>
@@ -1335,21 +1158,6 @@ tr.esp-row .td-dia{color:#c03030;}
   </div>
 </div>
 
-<!-- MODAL RIDER PREENCHIDO -->
-<div class="modal-overlay" id="modal-rider">
-  <div class="modal" style="width:600px;max-width:94vw;max-height:88vh;overflow-y:auto">
-    <h3><i class=ph-clipboard-text></i> <span id="rider-modal-title">Rider Técnico</span></h3>
-    <div id="rider-modal-body"></div>
-    <div class="modal-actions" style="justify-content:space-between">
-      <button class="btn btn-danger" onclick="excluirRiderEditor()"><i class=ph-trash></i> Excluir</button>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost" onclick="fecharModal('modal-rider')">Cancelar</button>
-        <button class="btn btn-primary" onclick="salvarRiderEditor()">Salvar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- NOTEPAD FLUTUANTE -->
 <button id="notepad-toggle" onclick="toggleNotepad()" title="Anotações rápidas"><i class=ph-note-pencil></i></button>
 <div id="notepad-panel">
@@ -1415,7 +1223,6 @@ function loadGrupos(){
 function saveGrupos(g){localStorage.setItem('dml_grupos',JSON.stringify(g));}
 let GRUPOS=loadGrupos();
 const todosGrupos=()=>Object.values(GRUPOS).flat();
-const gruposLouvor=()=>GRUPOS['Grupos Musicais']||[];
 
 function getBadgeOrder(){
   const g=GRUPOS;
@@ -1445,7 +1252,8 @@ function sortGrupos(grupos){
 const IGNORAR=[/hora\s*nona/i,/reuni[aã]o\s*(de\s*)?(coordenadores?|oficial|administrativa|ejc|pastores?|di[aá]conos?)/i,/reuni[aã]o\s+com/i,/conselho/i,/vig[ií]lia/i];
 const DIAS_OK=/domingo|ter[cç]a|quinta|s[aá]b(ado)?/i;
 
-let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null,_filtroDia='todos';
+let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null;
+let _filtrosDia=new Set(['todos']);
 function uid(){
   let max=0;
   for(const c of cultos){
@@ -1543,21 +1351,28 @@ function abrirEditor(){
 }
 
 function filtrarDia(dia){
-  _filtroDia=dia;
+  if(dia==='todos'){
+    _filtrosDia=new Set(['todos']);
+  }else{
+    _filtrosDia.delete('todos');
+    if(_filtrosDia.has(dia))_filtrosDia.delete(dia);
+    else _filtrosDia.add(dia);
+    if(!_filtrosDia.size)_filtrosDia=new Set(['todos']);
+  }
   document.querySelectorAll('.dia-filtro-btn').forEach(b=>{
-    b.classList.toggle('ativo',b.dataset.dia===dia);
+    b.classList.toggle('ativo',_filtrosDia.has(b.dataset.dia));
   });
   renderCultos();
 }
 
 function matchFiltroDia(c){
-  if(_filtroDia==='todos')return true;
-  if(_filtroDia==='dom')return /domingo/i.test(c.dia);
-  if(_filtroDia==='ter')return /ter[cç]a/i.test(c.dia);
-  if(_filtroDia==='qui')return /quinta/i.test(c.dia);
-  if(_filtroDia==='sab')return /s[aá]b/i.test(c.dia);
-  if(_filtroDia==='esp')return !!c.especial;
-  return true;
+  if(_filtrosDia.has('todos'))return true;
+  if(_filtrosDia.has('dom')&&/domingo/i.test(c.dia))return true;
+  if(_filtrosDia.has('ter')&&/ter[cç]a/i.test(c.dia))return true;
+  if(_filtrosDia.has('qui')&&/quinta/i.test(c.dia))return true;
+  if(_filtrosDia.has('sab')&&/s[aá]b/i.test(c.dia))return true;
+  if(_filtrosDia.has('esp')&&c.especial)return true;
+  return false;
 }
 
 function renderCultos(){
@@ -1565,7 +1380,7 @@ function renderCultos(){
   grid.innerHTML='';
   const showOc=document.getElementById('chk-ocultos').checked;
   const filtrados=cultos.filter(c=>matchFiltroDia(c));
-  if(filtrados.length===0&&_filtroDia!=='todos'){
+  if(filtrados.length===0&&!_filtrosDia.has('todos')){
     grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-calendar></i></div><p>Nenhum culto encontrado para este filtro.</p></div>`;
     return;
   }
@@ -2315,10 +2130,7 @@ async function processarFilaSync(){
   localStorage.setItem('dml_fila_sync','[]');
   for(const item of fila){
     try{
-      if(item.tipo==='sessao'){
-        const ok=await salvarSessaoFirebase(item.id,item.dados);
-        if(!ok)_filaSyncPendente.push(item);
-      }
+      if(item.tipo==='sessao') await salvarSessaoFirebase(item.id,item.dados);
       else if(item.tipo==='config') await salvarConfigFirebase();
     }catch(e){
       _filaSyncPendente.push(item);
@@ -2678,8 +2490,6 @@ function adicionarGrupo(){
   if(GRUPOS[cat].includes(nome)){toast('<i class=ph-warning></i> Já existe');return;}
   GRUPOS[cat].push(nome);
   saveGrupos(GRUPOS);
-  salvarConfigFirebase();
-  sincronizarEscalaPublica();
   document.getElementById('novo-grupo-nome').value='';
   renderConfig();toast('<i class=ph-check-circle></i> Grupo adicionado!');
 }
@@ -2688,10 +2498,7 @@ function removerGrupo(cat,nome){
   if(!confirm(`Remover "${nome}" da categoria "${cat}"?`))return;
   GRUPOS[cat]=GRUPOS[cat].filter(g=>g!==nome);
   if(!GRUPOS[cat].length)delete GRUPOS[cat];
-  saveGrupos(GRUPOS);
-  salvarConfigFirebase();
-  sincronizarEscalaPublica();
-  renderConfig();toast('<i class=ph-trash></i> Removido');
+  saveGrupos(GRUPOS);renderConfig();toast('<i class=ph-trash></i> Removido');
 }
 
 // ═══════════════════════════════════════════════
@@ -3003,23 +2810,58 @@ async function exportarImagem(){
 }
 
 // ═══════════════════════════════════════════════
-// PUBLICAR NO GITHUB PAGES (via Cloud Function — token fica no servidor)
+// PUBLICAR NO NETLIFY (deploy automático)
 // ═══════════════════════════════════════════════
+const NETLIFY_TOKEN=''; // configurado nas configurações
+const NETLIFY_SITE_ID='584aff64-553e-4a7c-938b-b7dcfdf4f494';
 const GITHUB_REPO='escala-dml-public';
 const GITHUB_USER='krysnamurty3D';
 
-// Publica um arquivo em escala-dml-public. O token do GitHub fica guardado
-// com segurança no Firebase (Secret Manager), nunca no navegador — assim não
-// depende de localStorage, que pode ser apagado pelo próprio navegador.
-async function publicarArquivoRemoto(path,content,message){
-  const {httpsCallable}=window._fbFns;
-  const fn=httpsCallable(window._fbFunctions,'publicarArquivo');
-  const res=await fn({path,content,message});
-  return res.data;
+
+
+function getGithubToken(){return localStorage.getItem('dml_gh_token')||'';}
+function getNetlifyToken(){return localStorage.getItem('dml_nl_token')||'';}
+
+function configurarTokens(){
+  const existente=getGithubToken();
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(8,14,20,.92);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:var(--surface);border:1px solid var(--teal-dim);border-radius:14px;padding:28px 32px;width:480px;max-width:96vw">
+    <h3 style="color:var(--teal);margin-bottom:16px"><i class=ph-key></i> Configurar Publicação</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      Cole seu <strong style="color:var(--white)">GitHub Personal Access Token</strong> abaixo.<br>
+      Fica salvo apenas no seu navegador — nunca no código.
+    </p>
+    <div style="margin-bottom:14px">
+      <label style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px">GitHub Token (permissão: repo)</label>
+      <input type="password" id="cfg-gh-token" placeholder="ghp_..." value="${existente}"
+        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:13px;padding:8px 12px;font-family:var(--font);box-sizing:border-box">
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px">
+      Para gerar: github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → New token → marque <strong style="color:var(--white)">repo</strong>
+    </p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="this.closest('div[style*=fixed]').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTokens(this)">Salvar e Publicar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('cfg-gh-token')?.focus(),100);
+}
+
+async function salvarTokens(btn){
+  const gh=document.getElementById('cfg-gh-token').value.trim();
+  if(!gh){alert('Cole o token do GitHub');return;}
+  localStorage.setItem('dml_gh_token',gh);
+  btn.closest('div[style*="fixed"]').remove();
+  await publicarNetlify();
 }
 
 async function publicarNetlify(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para publicar');return;}
+  const ghToken=getGithubToken();
+  console.log('publicarNetlify — token:', ghToken?'presente':'ausente');
+  if(!ghToken){configurarTokens();return;}
   mostrarLoad(true);
   try{
     // Sempre publica mes atual do calendario + proximo mes (independente do que esta carregado)
@@ -3032,40 +2874,22 @@ async function publicarNetlify(){
     const _norm=function(s){return (s||'').toLowerCase().replace(/ç/g,'c').trim();};
     window._visProxData=[];window._mesProxLabel=_nxtLbl;
     window._cultosParaPublicar=null;window._mesParaPublicar=_curLbl;
-
-    // Verifica se a escala atualmente aberta está marcada como "oculta da publicação"
-    let _sessaoAtualOculta=false;
-    if(sessaoId){
-      try{
-        let _dd=null;
-        if(window._fbUser)_dd=await getSessaoFirebase(sessaoId);
-        if(!_dd){const _raw=localStorage.getItem(SK(sessaoId));if(_raw)_dd=JSON.parse(_raw);}
-        _sessaoAtualOculta=!!(_dd&&_dd.ocultaPublicacao);
-      }catch(e){}
-    }
-    if(_sessaoAtualOculta&&_norm(mesLabel)===_norm(_curLbl)){
-      mostrarLoad(false);
-      toast('<i class=ph-eye-slash></i> Esta escala está oculta da publicação — desmarque em Histórico antes de publicar.');
-      return;
-    }
-
     // Se o mês atualmente aberto no editor é o mesmo que será publicado, usa os dados
     // AO VIVO da tela (podem ter edições ainda não salvas) em vez de buscar a versão salva.
     if(_norm(mesLabel)===_norm(_curLbl)){
       window._cultosParaPublicar=cultos.filter(function(c){return !c.oculto;});
     }
-    if(_norm(mesLabel)===_norm(_nxtLbl)&&!_sessaoAtualOculta){
+    if(_norm(mesLabel)===_norm(_nxtLbl)){
       window._visProxData=cultos.filter(function(c){return !c.oculto;});
     }
     const _liveCurAtivo=_norm(mesLabel)===_norm(_curLbl);
-    const _liveNxtAtivo=_norm(mesLabel)===_norm(_nxtLbl)&&!_sessaoAtualOculta;
+    const _liveNxtAtivo=_norm(mesLabel)===_norm(_nxtLbl);
     if(window._fbDb&&window._fbFns){
       try{
         const {collection,getDocs}=window._fbFns;
         const _snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
         _snap.forEach(function(d){
           var dd=d.data();var lbl=_norm(dd.mesLabel);
-          if(dd.ocultaPublicacao)return;
           if(lbl===_norm(_curLbl)&&!_liveCurAtivo){var _cp=(dd.cultos||[]).filter(function(c){return !c.oculto;});if(_cp.length)window._cultosParaPublicar=_cp;}
           if(lbl===_norm(_nxtLbl)&&!_liveNxtAtivo){window._visProxData=(dd.cultos||[]).filter(function(c){return !c.oculto;});}
         });
@@ -3076,7 +2900,7 @@ async function publicarNetlify(){
       var _lsIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
       for(var _li=0;_li<_lsIdx.length;_li++){
         try{var _ld=JSON.parse(localStorage.getItem('dml_sess_'+_lsIdx[_li]));
-          if(_ld&&!_ld.ocultaPublicacao&&_norm(_ld.mesLabel)===_norm(_curLbl)){window._cultosParaPublicar=(_ld.cultos||[]).filter(function(c){return !c.oculto;});break;}
+          if(_ld&&_norm(_ld.mesLabel)===_norm(_curLbl)){window._cultosParaPublicar=(_ld.cultos||[]).filter(function(c){return !c.oculto;});break;}
         }catch(e){}
       }
     }
@@ -3093,49 +2917,42 @@ async function publicarNetlify(){
     console.log('HTML gerado:', html?html.length+' chars':'vazio');
     if(!html){mostrarLoad(false);toast('<i class=ph-warning></i> Erro ao gerar HTML');return;}
 
-    // 1. Envia o index.html
-    await publicarArquivoRemoto('index.html',html,`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`);
+    const owner=GITHUB_USER;
+    const repo=GITHUB_REPO;
+    const headers={
+      'Authorization':`Bearer ${ghToken}`,
+      'Accept':'application/vnd.github+json',
+      'Content-Type':'application/json'
+    };
 
-    // 2. Garante o service worker do FCM (notificações push) no mesmo repositório
-    try{
-      const swContent=`importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+    // 1. Pega SHA atual do index.html
+    let sha=null;
+    const getRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{headers});
+    if(getRes.ok){const f=await getRes.json();sha=f.sha;}
 
-firebase.initializeApp({
-  apiKey: "AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",
-  authDomain: "escala-dml.firebaseapp.com",
-  projectId: "escala-dml",
-  storageBucket: "escala-dml.firebasestorage.app",
-  messagingSenderId: "219409261265",
-  appId: "1:219409261265:web:d919096c27487df65bdbf0"
-});
-
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  const { title, body, url } = payload.data || {};
-  self.registration.showNotification(title || 'Escala DML', {
-    body: body || '',
-    icon: '/favicon.ico',
-    data: { url: url || '/' }
-  });
-});
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
-  event.waitUntil(clients.openWindow(url));
-});
-`;
-      await publicarArquivoRemoto('firebase-messaging-sw.js',swContent,'Service worker de notificações (FCM)');
-    }catch(e){console.warn('Falha ao publicar firebase-messaging-sw.js:',e);}
+    // 2. Envia arquivo
+    const content=btoa(unescape(encodeURIComponent(html)));
+    const putRes=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html`,{
+      method:'PUT',headers,
+      body:JSON.stringify({
+        message:`Escala ${mesLabel} — ${new Date().toLocaleDateString('pt-BR')}`,
+        content,
+        ...(sha?{sha}:{})
+      })
+    });
+    if(!putRes.ok){
+      const status=putRes.status;
+      if(status===401||status===403){localStorage.removeItem('dml_gh_token');mostrarLoad(false);toast('<i class=ph-key></i> Token GitHub expirado ou inválido — reconfigure');configurarTokens();return;}
+      const t=await putRes.text();throw new Error(`GitHub ${status}: ${t}`);
+    }
 
     mostrarLoad(false);
-    toast('<i class=ph-globe></i> Publicado! krysnamurty3d.github.io/escala-dml-public atualiza em instantes...');
+    toast('<i class=ph-globe></i> Publicado! escala-dml.netlify.app atualiza em instantes...');
   }catch(e){
     mostrarLoad(false);
     console.error('Publish erro:',e);
-    toast('<i class=ph-x-circle></i> Erro ao publicar: '+(e.message||e));
+    if(e.message.includes('401')||e.message.includes('403')){localStorage.removeItem('dml_gh_token');toast('<i class=ph-key></i> Token GitHub expirado — reconfigure');configurarTokens();}
+    else toast('<i class=ph-x-circle></i> Erro ao publicar: '+e.message);
   }
 }
 
@@ -3149,11 +2966,17 @@ function atualizarPainelAviso(){
 
 async function carregarAvisoAtual(){
   const st=document.getElementById('aviso-status');
+  const ghToken=getGithubToken();
+  if(!ghToken){if(st)st.innerHTML='<i class=ph-warning></i> Token GitHub não configurado';return;}
   if(st)st.textContent='Carregando...';
   try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/aviso.json?_=${Date.now()}`);
+    const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
+      headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
+    });
+    if(r.status===401||r.status===403){if(st)st.innerHTML='<i class=ph-warning></i> Token expirado — reconfigure';return;}
     if(!r.ok){if(st)st.textContent='';return;}
-    const dados=await r.json();
+    const f=await r.json();
+    const dados=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));
     document.getElementById('aviso-ativo').checked=!!dados.ativo;
     document.getElementById('aviso-titulo').value=dados.titulo||'';
     document.getElementById('aviso-texto').value=dados.mensagem||'';
@@ -3163,22 +2986,37 @@ async function carregarAvisoAtual(){
 }
 
 async function salvarAviso(){
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
   const ativo=document.getElementById('aviso-ativo').checked;
   const titulo=(document.getElementById('aviso-titulo').value||'').trim();
   const mensagem=(document.getElementById('aviso-texto').value||'').trim();
   if(ativo&&!mensagem){toast('<i class=ph-warning></i> Digite a mensagem do aviso');return;}
   const dados={ativo,titulo,mensagem,id:'aviso-'+Date.now()};
+  const json=JSON.stringify(dados,null,2);
+  const content=btoa(unescape(encodeURIComponent(json)));
+  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   try{
-    await publicarArquivoRemoto('aviso.json',JSON.stringify(dados,null,2),'Aviso atualizado');
+    let sha=null;
+    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{headers});
+    if(getR.ok){const f=await getR.json();sha=f.sha;}
+    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/aviso.json`,{
+      method:'PUT',headers,
+      body:JSON.stringify({message:'Aviso atualizado',content,...(sha?{sha}:{})})
+    });
+    if(!putR.ok){
+      const s=putR.status;
+      if(s===401||s===403){localStorage.removeItem('dml_gh_token');document.getElementById('aviso-status').innerHTML='<i class=ph-warning></i> Token expirado — reconfigure';configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
     const statusTxt=ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
-    document.getElementById('aviso-status').innerHTML=statusTxt;
+    document.getElementById('aviso-status').textContent=statusTxt;
     toast(ativo?'<i class=ph-check-circle></i> Aviso ativado':'<i class=ph-check-circle></i> Aviso desativado');
-  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar aviso: '+(e.message||e));}
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar aviso: '+e.message);}
 }
 
 // Carrega aviso ao entrar na página inicial
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(carregarAvisoAtual,1500);});
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{if(typeof renderEstudio==='function')renderEstudio();},2500);});
 
 // ═══════════════════════════════════════════════
 // RIDERS TÉCNICOS
@@ -3220,10 +3058,15 @@ async function renderRiders(){
   const grid=document.getElementById('riders-grid');
   if(!grid)return;
   _riderCfg={};
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/rider-config.json?_=${Date.now()}`);
-    if(r.ok)_riderCfg=await r.json();
-  }catch(e){}
+  const ghToken=getGithubToken();
+  if(ghToken){
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
+        headers:{'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json'}
+      });
+      if(r.ok){const f=await r.json();_riderCfg=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\n/g,'')))));}
+    }catch(e){}
+  }
   // Preenche contatos
   const cont=_riderCfg.contatos||{};
   if(document.getElementById('cont-tecnico'))document.getElementById('cont-tecnico').value=cont.tecnico||'';
@@ -3249,488 +3092,76 @@ async function renderRiders(){
 }
 
 async function salvarRiderConfig(){
+  const ghToken=getGithubToken();
+  if(!ghToken){configurarTokens();return;}
   const todos=todosGrupos().filter(g=>g!==SH_LABEL);
-  const grupos=Object.assign({},_riderCfg.grupos||{});
+  const grupos={};
   todos.forEach(g=>{
     const slug=grupoSlug(g);
     const pin=(document.getElementById('pin-'+slug)?.value||'').trim();
-    grupos[slug]=Object.assign({},grupos[slug],{nome:g,pin});
+    grupos[slug]={nome:g,pin};
   });
   const contatos={
     tecnico:(document.getElementById('cont-tecnico')?.value||'').trim(),
     midia:(document.getElementById('cont-midia')?.value||'').trim(),
     surdos:(document.getElementById('cont-surdos')?.value||'').trim()
   };
-  _riderCfg=Object.assign({},_riderCfg,{grupos,contatos});
+  _riderCfg={grupos,contatos};
+  const json=JSON.stringify(_riderCfg,null,2);
+  const content=btoa(unescape(encodeURIComponent(json)));
+  const headers={'Authorization':`Bearer ${ghToken}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
   try{
-    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Rider config atualizado');
+    let sha=null;
+    const getR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{headers});
+    if(getR.ok){const f=await getR.json();sha=f.sha;}
+    const putR=await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/rider-config.json`,{
+      method:'PUT',headers,
+      body:JSON.stringify({message:'Rider config atualizado',content,...(sha?{sha}:{})})
+    });
+    if(!putR.ok){
+      const st=putR.status;
+      if(st===401||st===403){localStorage.removeItem('dml_gh_token');configurarTokens();return;}
+      throw new Error(await putR.text());
+    }
     toast('<i class=ph-check-circle></i> PINs salvos com sucesso!');
-  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+(e.message||e));}
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+e.message);}
 }
-
-function _riderFmtChave(k){return(k||'').replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');}
 
 async function renderRiderSubmissions(){
   const wrap=document.getElementById('riders-submissions');
   if(!wrap)return;
   wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0"><i class=ph-hourglass></i> Buscando riders enviados...</p>';
+  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
   let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px"><i class=ph-clipboard-text></i> Riders Preenchidos</h3>';
   let hasAny=false;
-  for(const[cat,lista]of Object.entries(GRUPOS)){
-    const gruposCat=lista.filter(g=>g!==SH_LABEL);
-    if(!gruposCat.length)continue;
-    let catHtml='';
-    for(const g of gruposCat){
-      const slug=grupoSlug(g);
-      try{
-        const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
-        const res=await fetch(url);
-        if(!res.ok)continue;
-        const fdoc=await res.json();
-        if(!fdoc.fields?.cultos)continue;
-        const cultos=_fsParse(fdoc.fields.cultos);
-        const keys=Object.keys(cultos||{});
-        if(!keys.length)continue;
-        hasAny=true;
-        catHtml+=`<div class="rider-sub-section"><div class="rider-sub-title">${g}</div>`;
-        keys.sort().reverse().slice(0,5).forEach(k=>{
-          const rd=cultos[k]||{};
-          const inpCount=(rd.inputList||[]).length;
-          const setCount=(rd.setList||[]).length;
-          const dt=_riderFmtChave(k);
-          catHtml+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;gap:8px">
-            <span style="color:var(--white);font-weight:600;flex:1">${dt}</span>
-            <span style="color:var(--muted)">${inpCount} inputs · ${setCount} músicas</span>
-            <button class="btn btn-outline btn-sm" onclick="abrirRiderEditor('${slug}','${g.replace(/'/g,"\\'")}','${k}')"><i class=ph-pencil-simple></i> Ver/Editar</button>
-          </div>`;
-        });
-        catHtml+='</div>';
-      }catch(e){}
-    }
-    if(catHtml)html+=`<div class="rider-sub-cat"><h4 class="rider-sub-cat-title">${cat}</h4>${catHtml}</div>`;
+  for(const g of todos){
+    const slug=grupoSlug(g);
+    try{
+      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
+      const res=await fetch(url);
+      if(!res.ok)continue;
+      const fdoc=await res.json();
+      if(!fdoc.fields?.cultos)continue;
+      const cultos=_fsParse(fdoc.fields.cultos);
+      const keys=Object.keys(cultos||{});
+      if(!keys.length)continue;
+      hasAny=true;
+      html+=`<div class="rider-sub-section"><div class="rider-sub-title">${g}</div>`;
+      keys.sort().reverse().slice(0,5).forEach(k=>{
+        const rd=cultos[k]||{};
+        const inpCount=(rd.inputList||[]).length;
+        const setCount=(rd.setList||[]).length;
+        const dt=k.replace(/^d(\d+)_h(\d{2})(\d{2})$/,'Dia $1 — $2:$3');
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px">
+          <span style="color:var(--white);font-weight:600">${dt}</span>
+          <span style="color:var(--muted)">${inpCount} inputs · ${setCount} músicas</span>
+        </div>`;
+      });
+      html+='</div>';
+    }catch(e){}
   }
   if(!hasAny)html+='<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum rider enviado ainda. Os líderes preenchem pela página pública.</p>';
   wrap.innerHTML=html;
-}
-
-// ── Editar/excluir um rider preenchido (modal) ──
-const RIDER_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];
-let _riderEd=null; // {slug, grupoNome, key, data:{inputList,setList,obs,voz}}
-
-function _riderInstrOpts(sel){
-  return RIDER_INSTRS.map(x=>`<option value="${x}"${x===sel?' selected':''}>${x}</option>`).join('');
-}
-
-async function abrirRiderEditor(slug,grupoNome,key){
-  try{
-    const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
-    const res=await fetch(url);
-    const fdoc=res.ok?await res.json():null;
-    const cultos=fdoc&&fdoc.fields&&fdoc.fields.cultos?_fsParse(fdoc.fields.cultos):{};
-    const rd=cultos[key]||{};
-    _riderEd={slug,grupoNome,key,data:{
-      inputList:(rd.inputList||[]).map(r=>({...r})),
-      setList:rd.setList&&rd.setList.length?rd.setList.map(r=>({...r})):[{musica:'',solo:''}],
-      obs:rd.obs||'',
-      voz:rd.voz||{qtd:1,fone:false}
-    }};
-    document.getElementById('rider-modal-title').textContent=`${grupoNome} — ${_riderFmtChave(key)}`;
-    _riderEdRender();
-    document.getElementById('modal-rider').classList.add('open');
-  }catch(e){toast('<i class=ph-warning></i> Erro ao carregar rider: '+e.message);}
-}
-
-function _riderEdColeta(){
-  if(!_riderEd)return null;
-  const vozQtd=document.getElementById('rided-voz-qtd');
-  const vozFone=document.getElementById('rided-voz-fone');
-  const voz={qtd:vozQtd?parseInt(vozQtd.value)||1:1,fone:!!(vozFone&&vozFone.checked)};
-  const inputList=[];
-  _riderEd.data.inputList.forEach((_,i)=>{
-    const ins=document.getElementById('rided-ins-'+i);
-    const fone=document.getElementById('rided-fone-'+i);
-    const canta=document.getElementById('rided-canta-'+i);
-    if(ins)inputList.push({instrumento:ins.value,fone:!!(fone&&fone.checked),canta:!!(canta&&canta.checked)});
-  });
-  const setList=[];
-  _riderEd.data.setList.forEach((_,i)=>{
-    const m=document.getElementById('rided-mus-'+i),s=document.getElementById('rided-sol-'+i);
-    if(m)setList.push({musica:m.value,solo:s?s.value:''});
-  });
-  const obsEl=document.getElementById('rided-obs');
-  return{inputList,setList:setList.length?setList:[{musica:'',solo:''}],obs:obsEl?obsEl.value.trim():'',voz};
-}
-
-function _riderEdRender(){
-  const d=_riderEd.data;
-  const vozOpts=[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option value="${n}"${n===(d.voz.qtd||1)?' selected':''}>${n}</option>`).join('');
-  const inpRows=d.inputList.map((r,i)=>`
-    <div class="rided-row">
-      <select id="rided-ins-${i}" class="rided-sel">${_riderInstrOpts(r.instrumento||'GUITARRA')}</select>
-      <label class="rided-chk"><input type="checkbox" id="rided-fone-${i}" ${r.fone?'checked':''}> <i class=ph-headphones></i> Fone</label>
-      <label class="rided-chk"><input type="checkbox" id="rided-canta-${i}" ${r.canta?'checked':''}> <i class=ph-microphone></i> Canta</label>
-      <button class="btn-danger rided-rm" onclick="riderEdRemInp(${i})"><i class=ph-x></i></button>
-    </div>`).join('');
-  const setRows=d.setList.map((r,i)=>`
-    <div class="rided-row">
-      <input type="text" value="${(r.musica||'').replace(/"/g,'&quot;')}" placeholder="Música" id="rided-mus-${i}" class="rided-inp" style="flex:2;min-width:160px">
-      <input type="text" value="${(r.solo||'').replace(/"/g,'&quot;')}" placeholder="Solo (opc.)" id="rided-sol-${i}" class="rided-inp" style="flex:1;min-width:120px">
-      <button class="btn-danger rided-rm" onclick="riderEdRemSet(${i})"><i class=ph-x></i></button>
-    </div>`).join('');
-  document.getElementById('rider-modal-body').innerHTML=`
-    <div class="form-row">
-      <label><i class=ph-microphone></i> Vozes</label>
-      <div class="rided-row">
-        <select id="rided-voz-qtd" class="rided-sel" style="flex:0 0 90px">${vozOpts}</select>
-        <label class="rided-chk"><input type="checkbox" id="rided-voz-fone" ${d.voz.fone?'checked':''}> <i class=ph-headphones></i> Fone</label>
-      </div>
-    </div>
-    <div class="form-row">
-      <label><i class=ph-sliders-horizontal></i> Instrumentos</label>
-      ${inpRows||'<p style="font-size:15px;color:var(--muted)">Nenhum instrumento</p>'}
-      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="riderEdAddInp()">+ Adicionar instrumento</button>
-    </div>
-    <div class="form-row"><label>Observações</label><textarea id="rided-obs" class="rided-textarea">${(d.obs||'').replace(/</g,'&lt;')}</textarea></div>
-    <div class="form-row">
-      <label><i class=ph-music-note></i> Set List</label>
-      ${setRows}
-      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="riderEdAddSet()">+ Adicionar música</button>
-    </div>`;
-}
-
-function riderEdAddInp(){_riderEd.data=_riderEdColeta();_riderEd.data.inputList.push({instrumento:'GUITARRA',fone:false,canta:false});_riderEdRender();}
-function riderEdRemInp(i){_riderEd.data=_riderEdColeta();_riderEd.data.inputList.splice(i,1);_riderEdRender();}
-function riderEdAddSet(){_riderEd.data=_riderEdColeta();_riderEd.data.setList.push({musica:'',solo:''});_riderEdRender();}
-function riderEdRemSet(i){_riderEd.data=_riderEdColeta();_riderEd.data.setList.splice(i,1);if(!_riderEd.data.setList.length)_riderEd.data.setList=[{musica:'',solo:''}];_riderEdRender();}
-
-async function salvarRiderEditor(){
-  if(!_riderEd)return;
-  const d=_riderEdColeta();
-  try{
-    const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${_riderEd.slug}?key=${_RIDER_KEY}`;
-    const res=await fetch(url);
-    const fdoc=res.ok?await res.json():null;
-    const cultos=fdoc&&fdoc.fields&&fdoc.fields.cultos?_fsParse(fdoc.fields.cultos):{};
-    cultos[_riderEd.key]={inputList:d.inputList.filter(r=>r.instrumento),setList:d.setList.filter(r=>(r.musica||'').trim()),obs:d.obs,voz:d.voz,updatedAt:Date.now()};
-    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{cultos:_fsEncode(cultos)}})});
-    toast('<i class=ph-check-circle></i> Rider salvo!');
-    fecharModal('modal-rider');
-    renderRiderSubmissions();
-  }catch(e){toast('<i class=ph-warning></i> Erro ao salvar: '+e.message);}
-}
-
-async function excluirRiderEditor(){
-  if(!_riderEd)return;
-  if(!confirm('Excluir este rider preenchido? Essa ação não pode ser desfeita.'))return;
-  try{
-    const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${_riderEd.slug}?key=${_RIDER_KEY}`;
-    const res=await fetch(url);
-    const fdoc=res.ok?await res.json():null;
-    const cultos=fdoc&&fdoc.fields&&fdoc.fields.cultos?_fsParse(fdoc.fields.cultos):{};
-    delete cultos[_riderEd.key];
-    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{cultos:_fsEncode(cultos)}})});
-    toast('<i class=ph-trash></i> Rider excluído');
-    fecharModal('modal-rider');
-    renderRiderSubmissions();
-  }catch(e){toast('<i class=ph-warning></i> Erro ao excluir: '+e.message);}
-}
-
-// ═══════════════════════════════════════════════
-// SOLICITAÇÕES DE EQUIPAMENTO
-// ═══════════════════════════════════════════════
-function _solicEsc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-
-async function renderSolic(){
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/instrumentos-config.json?_=${Date.now()}`);
-    if(r.ok){
-      const cfg=await r.json();
-      if(document.getElementById('instrumentos-itens'))document.getElementById('instrumentos-itens').value=(cfg.itens||[]).join('\n');
-    }
-  }catch(e){}
-  const wrap=document.getElementById('solic-list');
-  if(!wrap)return;
-  wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div>';
-  try{
-    const {collection,getDocs,query,orderBy}=window._fbFns;
-    const snap=await getDocs(query(collection(window._fbDb,'solicitacoes'),orderBy('criadoEm','desc')));
-    const itens=[];
-    snap.forEach(d=>itens.push({id:d.id,...d.data()}));
-    if(!itens.length){wrap.innerHTML='<div class="empty-state"><div class="icon">📦</div><p>Nenhuma solicitação enviada ainda.</p></div>';return;}
-    itens.sort((a,b)=>((a.status||'pendente')==='pendente'?0:1)-((b.status||'pendente')==='pendente'?0:1));
-    wrap.innerHTML=itens.map(it=>{
-      const dt=it.data?new Date(it.data+'T00:00:00').toLocaleDateString('pt-BR'):'—';
-      const dtDev=it.dataDevolucao?new Date(it.dataDevolucao+'T00:00:00').toLocaleDateString('pt-BR'):null;
-      const st=it.status||'pendente';
-      const stLbl=st==='deferido'?'✅ Deferido':st==='indeferido'?'❌ Indeferido':'🕓 Pendente';
-      const nomesItens=(it.itens&&it.itens.length?it.itens:(it.item?[it.item]:[])).map(_solicEsc).join(', ')||'—';
-      const historico=it.historico||[];
-      return `<div class="solic-row">
-        <div class="solic-info">
-          <div class="solic-grupo">${_solicEsc(it.grupoNome||it.grupo||'—')}</div>
-          <div class="solic-item">${nomesItens}</div>
-          <div class="solic-meta">Para dia ${dt}${dtDev?' · devolução até '+dtDev:''}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
-          ${it.motivo?`<div class="solic-motivo">${_solicEsc(it.motivo)}</div>`:''}
-          ${it.justificativa?`<div class="solic-just">💬 ${_solicEsc(it.justificativa)}</div>`:''}
-          ${historico.length?`<button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">🕐 Ver histórico (${historico.length})</button>
-          <div style="display:none;margin-top:6px">${historico.map(h=>`<div class="solic-just">${new Date(h.em).toLocaleString('pt-BR')} — ${h.status}${h.justificativa?': '+_solicEsc(h.justificativa):''}</div>`).join('')}</div>`:''}
-        </div>
-        <span class="solic-status ${st}">${stLbl}</span>
-        <div class="solic-actions">
-          <button class="btn btn-outline btn-sm" onclick="_solicResponder('${it.id}','deferido')">✅ Deferir</button>
-          <button class="btn-danger" onclick="_solicResponder('${it.id}','indeferido')">❌ Indeferir</button>
-        </div>
-      </div>`;
-    }).join('');
-  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
-}
-
-async function salvarInstrumentosConfig(){
-  const itens=(document.getElementById('instrumentos-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  const st=document.getElementById('instrumentos-status');
-  try{
-    await publicarArquivoRemoto('instrumentos-config.json',JSON.stringify({itens},null,2),'Instrumentos disponíveis atualizados');
-    if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
-    toast('✅ Instrumentos salvos!');
-  }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
-}
-
-async function _solicResponder(id,status){
-  let justificativa='';
-  if(status==='indeferido'){
-    justificativa=(prompt('Justificativa do indeferimento (obrigatória):')||'').trim();
-    if(!justificativa){toast('⚠️ Justificativa é obrigatória para indeferir');return;}
-  }else{
-    justificativa=(prompt('Justificativa (opcional):','')||'').trim();
-  }
-  try{
-    const {doc,getDoc,setDoc}=window._fbFns;
-    const ref=doc(window._fbDb,'solicitacoes',id);
-    const snap=await getDoc(ref);
-    const atual=snap.exists()?snap.data():{};
-    const historico=(atual.historico||[]).concat([{status,justificativa,em:Date.now()}]);
-    await setDoc(ref,{status,justificativa,respondidoEm:Date.now(),historico},{merge:true});
-    toast(status==='deferido'?'✅ Solicitação deferida':'❌ Solicitação indeferida');
-    renderSolic();
-  }catch(e){toast('❌ Erro: '+e.message);}
-}
-
-// ═══════════════════════════════════════════════
-// COMUNICAÇÕES — AGENDA EXTERNA DOS GRUPOS (histórico, apenas editor)
-// ═══════════════════════════════════════════════
-async function renderComunicacoesAdmin(){
-  const wrap=document.getElementById('comunicacoes-list');
-  if(!wrap)return;
-  wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div>';
-  try{
-    const {collection,getDocs,query,orderBy}=window._fbFns;
-    const snap=await getDocs(query(collection(window._fbDb,'agendaExterna'),orderBy('criadoEm','desc')));
-    const itens=[];
-    snap.forEach(d=>itens.push({id:d.id,...d.data()}));
-    if(!itens.length){wrap.innerHTML='<div class="empty-state"><div class="icon">📢</div><p>Nenhuma agenda externa enviada ainda.</p></div>';return;}
-    const porGrupo={};
-    itens.forEach(it=>{
-      const g=it.grupoNome||it.grupo||'—';
-      (porGrupo[g]=porGrupo[g]||[]).push(it);
-    });
-    const grupos=Object.keys(porGrupo).sort((a,b)=>a.localeCompare(b));
-    wrap.innerHTML=grupos.map(g=>{
-      const linhas=porGrupo[g].map(it=>{
-        const dt=it.dia?new Date(it.dia+'T00:00:00').toLocaleDateString('pt-BR'):'—';
-        return `<div class="solic-row">
-          <div class="solic-info">
-            <div class="solic-item">${_solicEsc(it.local||'—')}</div>
-            <div class="solic-meta">Dia ${dt}${it.horario?' · '+_solicEsc(it.horario):''}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
-          </div>
-        </div>`;
-      }).join('');
-      return `<div class="estudio-cfg" style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${_solicEsc(g)}</div>
-        ${linhas}
-      </div>`;
-    }).join('');
-  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
-}
-
-// ═══════════════════════════════════════════════
-// ESTÚDIO — ENSAIOS, CHECKLIST + HORÁRIO
-// ═══════════════════════════════════════════════
-// Data (meia-noite) da ocorrência mais recente do dia-da-semana informado (hoje, se coincidir)
-function _estudioDataCiclo(diaSemana){
-  const hoje=new Date();hoje.setHours(0,0,0,0);
-  const diffAtras=(hoje.getDay()-diaSemana+7)%7;
-  const d=new Date(hoje);d.setDate(d.getDate()-diffAtras);
-  return d;
-}
-function _estudioYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-
-async function renderEstudio(){
-  atualizarStatusPushCoordenador();
-  let cfg={};
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/rider-config.json?_=${Date.now()}`);
-    if(r.ok)cfg=await r.json();
-  }catch(e){}
-  try{
-    const r2=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/checklist-config.json?_=${Date.now()}`);
-    if(r2.ok){
-      const chkCfg=await r2.json();
-      if(document.getElementById('checklist-itens'))document.getElementById('checklist-itens').value=(chkCfg.itens||[]).join('\n');
-    }
-  }catch(e){}
-  if(document.getElementById('checklist-itens')&&!document.getElementById('checklist-itens').value.trim()){
-    document.getElementById('checklist-itens').value='BATERIA\nBAIXO\nTECLADO\nMICROFONES\nMESA DE SOM\nAMPLIFICADOR\nDIRECT BOXES';
-  }
-  _riderCfg=cfg;
-  renderEnsaioDiasGrid();
-  await renderEstudioSubmissions();
-}
-
-function renderEnsaioDiasGrid(){
-  const grid=document.getElementById('ensaio-dias-grid');
-  if(!grid)return;
-  const todos=gruposLouvor();
-  if(!todos.length){grid.innerHTML='<div class="empty-state"><div class="icon">⚙️</div><p>Nenhum grupo cadastrado em "Grupos Musicais" (⚙️ Grupos).</p></div>';return;}
-  const grupos=_riderCfg.grupos||{};
-  grid.innerHTML=todos.map(g=>{
-    const slug=grupoSlug(g);
-    const gc=grupos[slug]||{};
-    const dia=(gc.ensaioDia!==undefined&&gc.ensaioDia!==null)?gc.ensaioDia:'';
-    const hora=gc.ensaioHora||'19:30';
-    const opts=DIAS_SEMANA.map((d,i)=>`<option value="${i}"${String(dia)===String(i)?' selected':''}>${d}</option>`).join('');
-    return `<div class="rider-card">
-      <div class="rider-card-nome">${g}</div>
-      <div class="ensaio-dia-row">
-        <select id="ensaio-dia-${slug}"><option value=""${dia===''?' selected':''}>— Sem ensaio fixo —</option>${opts}</select>
-        <input type="time" id="ensaio-hora-${slug}" value="${hora}">
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function salvarEnsaioDias(){
-  const todos=gruposLouvor();
-  const grupos=Object.assign({},_riderCfg.grupos||{});
-  todos.forEach(g=>{
-    const slug=grupoSlug(g);
-    const diaSel=document.getElementById('ensaio-dia-'+slug)?.value;
-    const hora=document.getElementById('ensaio-hora-'+slug)?.value||'19:30';
-    const atual=grupos[slug]||{nome:g,pin:''};
-    grupos[slug]=Object.assign({},atual,{nome:g,ensaioDia:(diaSel===''||diaSel===undefined)?null:parseInt(diaSel),ensaioHora:hora});
-  });
-  _riderCfg=Object.assign({},_riderCfg,{grupos});
-  try{
-    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Dias de ensaio atualizados');
-    toast('✅ Dias de ensaio salvos!');
-  }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
-}
-
-async function salvarChecklistConfig(){
-  const itens=(document.getElementById('checklist-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  const st=document.getElementById('checklist-status');
-  try{
-    await publicarArquivoRemoto('checklist-config.json',JSON.stringify({itens},null,2),'Checklist do estúdio atualizado');
-    if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
-    toast('✅ Itens do checklist salvos!');
-  }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
-}
-
-async function renderEstudioSubmissions(){
-  const wrap=document.getElementById('estudio-submissions');
-  if(!wrap)return;
-  wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:8px 0">⏳ Verificando ensaios...</p>';
-  const todos=gruposLouvor();
-  const grupos=_riderCfg.grupos||{};
-  let html='<h3 style="color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">📋 Situação dos ensaios (ciclo atual)</h3>';
-  let atrasados=0;
-  const linhas=[];
-  for(const g of todos){
-    const slug=grupoSlug(g);
-    const gc=grupos[slug]||{};
-    if(gc.ensaioDia===undefined||gc.ensaioDia===null||gc.ensaioDia===''){
-      linhas.push(`<div class="estudio-check-row"><span>${g}</span><span class="estudio-status-badge sem-config">Sem dia configurado</span></div>`);
-      continue;
-    }
-    const diaSemana=parseInt(gc.ensaioDia);
-    const dataCiclo=_estudioDataCiclo(diaSemana);
-    const key=_estudioYmd(dataCiclo);
-    const hora=gc.ensaioHora||'19:30';
-    const [hh,mm]=hora.split(':').map(Number);
-    const agendado=new Date(dataCiclo);agendado.setHours(hh||0,mm||0,0,0);
-    const prazo=new Date(agendado.getTime()+2*60*60*1000);
-    const agora=new Date();
-    let rd=null;
-    try{
-      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/estudio/${slug}?key=${_RIDER_KEY}`;
-      const res=await fetch(url);
-      if(res.ok){
-        const fdoc=await res.json();
-        const ensaios=fdoc.fields?.ensaios?_fsParse(fdoc.fields.ensaios):{};
-        rd=ensaios[key]||null;
-      }
-    }catch(e){}
-    const dtFmt=dataCiclo.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    let status,label;
-    if(rd&&rd.semEnsaio){status='sem-ensaio';label='Sem ensaio (avisado)';}
-    else if(rd&&(rd.entrada||Object.keys(rd.checklist||{}).length)){status='preenchido';label='Preenchido';}
-    else if(agora<agendado){status='sem-config';label='Ainda não chegou o horário';}
-    else if(agora<prazo){status='aguardando';label='Aguardando — prazo até '+prazo.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
-    else{status='atrasado';label='⚠️ Atrasado — sem checklist';atrasados++;}
-    const check=(rd&&rd.checklist)||{};
-    const valores=Object.values(check);
-    const totalCk=valores.length,okCk=valores.filter(Boolean).length;
-    const ent=rd&&rd.entrada?new Date(rd.entrada).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
-    const sai=rd&&rd.saida?new Date(rd.saida).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
-    linhas.push(`<div class="estudio-check-row" style="flex-direction:column;align-items:flex-start;gap:4px">
-      <div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">
-        <span style="color:var(--white);font-weight:600">${g} · ${DIAS_SEMANA[dataCiclo.getDay()]} ${dtFmt} ${hora}</span>
-        <span class="estudio-status-badge ${status}">${label}</span>
-      </div>
-      <div class="estudio-horario">🕐 Entrada ${ent} · Saída ${sai}${totalCk?' · Checklist '+okCk+'/'+totalCk:''}${rd&&rd.obsChecklist?' · 💬 '+_solicEsc(rd.obsChecklist):''}</div>
-    </div>`);
-  }
-  html+=linhas.join('')||'<p style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum grupo cadastrado.</p>';
-  wrap.innerHTML=html;
-  _atualizarBadgeEstudio(atrasados);
-}
-
-function _atualizarBadgeEstudio(n){
-  const b=document.getElementById('estudio-nav-badge');
-  if(!b)return;
-  if(n>0){b.textContent=n;b.style.display='inline-block';}
-  else{b.style.display='none';}
-}
-
-// ═══════════════════════════════════════════════
-// NOTIFICAÇÕES PUSH (FCM) — coordenador
-// ═══════════════════════════════════════════════
-const FCM_VAPID_KEY='BMx6z1hCdW1bKwCjmTYrgi-igDclRR70d8RGs83ifh3XoGclMfKDQYOsw9ZifPwAq99dTpWhm8oBt_yZzH2H2CI';
-
-async function ativarNotificacoesCoordenador(){
-  const st=document.getElementById('push-coord-status');
-  try{
-    if(!('serviceWorker' in navigator)||!('Notification' in window)){toast('❌ Este navegador não suporta notificações push');return;}
-    if(!window._fbMessaging){toast('❌ Serviço de notificações indisponível');return;}
-    const reg=await navigator.serviceWorker.register('firebase-messaging-sw.js');
-    const perm=await Notification.requestPermission();
-    if(perm!=='granted'){toast('⚠️ Permissão de notificação negada');if(st)st.textContent='⚫ Permissão negada';return;}
-    const {getToken,doc,setDoc}=window._fbFns;
-    const token=await getToken(window._fbMessaging,{vapidKey:FCM_VAPID_KEY,serviceWorkerRegistration:reg});
-    if(!token){toast('❌ Não foi possível gerar o token de notificação');return;}
-    await setDoc(doc(window._fbDb,'pushTokens',token),{papel:'coordenador',criadoEm:Date.now()},{merge:true});
-    localStorage.setItem('dml_push_token',token);
-    toast('✅ Notificações ativadas!');
-    if(st)st.textContent='🟢 Notificações ativas neste navegador';
-  }catch(e){toast('❌ Erro ao ativar notificações: '+e.message);console.error(e);}
-}
-
-function atualizarStatusPushCoordenador(){
-  const st=document.getElementById('push-coord-status');
-  if(!st)return;
-  const perm=('Notification' in window)?Notification.permission:'unsupported';
-  if(perm==='granted'&&localStorage.getItem('dml_push_token'))st.textContent='🟢 Notificações ativas neste navegador';
-  else if(perm==='denied')st.textContent='⚫ Permissão negada — habilite nas configurações do navegador';
-  else st.textContent='⚪ Notificações não ativadas neste navegador';
 }
 
 // Gera o HTML público como string (sem baixar)
@@ -3766,152 +3197,9 @@ function gerarHTMLPublico(){
 }
 
 // ═══════════════════════════════════════════════
-// RENDER DE CARDS DE CULTO (versões independentes, usadas na sincronização
-// ao vivo da escala pública — não dependem do fechamento de exportarPagina)
 // ═══════════════════════════════════════════════
-const _PUB_BC={'sh':'#9a7800','coral':'#1a5fa0','vocal':'#6a3ab8','coreo':'#c06018','cantor':'#c03030','musical':'#1a7a40'};
-function _pubGc(g){
-  if(g===SH_LABEL)return _PUB_BC.sh;
-  const k=Object.entries(GRUPOS).find(([,l])=>l.includes(g));
-  if(!k)return _PUB_BC.musical;
-  if(k[0]==='Grupos Musicais')return _PUB_BC.musical;
-  if(k[0]==='Corais')return _PUB_BC.coral;
-  if(k[0]==='Grupos Vocais')return _PUB_BC.vocal;
-  if(k[0]==='Grupos de Coreografia')return _PUB_BC.coreo;
-  if(k[0]==='Cantores')return _PUB_BC.cantor;
-  return _PUB_BC.musical;
-}
-function _pubLg(g){return g===SH_LABEL?'S&amp;H':g.replace(/^CORAL\s+/,'C. ');}
-function _pubCardCulto(c,_mes){
-  const grupos=sortGrupos(c.grupos);
-  const MESES_N={Janeiro:'01',Fevereiro:'02',Marco:'03','Março':'03',Abril:'04',Maio:'05',Junho:'06',Julho:'07',Agosto:'08',Setembro:'09',Outubro:'10',Novembro:'11',Dezembro:'12'};
-  const pt=(_mes||'').split(' ');
-  const mn=MESES_N[pt[0]]||'01',an=pt[1]||new Date().getFullYear();
-  const dt=an+mn+c.data.padStart(2,'0');
-  const [hh,mm]=(c.hora||'00:00').split(':');
-  const dtS=dt+'T'+hh+(mm||'00')+'00';
-  const dtE=dt+'T'+(parseInt(hh)+2).toString().padStart(2,'0')+(mm||'00')+'00';
-  const gcUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='
-    +encodeURIComponent(c.culto+' — DML')+'&dates='+dtS+'/'+dtE
-    +'&details='+encodeURIComponent((c.dirigente?'Dir: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(_pubLg).join(', '));
-  const waT=encodeURIComponent('*'+c.culto+'*\nDia '+c.data+' — '+c.hora+'\n'+(c.dirigente?'Dirigente: '+c.dirigente+'\n':'')+'Grupos: '+grupos.map(_pubLg).join(' | '));
-  const badges=grupos.map(g=>'<span class="badge" data-grupo="'+encodeURIComponent(g)+'" style="background:'+_pubGc(g)+'">'+_pubLg(g)+'</span>').join('');
-  return '<div class="culto-row" data-grupos="'+c.grupos.map(encodeURIComponent).join(',')+'" data-data="'+c.data+'">'
-    +'<div class="col-hora">'+c.hora+'</div>'
-    +'<div class="col-info">'
-    +'<div class="culto-nome">'+c.culto+'</div>'
-    +(c.dirigente?'<div class="culto-dir">'+c.dirigente+'</div>':'')
-    +'<div class="culto-countdown" data-data="'+c.data+'"></div>'
-    +(badges?'<div class="badges">'+badges+'</div>':'')
-    +'<div class="culto-actions">'
-    +'<a class="btn-acao" href="'+gcUrl+'" target="_blank"><i class=ph-calendar></i> Calendário</a>'
-    +'<a class="btn-acao" href="https://wa.me/?text='+waT+'" target="_blank"><i class=ph-share-network></i> Compartilhar</a>'
-    +'</div></div></div>';
-}
-function _pubGerarCards(_lista,_mes){
-  let html='',i=0;
-  while(i<_lista.length){
-    const c=_lista[i];
-    const isDom=/domingo/i.test(c.dia);
-    const isTer=/ter[cç]a/i.test(c.dia);
-    const isQui=/quinta/i.test(c.dia);
-    const isSab=/s[aá]b/i.test(c.dia);
-    const bk=c.especial?'esp-block':isDom?'dom-block':isTer?'ter-block':isQui?'qui-block':isSab?'sab-block':'';
-    const hk=c.especial?'esp-header':isDom?'dom-header':isTer?'ter-header':isQui?'qui-header':isSab?'sab-header':'';
-    const nxt=_lista[i+1];
-    const hasNxt=nxt&&nxt.data===c.data&&/domingo/i.test(nxt.dia);
-    const grps=(isDom&&hasNxt?[...c.grupos,...nxt.grupos]:c.grupos).map(encodeURIComponent).join(',');
-    if(isDom&&hasNxt){
-      html+='<div class="dia-block dom-block" data-grupos="'+grps+'" data-data="'+c.data+'">'
-        +'<div class="dia-header dom-header"><span class="dia-num">'+c.data+'</span><span class="dia-abrev">DOM</span></div>'
-        +'<div class="dia-cultos">'+_pubCardCulto(c,_mes)+_pubCardCulto(nxt,_mes)+'</div></div>';
-      i+=2;
-    } else {
-      html+='<div class="dia-block'+(bk?' '+bk:'')+'" data-grupos="'+grps+'" data-data="'+c.data+'">'
-        +'<div class="dia-header'+(hk?' '+hk:'')+'">'
-        +'<span class="dia-num">'+c.data+'</span>'
-        +'<span class="dia-abrev">'+c.dia.substring(0,3).toUpperCase()+'</span>'
-        +'</div><div class="dia-cultos">'+_pubCardCulto(c,_mes)+'</div></div>';
-      i++;
-    }
-  }
-  return html;
-}
-
+// EXPORTAR PÁGINA PÚBLICA (para Netlify/WhatsApp)
 // ═══════════════════════════════════════════════
-// SINCRONIZAÇÃO AO VIVO DA ESCALA PÚBLICA (Firestore)
-// ═══════════════════════════════════════════════
-async function _resolverEscalaMes(lbl){
-  const _norm=s=>(s||'').toLowerCase().replace(/ç/g,'c').trim();
-  if(_norm(mesLabel)===_norm(lbl)){
-    let oculta=false;
-    if(sessaoId){
-      try{
-        let dd=null;
-        if(window._fbUser)dd=await getSessaoFirebase(sessaoId);
-        if(!dd){const raw=localStorage.getItem(SK(sessaoId));if(raw)dd=JSON.parse(raw);}
-        oculta=!!(dd&&dd.ocultaPublicacao);
-      }catch(e){}
-    }
-    if(!oculta){const cs=cultos.filter(c=>!c.oculto);if(cs.length)return{cultos:cs,mesLabel:lbl};}
-  }
-  if(window._fbDb&&window._fbFns){
-    try{
-      const {collection,getDocs}=window._fbFns;
-      const snap=await getDocs(collection(window._fbDb,'usuarios/'+getDonoUid()+'/sessoes'));
-      let achado=null;
-      snap.forEach(d=>{
-        const dd=d.data();
-        if(dd.ocultaPublicacao)return;
-        if(_norm(dd.mesLabel)===_norm(lbl)){const cs=(dd.cultos||[]).filter(c=>!c.oculto);if(cs.length)achado={cultos:cs,mesLabel:lbl};}
-      });
-      if(achado)return achado;
-    }catch(e){}
-  }
-  const idx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
-  for(const id of idx){
-    try{
-      const ld=JSON.parse(localStorage.getItem(SK(id)));
-      if(ld&&!ld.ocultaPublicacao&&_norm(ld.mesLabel)===_norm(lbl)){
-        const cs=(ld.cultos||[]).filter(c=>!c.oculto);
-        if(cs.length)return{cultos:cs,mesLabel:lbl};
-      }
-    }catch(e){}
-  }
-  return null;
-}
-
-async function sincronizarEscalaPublica(){
-  try{
-    const _MPCAL=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const _today=new Date();
-    const _curIdx=_today.getMonth();const _curAno=_today.getFullYear();
-    const _nxtIdx=_curIdx===11?0:_curIdx+1;const _nxtAno=_curIdx===11?_curAno+1:_curAno;
-    const _curLbl=_MPCAL[_curIdx]+' '+_curAno;
-    const _nxtLbl=_MPCAL[_nxtIdx]+' '+_nxtAno;
-
-    const atual=await _resolverEscalaMes(_curLbl);
-    const prox=await _resolverEscalaMes(_nxtLbl);
-    const agoraFmt=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-    const simplify=c=>({data:c.data,dia:c.dia,hora:c.hora,culto:c.culto,dirigente:c.dirigente||'',grupos:c.grupos});
-
-    const dados={
-      atual:atual?{mesLabel:atual.mesLabel,cultos:atual.cultos.map(simplify),cardsHtml:_pubGerarCards(atual.cultos,atual.mesLabel),atualizadoEm:agoraFmt}:null,
-      proximo:prox?{mesLabel:prox.mesLabel,cultos:prox.cultos.map(simplify),cardsHtml:_pubGerarCards(prox.cultos,prox.mesLabel),atualizadoEm:agoraFmt}:null
-    };
-    const gruposUsados=[...new Set([...(atual?atual.cultos:[]),...(prox?prox.cultos:[])].flatMap(c=>c.grupos))];
-    const coresMap={};gruposUsados.forEach(g=>{coresMap[g]=_pubGc(g);});
-
-    const fields={
-      atual:_fsEncode(dados.atual),
-      proximo:_fsEncode(dados.proximo),
-      cores:_fsEncode(coresMap),
-      gruposLouvor:_fsEncode(gruposLouvor())
-    };
-    const url='https://firestore.googleapis.com/v1/projects/'+_RIDER_PROJ+'/databases/(default)/documents/escalaPublica/pagina?key='+_RIDER_KEY;
-    await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
-  }catch(e){console.error('sincronizarEscalaPublica:',e);}
-}
 
 function exportarPagina(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para exportar');return;}
@@ -4021,13 +3309,13 @@ function exportarPagina(){
     "body.light{background:#f0f4f8;color:#1a2535;}",
     // header
     "header{background:#1e2d40;border-bottom:3px solid #2ab482;padding:14px 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 20px rgba(0,0,0,.5);}",
-    ".logo-wrap{justify-self:center;grid-column:2;}",
+    ".logo-wrap{justify-self:start;}",
     ".logo-wrap{display:flex;align-items:center;gap:10px;}",
     ".logo-txt .dept{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#7a9aa8;}",
     ".logo-txt .nome{font-size:16px;font-weight:800;color:#3dbfb8;}",
     ".logo-txt .igreja{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#7a9aa8;}",
-    ".hdr-right{display:flex;align-items:center;gap:8px;justify-self:end;grid-column:3;}",
-    ".mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;border-radius:20px;padding:8px 18px;font-size:16px;font-weight:800;}",
+    ".hdr-right{display:flex;align-items:center;gap:8px;justify-self:end;}",
+    ".mes-badge{background:rgba(42,180,130,.12);border:1px solid #1a6a50;color:#2ab482;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800;}",
     "[class^='ph-'],[class*=' ph-']{font-family:'Phosphor';font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;}",
     "[class^='ph-']::before,[class*=' ph-']::before{font-family:'Phosphor' !important;}",
     "i[class^='ph-'],i[class*=' ph-']{font-size:1em;vertical-align:-0.12em;display:inline-block;}",
@@ -4142,8 +3430,8 @@ function exportarPagina(){
     ".realizados-body .dia-block{opacity:.55;filter:grayscale(.3);}",
     ".realizados-body .dia-block:hover{opacity:.85;filter:none;}",
     ".realizados-body .culto-countdown::before{content:'Realizado ';}",
-    ".mes-tabs{display:flex;gap:6px;}",
-    ".mes-tab{background:rgba(255,255,255,.08);border:none;border-radius:20px;color:#7a9aa8;font-size:14px;font-weight:700;padding:8px 16px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;}",
+    ".mes-tabs{display:flex;gap:4px;}",
+    ".mes-tab{background:rgba(255,255,255,.08);border:none;border-radius:20px;color:#7a9aa8;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;}",
     ".mes-tab.ativa{background:#2ab482;color:#fff;}",
     ".mes-tab:hover:not(.ativa){background:rgba(255,255,255,.15);}",
     ".aviso-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}",
@@ -4165,8 +3453,8 @@ function exportarPagina(){
     ".logo-txt{display:none;}",
     ".logo-wrap svg{height:28px;}",
     ".hdr-right{gap:5px;}",
-    ".mes-tab{font-size:13px;padding:7px 13px;}",
-    ".mes-badge{font-size:14px;padding:7px 14px;}",
+    ".mes-tab{font-size:11px;padding:5px 9px;}",
+    ".mes-badge{font-size:12px;padding:5px 10px;}",
     ".btn-ico{padding:5px 8px;font-size:16px;}}",
     // rider panel
     ".rp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;display:flex;align-items:flex-end;justify-content:center;}",
@@ -4185,8 +3473,6 @@ function exportarPagina(){
     ".rp-btn-out{background:rgba(42,180,130,.1);color:#2ab482;border:1px solid #2ab482;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}",
     ".rp-btn-out:hover{background:rgba(42,180,130,.2);}",
     ".rp-err{font-size:12px;color:#e06060;margin-bottom:10px;}",
-    ".rp-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(42,180,130,.12);border:1px solid #2ab482;color:#2ab482;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:600;}",
-    ".rp-chip a{cursor:pointer;color:#2ab482;font-weight:800;}",
     ".rp-culto-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#162030;border:1px solid #2a3a4a;border-radius:9px;margin-bottom:8px;cursor:pointer;}",
     ".rp-culto-item:hover{border-color:#2ab482;}",
     ".rp-culto-nome{font-size:13px;font-weight:700;color:#edf4f4;}",
@@ -4200,7 +3486,7 @@ function exportarPagina(){
     ".rp-rm{background:none;border:none;color:#e06060;cursor:pointer;font-size:15px;padding:3px 5px;}",
     ".rp-add{background:none;border:1px dashed #2a3a4a;color:#7a9aa8;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;width:100%;margin-bottom:12px;}",
     ".rp-add:hover{border-color:#2ab482;color:#2ab482;}",
-    ".btn-rider-hdr{background:rgba(42,180,130,.12);border:1px solid rgba(42,180,130,.4);border-radius:20px;color:#2ab482;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:inherit;justify-self:start;grid-column:1;white-space:nowrap;display:flex;align-items:center;gap:5px;}",
+    ".btn-rider-hdr{background:rgba(42,180,130,.12);border:1px solid rgba(42,180,130,.4);border-radius:20px;color:#2ab482;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:inherit;justify-self:center;white-space:nowrap;}",
     ".btn-rider-hdr:hover{background:rgba(42,180,130,.22);}",
     ".rp-hdr-box{background:linear-gradient(135deg,#0a1e30,#1a2d40);border-bottom:2px solid #2ab482;padding:18px 20px 14px;margin:-22px -20px 20px;border-radius:12px 12px 0 0;}",
     ".rp-hdr-grupo{font-size:17px;font-weight:900;color:#2ab482;letter-spacing:.5px;margin-bottom:4px;}",
@@ -4224,42 +3510,17 @@ function exportarPagina(){
     "body.light .rp-inp,.body.light .rp-sel{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
     "body.light .rp-cell{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
     "body.light .rp-culto-item{background:#e8f0f8;border-color:#b0c8d8;}",
-    ".rp-home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}",
-    ".rp-home-card{background:#162030;border:1px solid #2a3a4a;border-radius:12px;padding:22px 10px;text-align:center;cursor:pointer;transition:all .15s;}",
-    ".rp-home-card:hover{border-color:#2ab482;background:rgba(42,180,130,.08);}",
-    ".rp-home-ico{font-size:38px;margin-bottom:8px;}",
-    ".rp-home-lbl{font-size:12px;font-weight:700;color:#edf4f4;}",
-    ".rp-solic-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;}",
-    ".rp-solic-badge.pendente{background:rgba(212,160,23,.15);color:#d4a017;border:1px solid rgba(212,160,23,.4);}",
-    ".rp-solic-badge.deferido{background:rgba(42,180,130,.15);color:#2ab482;border:1px solid #1a6a50;}",
-    ".rp-solic-badge.indeferido{background:rgba(192,57,43,.15);color:#e06060;border:1px solid #7a2020;}",
-    "body.light .rp-home-card{background:#e8f0f8;border-color:#b0c8d8;}",
-    ".rp-check-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #2a3a4a;}",
-    ".rp-check-row:last-child{border-bottom:none;}",
-    ".rp-check-nome{font-size:13px;color:#edf4f4;flex:1;}",
-    ".rp-check-opts{display:flex;gap:4px;flex-shrink:0;}",
-    ".rp-check-btn{background:#162030;border:1px solid #2a3a4a;border-radius:7px;padding:5px 9px;font-size:14px;cursor:pointer;font-family:inherit;line-height:1;}",
-    ".rp-check-btn.ativo-ok{background:rgba(42,180,130,.2);border-color:#2ab482;}",
-    ".rp-check-btn.ativo-pendente{background:rgba(255,255,255,.12);border-color:#7a9aa8;}",
-    ".rp-check-btn.ativo-problema{background:rgba(192,57,43,.2);border-color:#e06060;}",
-    ".rp-horario-row{display:flex;gap:10px;margin-bottom:10px;}",
-    ".rp-horario-btn{flex:1;background:#162030;border:1px solid #2a3a4a;border-radius:9px;padding:12px 8px;text-align:center;cursor:pointer;font-family:inherit;color:#edf4f4;font-size:12px;font-weight:700;}",
-    ".rp-horario-btn:hover{border-color:#2ab482;}",
-    ".rp-horario-btn.batido{background:rgba(42,180,130,.15);border-color:#2ab482;color:#2ab482;}",
-    ".rp-horario-hora{display:block;font-size:15px;font-weight:800;margin-top:2px;}",
-    "body.light .rp-check-btn,body.light .rp-horario-btn{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
   ].join('\n');
 
   /* ── JS da página pública (var, sem template literals) ── */
   const JS=[
-    'var CULTOS_ATUAL=[];',
-    'var CULTOS_PROX=null;',
-    'var MES_ATUAL="";',
-    'var MES_PROX=null;',
+    'var CULTOS_ATUAL='+DADOS+';',
+    'var CULTOS_PROX='+(DADOS_PROX||'null')+';',
+    'var MES_ATUAL='+MES_STR+';',
+    'var MES_PROX='+(MES_STR_PROX||'null')+';',
     'var CULTOS=CULTOS_ATUAL;',
     'var MES=MES_ATUAL;',
-    'var CORES={};',
-    'var _RP_GRUPOS_LOUVOR=[];',
+    'var CORES='+CORES+';',
     'var MESES={Janeiro:0,Fevereiro:1,"Março":2,Marco:2,Abril:3,Maio:4,Junho:5,Julho:6,Agosto:7,Setembro:8,Outubro:9,Novembro:10,Dezembro:11};',
     'var filtroAtivo="todos";',
 
@@ -4294,16 +3555,13 @@ function exportarPagina(){
     '  });',
     '}',
 
-    // Insere dias-faltam nos headers (chamado após carregar a escala ao vivo)
-    'function _inserirDiasFaltam(){',
-    '  document.querySelectorAll(".dia-header").forEach(function(h){',
-    '    if(h.querySelector(".dias-faltam"))return;',
-    '    var num=h.querySelector(".dia-num");if(!num)return;',
-    '    var s=document.createElement("span");s.className="dias-faltam";s.dataset.data=num.textContent.trim();',
-    '    h.appendChild(s);',
-    '  });',
-    '}',
-    'setInterval(function(){if(CULTOS.length)atualizarContagens();},60000);',
+    // Insere dias-faltam nos headers
+    'document.querySelectorAll(".dia-header").forEach(function(h){',
+    '  var num=h.querySelector(".dia-num");if(!num)return;',
+    '  var s=document.createElement("span");s.className="dias-faltam";s.dataset.data=num.textContent.trim();',
+    '  h.appendChild(s);',
+    '});',
+    'atualizarContagens();setInterval(atualizarContagens,60000);',
 
     // Card próximo culto
     'function renderProximo(){',
@@ -4332,6 +3590,7 @@ function exportarPagina(){
     '    +"<div class=\\"proximo-countdown\\">"+ct+"</div>"',
     '    +"</div>";',
     '}',
+    'renderProximo();',
 
     // Semana
     'function renderSemana(){',
@@ -4349,6 +3608,7 @@ function exportarPagina(){
     '    return"<div class=\\"semana-row\\"><div class=\\"semana-num\\">"+c.data+"</div><div><div class=\\"sn\\">"+c.culto+"</div><div class=\\"sh\\">"+c.hora+(c.dirigente?" \u00B7 "+c.dirigente:"")+"</div></div></div>";',
     '  }).join("");',
     '}',
+    'renderSemana();',
 
     // Filtrar
     'function filtrar(grupo){',
@@ -4383,13 +3643,13 @@ function exportarPagina(){
     '  var cm=document.getElementById("comp-mes");if(cm)cm.style.display=grupo!=="todos"?"flex":"none";',
     '}',
 
-    // Badges clicáveis (delegação — funciona mesmo com cards injetados depois)
-    'document.addEventListener("click",function(e){',
-    '  var b=e.target.closest?e.target.closest(".badge[data-grupo]"):null;',
-    '  if(!b)return;',
-    '  e.stopPropagation();',
-    '  var g=decodeURIComponent(b.dataset.grupo);',
-    '  filtrar(filtroAtivo===g?"todos":g);',
+    // Badges clicáveis
+    'document.querySelectorAll(".badge[data-grupo]").forEach(function(b){',
+    '  b.addEventListener("click",function(e){',
+    '    e.stopPropagation();',
+    '    var g=decodeURIComponent(b.dataset.grupo);',
+    '    filtrar(filtroAtivo===g?"todos":g);',
+    '  });',
     '});',
 
     // Busca
@@ -4429,6 +3689,14 @@ function exportarPagina(){
     '  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");',
     '}',
 
+    // Tema
+    'function toggleTheme(){',
+    '  var l=document.body.classList.toggle("light");',
+    '  var b=document.getElementById("btn-theme");if(b)b.textContent=l?"\uD83C\uDF19":"\u2600\uFE0F";',
+    '  try{localStorage.setItem("dml-theme",l?"light":"dark");}catch(e){}',
+    '}',
+    'try{if(localStorage.getItem("dml-theme")==="light"){document.body.classList.add("light");var tb=document.getElementById("btn-theme");if(tb)tb.textContent="\uD83C\uDF19";}}catch(e){}',
+
     // OneSignal
     'window.OneSignalDeferred=window.OneSignalDeferred||[];',
     'OneSignalDeferred.push(function(OS){',
@@ -4436,7 +3704,7 @@ function exportarPagina(){
     '    return OS.User.PushSubscription.optedIn;',
     '  }).then(function(on){',
     '    var b=document.getElementById("btn-notif");',
-    '    if(b){b.innerHTML=on?"<i class=ph-bell></i>":"<i class=ph-bell-slash></i>";b.classList.toggle("ativo",!!on);}',
+    '    if(b){b.textContent=on?"\uD83D\uDD14":"\uD83D\uDD55";b.classList.toggle("ativo",!!on);}',
     '  }).catch(function(){});',
     '});',
     'function toggleNotif(){',
@@ -4444,7 +3712,7 @@ function exportarPagina(){
     '  OneSignal.User.PushSubscription.optedIn.then(function(on){',
     '    return on?OneSignal.User.PushSubscription.optOut():OneSignal.Notifications.requestPermission();',
     '  }).then(function(){return OneSignal.User.PushSubscription.optedIn;}).then(function(on){',
-    '    var b=document.getElementById("btn-notif");if(b){b.innerHTML=on?"<i class=ph-bell></i>":"<i class=ph-bell-slash></i>";b.classList.toggle("ativo",!!on);}',
+    '    var b=document.getElementById("btn-notif");if(b){b.textContent=on?"\uD83D\uDD14":"\uD83D\uDD55";b.classList.toggle("ativo",!!on);}',
     '  }).catch(function(){});',
     '}',
 
@@ -4480,148 +3748,47 @@ function exportarPagina(){
     '  var rt=document.getElementById("realizados-toggle");if(rt)rt.classList.remove("aberto");',
     '  atualizarContagens();renderProximo();renderSemana();iniciarRealizados();',
     '}',
-
-    // Carrega a escala ao vivo do Firestore (sem precisar republicar o site a cada alteração)
-    'var ESCALA_PUB_URL="https://firestore.googleapis.com/v1/projects/escala-dml/databases/(default)/documents/escalaPublica/pagina?key=AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
-    'function _carregarEscalaPublica(){',
-    '  fetch(ESCALA_PUB_URL+"&_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(doc){',
-    '    var f=(doc&&doc.fields)||{};',
-    '    var atual=f.atual?_rpFsParse(f.atual):null;',
-    '    var prox=f.proximo?_rpFsParse(f.proximo):null;',
-    '    CORES=f.cores?_rpFsParse(f.cores):{};',
-    '    if(f.gruposLouvor)_RP_GRUPOS_LOUVOR=_rpFsParse(f.gruposLouvor)||[];',
-    '    var mAtual=document.getElementById("main-atual");',
-    '    var mProx=document.getElementById("main-prox");',
-    '    var mesWrap=document.getElementById("mes-wrap");',
-    '    var upd=document.querySelector(".updated");',
-    '    if(atual&&atual.cultos&&atual.cultos.length){',
-    '      CULTOS_ATUAL=atual.cultos;MES_ATUAL=atual.mesLabel;CULTOS=CULTOS_ATUAL;MES=MES_ATUAL;',
-    '      if(mAtual)mAtual.innerHTML=atual.cardsHtml||"";',
-    '      document.title="Escala DML — "+atual.mesLabel;',
-    '      if(upd)upd.textContent="Atualizado em "+(atual.atualizadoEm||"");',
-    '    }else if(mAtual){',
-    '      mAtual.innerHTML=\'<div class="aguardando-escala"><div class="aguardando-icone"><i class=ph-calendar-x></i></div><div class="aguardando-titulo">Nenhuma escala publicada no momento</div><div class="aguardando-sub">Volte em breve.</div></div>\';',
-    '    }',
-    '    var temProx=!!(prox&&prox.cultos&&prox.cultos.length);',
-    '    if(temProx){',
-    '      CULTOS_PROX=prox.cultos;MES_PROX=prox.mesLabel;',
-    '      if(mProx)mProx.innerHTML=prox.cardsHtml||"";',
-    '      if(mesWrap)mesWrap.innerHTML=\'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\\\'atual\\\')">\'+(atual?atual.mesLabel:"")+\'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\\\'prox\\\')">\'+prox.mesLabel+\'</button></div>\';',
-    '      var bn=document.getElementById("btn-notif");if(bn)bn.style.display="none";',
-    '    }else if(mesWrap&&atual){',
-    '      mesWrap.innerHTML=\'<div class="mes-badge">\'+atual.mesLabel+\'</div>\';',
-    '    }',
-    '    _inserirDiasFaltam();atualizarContagens();renderProximo();renderSemana();iniciarRealizados();',
-    '  }).catch(function(e){console.error("Erro ao carregar escala:",e);',
-    '    var mAtual=document.getElementById("main-atual");',
-    '    if(mAtual)mAtual.innerHTML=\'<p style="padding:24px;text-align:center;color:#7a9aa8">Erro ao carregar a escala. Recarregue a página.</p>\';',
-    '  });',
-    '}',
-    '_carregarEscalaPublica();',
-
+    'iniciarRealizados();',
     // Aviso popup
-    'var AVISO_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/aviso.json";',
-    'function _mostrarAvisoOverlay(d){',
-    '  var ov=document.createElement("div");ov.className="aviso-overlay";ov.id="aviso-ov";',
-    '  ov.innerHTML=\'<div class="aviso-box">\'',
-    '    +\'<button class="aviso-fechar" onclick="fecharAviso()">&#x2715;</button>\'',
-    '    +(d.titulo?\'<div class="aviso-titulo">\'+d.titulo+\'</div>\':\'\')',
-    '    +\'<div class="aviso-msg">\'+d.mensagem+\'</div>\'',
-    '    +\'<div class="aviso-rodape"><button class="aviso-btn-ok" onclick="fecharAviso()">Entendido</button></div>\'',
-    '    +\'</div>\';',
-    '  document.body.appendChild(ov);',
-    '  window._avisoId=d.id;',
-    '}',
-    'function fecharAviso(){',
-    '  var ov=document.getElementById("aviso-ov");if(ov)ov.remove();',
-    '  try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
-    '}',
-    'fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
-    '  if(!d||!d.ativo||!d.mensagem)return;',
-    '  var visto=localStorage.getItem("dml-aviso-id");',
-    '  if(visto===d.id)return;',
-    '  _mostrarAvisoOverlay(d);',
-    '}).catch(function(){});',
+    '(function(){',
+    '  var AVISO_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/aviso.json";',
+    '  fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '    if(!d||!d.ativo||!d.mensagem)return;',
+    '    var visto=localStorage.getItem("dml-aviso-id");',
+    '    if(visto===d.id)return;',
+    '    var ov=document.createElement("div");ov.className="aviso-overlay";ov.id="aviso-ov";',
+    '    ov.innerHTML=\'<div class="aviso-box">\'',
+    '      +\'<button class="aviso-fechar" onclick="fecharAviso()">&#x2715;</button>\'',
+    '      +(d.titulo?\'<div class="aviso-titulo">\'+d.titulo+\'</div>\':\'\')',
+    '      +\'<div class="aviso-msg">\'+d.mensagem+\'</div>\'',
+    '      +\'<div class="aviso-rodape"><button class="aviso-btn-ok" onclick="fecharAviso()">Entendido</button></div>\'',
+    '      +\'</div>\';',
+    '    document.body.appendChild(ov);',
+    '    window._avisoId=d.id;',
+    '  }).catch(function(){});',
+    '  window.fecharAviso=function(){',
+    '    var ov=document.getElementById("aviso-ov");if(ov)ov.remove();',
+    '    try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
+    '  };',
+    '})();',
 
 // Rider Panel
-    'var _RP={state:"login",flow:null,slug:null,nome:null,cultoKey:null,cultoLabel:null,cfg:null,fsDoc:null};',
+    'var _RP={state:"login",slug:null,nome:null,cultoKey:null,cultoLabel:null,cfg:null,fsDoc:null};',
     'var _RP_PROJ="escala-dml",_RP_KEY="AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
     'var _RP_CFG_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/rider-config.json";',
-    'var _RP_CHECKLIST_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/checklist-config.json";',
-    'var _RP_INSTRUMENTOS_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/instrumentos-config.json";',
     'var _RP_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];',
     'function _rpSlug(n){return(n||"").toLowerCase().replace(/[àáâãä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ìíîï]/g,"i").replace(/[òóôõö]/g,"o").replace(/[ùúûü]/g,"u").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"");}',
     'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
     'function _rpFsEnc(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==="boolean")return{booleanValue:v};if(typeof v==="number")return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==="string")return{stringValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(_rpFsEnc)}};if(typeof v==="object"){var f={};Object.entries(v).forEach(function(e){f[e[0]]=_rpFsEnc(e[1]);});return{mapValue:{fields:f}};}return{stringValue:String(v)};}',
-    'function abrirRiderPanel(){_RP.flow="rider";document.getElementById("rp-overlay").style.display="flex";_rpMostrarLogin();}',
+    'function abrirRiderPanel(){document.getElementById("rp-overlay").style.display="flex";_rpMostrarLogin();}',
     'function fecharRiderPanel(){document.getElementById("rp-overlay").style.display="none";}',
-    'function mostrarAppEscala(){',
-    '  document.getElementById("app-home").style.display="none";',
-    '  document.getElementById("app-escala-wrap").style.display="block";',
-    '  var b=document.getElementById("btn-app-home");if(b)b.style.display="inline-block";',
-    '}',
-    'function mostrarAppHome(){',
-    '  document.getElementById("app-home").style.display="block";',
-    '  document.getElementById("app-escala-wrap").style.display="none";',
-    '  var b=document.getElementById("btn-app-home");if(b)b.style.display="none";',
-    '}',
-    'function _appAbrirModal(flow){',
-    '  document.getElementById("rp-overlay").style.display="flex";',
-    '  if(flow==="comunicacao")_rpMostrarComunicacoes();',
-    '  else{_RP.flow=flow;_rpMostrarLogin();}',
-    '}',
     'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
     'function _rpInstrOpts(sel){return _RP_INSTRS.map(function(x){return\'<option value="\'+x+\'"\'+(x===sel?\' selected\':\'\')+\'>\'+x+\'</option>\';}).join("");}',
 
-    'var _rpFbApp=null,_rpMessaging=null;',
-    'try{',
-    '  _rpFbApp=firebase.initializeApp({apiKey:"AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",authDomain:"escala-dml.firebaseapp.com",projectId:"escala-dml",storageBucket:"escala-dml.firebasestorage.app",messagingSenderId:"219409261265",appId:"1:219409261265:web:d919096c27487df65bdbf0"});',
-    '  if(firebase.messaging.isSupported())_rpMessaging=firebase.messaging();',
-    '}catch(e){console.warn("FCM indisponível:",e);}',
-    'function _rpAtivarNotificacoes(){',
-    '  if(!_rpMessaging){alert("Este navegador não suporta notificações push.");return;}',
-    '  if(!_RP.slug){alert("Entre com o PIN do seu grupo antes de ativar as notificações.");return;}',
-    '  navigator.serviceWorker.register("firebase-messaging-sw.js").then(function(reg){',
-    '    return Notification.requestPermission().then(function(perm){',
-    '      if(perm!=="granted"){alert("Permissão de notificação negada.");return;}',
-    '      return _rpMessaging.getToken({vapidKey:"BMx6z1hCdW1bKwCjmTYrgi-igDclRR70d8RGs83ifh3XoGclMfKDQYOsw9ZifPwAq99dTpWhm8oBt_yZzH2H2CI",serviceWorkerRegistration:reg}).then(function(token){',
-    '        if(!token)return;',
-    '        var body={fields:{grupo:{stringValue:_RP.slug},grupoNome:{stringValue:_RP.nome||""},criadoEm:{integerValue:String(Date.now())}}};',
-    '        var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/pushTokens/"+encodeURIComponent(token)+"?key="+_RP_KEY;',
-    '        return fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){',
-    '          if(r.ok){_RP.pushAtivo=true;alert("✅ Notificações ativadas para "+_RP.nome+"!");if(_RP.state==="ensaio"&&typeof _rpRenderEstudio==="function")_rpRenderEstudio();}',
-    '          else alert("Erro ao salvar token de notificação.");',
-    '        });',
-    '      });',
-    '    });',
-    '  }).catch(function(e){alert("Erro: "+e.message);});',
-    '}',
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
-    '  var tag=_RP.state==="comunic"?"<i class=ph-megaphone></i> COMUNICAÇÕES":_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
-    '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
-    '  var sino=_RP.slug?\'<button style="background:none;border:none;color:#7a9aa8;font-size:19px;cursor:pointer;position:absolute;top:14px;right:16px" onclick="_rpAtivarNotificacoes()" title="Ativar notificações"><i class="\'+(_RP.pushAtivo?"ph-bell":"ph-bell-slash")+\'"></i></button>\':"";',
-    '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
-    '}',
-    'function _rpMostrarHome(){',
-    '  _RP.state="home";_RP.flow=null;',
-    '  _rpHtml(\'<div class="rp-hdr-box"><div class="rp-hdr-grupo">Departamento de Música e Louvor</div><div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-device-mobile></i> ÁREA DO LÍDER</span></div></div>\'',
-    '    +\'<div class="rp-home-grid">\'',
-    '    +\'<div class="rp-home-card" onclick="fecharRiderPanel();mostrarAppEscala()"><div class="rp-home-ico"><i class=ph-calendar-dots></i></div><div class="rp-home-lbl">Escala</div></div>\'',
-    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'solic\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-package></i></div><div class="rp-home-lbl">Solicitar Equipamento</div></div>\'',
-    '    +\'<div class="rp-home-card" onclick="_rpMostrarComunicacoes()"><div class="rp-home-ico"><i class=ph-megaphone></i></div><div class="rp-home-lbl">Comunicações</div></div>\'',
-    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'rider\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-sliders-horizontal></i></div><div class="rp-home-lbl">RT</div></div>\'',
-    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'estudio\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-list-checks></i></div><div class="rp-home-lbl">Estúdio</div></div>\'',
-    '    +\'</div>\');',
-    '}',
-    'function _rpBtnAgendaExterna(){return\'<button class="rp-btn-out" style="width:100%;margin-top:16px" onclick="_RP.flow=\\\'comunicacao\\\';_rpMostrarLogin()"><i class=ph-calendar-plus></i> Avisar agenda externa do meu grupo</button>\';}',
-    'function _rpMostrarComunicacoes(){',
-    '  _RP.state="comunic";',
-    '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\" style=\\"margin-top:4px\\"><i class=ph-hourglass></i> Carregando avisos...</p>");',
-    '  fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
-    '    if(!d||!d.ativo||!d.mensagem){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum aviso no momento.</p>\'+_rpBtnAgendaExterna());return;}',
-    '    _rpHtml(_rpHdr("_rpMostrarHome")+(d.titulo?\'<div class="rp-title">\'+d.titulo+\'</div>\':\'\')+\'<div class="rp-sub" style="color:#c8d8e8;white-space:pre-wrap;margin-top:8px">\'+d.mensagem+\'</div>\'+_rpBtnAgendaExterna());',
-    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar aviso.</p>\'+_rpBtnAgendaExterna());});',
+    '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-sliders-horizontal></i> RIDER TÉCNICO</span></div>\';',
+    '  return\'<div class="rp-hdr-box"><div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
     '}',
 
     'function _rpMostrarLogin(){',
@@ -4629,10 +3796,9 @@ function exportarPagina(){
     '  fetch(_RP_CFG_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(cfg){',
     '    _RP.cfg=cfg;',
     '    var grupos=cfg&&cfg.grupos?Object.values(cfg.grupos).filter(function(g){return g.pin;}).sort(function(a,b){return a.nome.localeCompare(b.nome);}):[];',
-    '    if(_RP.flow==="estudio")grupos=grupos.filter(function(g){return _RP_GRUPOS_LOUVOR.indexOf(g.nome)>=0;});',
-    '    if(!grupos.length){_rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\">Nenhum grupo configurado ainda.</p>");return;}',
+    '    if(!grupos.length){_rpHtml(_rpHdr(null)+"<p class=\\"rp-sub\\">Nenhum grupo configurado ainda.</p>");return;}',
     '    var opts=grupos.map(function(g){return\'<option value="\'+_rpSlug(g.nome)+\'">\'+g.nome+\'</option>\';}).join("");',
-    '    _rpHtml(_rpHdr("_rpMostrarHome")',
+    '    _rpHtml(_rpHdr(null)',
     '      +\'<label class="rp-label" style="margin-top:2px">Grupo</label>\'',
     '      +\'<select class="rp-sel" id="rp-grupo">\'+opts+\'</select>\'',
     '      +\'<label class="rp-label">PIN</label>\'',
@@ -4649,135 +3815,7 @@ function exportarPagina(){
     '  var grp=grupos[slug];',
     '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarEnsaio();else if(_RP.flow==="comunicacao")_rpMostrarAgendaExterna();else _rpMostrarCultos();',
-    '}',
-    'function _rpMostrarAgendaExterna(){',
-    '  _RP.state="agenda-externa";',
-    '  var hoje=new Date().toISOString().slice(0,10);',
-    '  _rpHtml(_rpHdr("_rpMostrarComunicacoes")',
-    '    +\'<p class="rp-sub" style="margin-top:4px">Avise um compromisso extra igreja de \'+_RP.nome+\'</p>\'',
-    '    +\'<label class="rp-label" style="margin-top:2px">Dia</label>\'',
-    '    +\'<input class="rp-inp" type="date" id="agenda-dia" min="\'+hoje+\'">\'',
-    '    +\'<label class="rp-label">Horário</label>\'',
-    '    +\'<input class="rp-inp" type="time" id="agenda-horario">\'',
-    '    +\'<label class="rp-label">Local / Nome da Denominação</label>\'',
-    '    +\'<input class="rp-inp" type="text" id="agenda-local" placeholder="Ex: Igreja Batista Central, Praça XV...">\'',
-    '    +\'<div class="rp-err" id="agenda-err" style="display:none">Preencha dia, horário e local.</div>\'',
-    '    +\'<button class="rp-btn" onclick="_rpEnviarAgendaExterna()">Enviar aviso</button>\');',
-    '}',
-    'function _rpEnviarAgendaExterna(){',
-    '  var dia=document.getElementById("agenda-dia").value;',
-    '  var horario=document.getElementById("agenda-horario").value;',
-    '  var local=document.getElementById("agenda-local").value.trim();',
-    '  if(!dia||!horario||!local){var e=document.getElementById("agenda-err");if(e)e.style.display="block";return;}',
-    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,dia:dia,horario:horario,local:local,criadoEm:Date.now()};',
-    '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/agendaExterna?key="+_RP_KEY;',
-    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
-    '    .then(function(r){',
-    '      if(r.ok){alert("✅ Agenda enviada! Obrigado por avisar.");_rpMostrarComunicacoes();}',
-    '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
-    '    }).catch(function(e){alert("Erro: "+e.message);});',
-    '}',
-
-    'function _rpMostrarSolicMenu(){',
-    '  _RP.state="solic-menu";',
-    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Solicitações de \'+_RP.nome+\'</p><button class="rp-btn" onclick="_rpMostrarSolicNova()"><i class=ph-plus></i> Nova solicitação</button><div id="rp-solic-lista"><p class="rp-sub"><i class=ph-hourglass></i> Carregando...</p></div>\');',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents:runQuery?key="+_RP_KEY;',
-    '  var body={structuredQuery:{from:[{collectionId:"solicitacoes"}],where:{fieldFilter:{field:{fieldPath:"grupo"},op:"EQUAL",value:{stringValue:_RP.slug}}},limit:50}};',
-    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
-    '    .then(function(r){return r.ok?r.json():[];}).then(function(rows){',
-    '      var itens=(rows||[]).filter(function(r){return r.document;}).map(function(r){',
-    '        var f=r.document.fields||{};',
-    '        var arrItens=f.itens?_rpFsParse(f.itens):(f.item?[_rpFsParse(f.item)]:[]);',
-    '        return{id:r.document.name.split("/").pop(),grupoNome:_rpFsParse(f.grupoNome),itens:arrItens,motivo:_rpFsParse(f.motivo),data:_rpFsParse(f.data),dataDevolucao:_rpFsParse(f.dataDevolucao),status:_rpFsParse(f.status)||"pendente",justificativa:_rpFsParse(f.justificativa),criadoEm:_rpFsParse(f.criadoEm)||0};',
-    '      });',
-    '      itens.sort(function(a,b){return b.criadoEm-a.criadoEm;});',
-    '      var el=document.getElementById("rp-solic-lista");if(!el)return;',
-    '      if(!itens.length){el.innerHTML=\'<p class="rp-sub" style="margin-top:10px">Nenhuma solicitação enviada ainda.</p>\';return;}',
-    '      el.innerHTML=itens.map(function(it){',
-    '        var stCls=it.status==="deferido"?"deferido":it.status==="indeferido"?"indeferido":"pendente";',
-    '        var stLbl=it.status==="deferido"?"<i class=ph-check-circle></i> Deferido":it.status==="indeferido"?"<i class=ph-x-circle></i> Indeferido":"<i class=ph-clock-countdown></i> Pendente";',
-    '        var dt=it.data?new Date(it.data+"T00:00:00").toLocaleDateString("pt-BR"):"—";',
-    '        var dtDev=it.dataDevolucao?new Date(it.dataDevolucao+"T00:00:00").toLocaleDateString("pt-BR"):null;',
-    '        var nomes=(it.itens||[]).join(", ")||"—";',
-    '        return \'<div class="rp-culto-item" style="align-items:flex-start;flex-direction:column;cursor:default">\'',
-    '          +\'<div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">\'',
-    '          +\'<div class="rp-culto-nome">\'+nomes+\'</div><span class="rp-solic-badge \'+stCls+\'">\'+stLbl+\'</span></div>\'',
-    '          +\'<div class="rp-culto-sub">Para dia \'+dt+(dtDev?" · devolução até "+dtDev:"")+(it.motivo?" · "+it.motivo:"")+\'</div>\'',
-    '          +(it.justificativa?\'<div class="rp-culto-sub" style="margin-top:4px;font-style:italic"><i class=ph-chat-circle-text></i> \'+it.justificativa+\'</div>\':\'\')',
-    '          +\'</div>\';',
-    '      }).join("");',
-    '    }).catch(function(){var el=document.getElementById("rp-solic-lista");if(el)el.innerHTML=\'<p class="rp-sub">Erro ao carregar.</p>\';});',
-    '}',
-    'function _rpMostrarSolicNova(){',
-    '  _RP.state="solic-nova";_RP.solicItens=[];',
-    '  var hoje=new Date().toISOString().slice(0,10);',
-    '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")+\'<p class="rp-sub" style="margin-top:4px"><i class=ph-hourglass></i> Carregando itens dispon&#237;veis...</p>\');',
-    '  fetch(_RP_INSTRUMENTOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};}).then(function(cfg){',
-    '    _RP.instrumentosDisponiveis=cfg.itens||[];',
-    '    _rpRenderSolicNova(hoje);',
-    '  });',
-    '}',
-    'function _rpRenderSolicNova(hoje){',
-    '  var opts=(_RP.instrumentosDisponiveis||[]).map(function(x){return\'<option value="\'+x+\'">\'+x+\'</option>\';}).join("")+\'<option value="__outro__">Outro (digitar)...</option>\';',
-    '  var chips=(_RP.solicItens||[]).map(function(it,i){return\'<span class="rp-chip">\'+it+\' <a onclick="_rpRemoverItemSolic(\'+i+\')">&times;</a></span>\';}).join("");',
-    '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")',
-    '    +\'<label class="rp-label" style="margin-top:2px">Data</label>\'',
-    '    +\'<input class="rp-inp" type="date" id="solic-data" min="\'+hoje+\'">\'',
-    '    +\'<label class="rp-label">Equipamento / Instrumento</label>\'',
-    '    +\'<div style="display:flex;gap:6px">\'',
-    '    +\'<select class="rp-sel" id="solic-item-sel" style="flex:1;margin-bottom:0">\'+opts+\'</select>\'',
-    '    +\'<button class="rp-btn-out" style="width:auto" onclick="_rpAdicionarItemSolic()">+ Adicionar</button>\'',
-    '    +\'</div>\'',
-    '    +\'<input class="rp-inp" type="text" id="solic-item-custom" style="display:none;margin-top:8px" placeholder="Digite o nome do equipamento">\'',
-    '    +\'<div id="solic-itens-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">\'+chips+\'</div>\'',
-    '    +\'<label class="rp-label">Motivo</label>\'',
-    '    +\'<textarea class="rp-inp" id="solic-motivo" rows="3" style="resize:vertical" placeholder="Explique o motivo da solicitação"></textarea>\'',
-    '    +\'<label class="rp-label">Dia para devolução</label>\'',
-    '    +\'<input class="rp-inp" type="date" id="solic-data-devolucao" min="\'+hoje+\'">\'',
-    '    +\'<div class="rp-err" id="solic-err" style="display:none">Preencha data, ao menos um equipamento e motivo.</div>\'',
-    '    +\'<button class="rp-btn" onclick="_rpEnviarSolic()">Enviar solicitação</button>\');',
-    '  var sel=document.getElementById("solic-item-sel");',
-    '  if(sel)sel.onchange=function(){var c=document.getElementById("solic-item-custom");if(c)c.style.display=sel.value==="__outro__"?"block":"none";};',
-    '}',
-    'function _rpSolicPreservarCampos(fn){',
-    '  var data=document.getElementById("solic-data")?document.getElementById("solic-data").value:"";',
-    '  var dataDev=document.getElementById("solic-data-devolucao")?document.getElementById("solic-data-devolucao").value:"";',
-    '  var motivo=document.getElementById("solic-motivo")?document.getElementById("solic-motivo").value:"";',
-    '  var hoje=new Date().toISOString().slice(0,10);',
-    '  fn();',
-    '  _rpRenderSolicNova(hoje);',
-    '  if(document.getElementById("solic-data"))document.getElementById("solic-data").value=data;',
-    '  if(document.getElementById("solic-data-devolucao"))document.getElementById("solic-data-devolucao").value=dataDev;',
-    '  if(document.getElementById("solic-motivo"))document.getElementById("solic-motivo").value=motivo;',
-    '}',
-    'function _rpAdicionarItemSolic(){',
-    '  _rpSolicPreservarCampos(function(){',
-    '    var sel=document.getElementById("solic-item-sel");',
-    '    var val=sel.value==="__outro__"?(document.getElementById("solic-item-custom").value||"").trim():sel.value;',
-    '    if(!val)return;',
-    '    _RP.solicItens=_RP.solicItens||[];',
-    '    if(_RP.solicItens.indexOf(val)<0)_RP.solicItens.push(val);',
-    '  });',
-    '}',
-    'function _rpRemoverItemSolic(i){',
-    '  _rpSolicPreservarCampos(function(){_RP.solicItens.splice(i,1);});',
-    '}',
-    'function _rpEnviarSolic(){',
-    '  var data=document.getElementById("solic-data").value;',
-    '  var itens=_RP.solicItens||[];',
-    '  var motivo=document.getElementById("solic-motivo").value.trim();',
-    '  var dataDevolucao=document.getElementById("solic-data-devolucao").value;',
-    '  if(!data||!itens.length||!motivo){var e=document.getElementById("solic-err");if(e)e.style.display="block";return;}',
-    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,data:data,itens:itens,dataDevolucao:dataDevolucao||null,motivo:motivo,status:"pendente",criadoEm:Date.now()};',
-    '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/solicitacoes?key="+_RP_KEY;',
-    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
-    '    .then(function(r){',
-    '      if(r.ok){alert("✅ Solicitação enviada!");_rpMostrarSolicMenu();}',
-    '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
-    '    }).catch(function(e){alert("Erro: "+e.message);});',
+    '  _rpMostrarCultos();',
     '}',
 
     'function _rpMostrarCultos(){',
@@ -4801,116 +3839,6 @@ function exportarPagina(){
     '  }).join("");',
     '  if(!items)items=\'<p style="font-size:13px;color:#7a9aa8;padding:12px 0">Nenhum culto encontrado para \'+_RP.nome+\' na escala publicada.</p>\';',
     '  _rpHtml(_rpHdr("_rpMostrarLogin")+\'<p class="rp-sub" style="margin-top:4px">Selecione o culto</p>\'+items);',
-    '}',
-
-    'function _rpEnsaioYmd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}',
-    'function _rpMostrarEnsaio(){',
-    '  _RP.state="ensaio";',
-    '  var grp=(_RP.cfg&&_RP.cfg.grupos)?_RP.cfg.grupos[_RP.slug]:null;',
-    '  var dia=grp?grp.ensaioDia:null;',
-    '  if(dia===undefined||dia===null||dia===""){',
-    '    _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum dia de ensaio configurado para esse grupo. Fale com o coordenador.</p>\');',
-    '    return;',
-    '  }',
-    '  var hora=grp.ensaioHora||"19:30";',
-    '  var DIAS=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];',
-    '  var hoje=new Date();hoje.setHours(0,0,0,0);',
-    '  var diffAtras=(hoje.getDay()-parseInt(dia)+7)%7;',
-    '  var dataCiclo=new Date(hoje);dataCiclo.setDate(dataCiclo.getDate()-diffAtras);',
-    '  _RP.ensaioDataCiclo=dataCiclo;',
-    '  _RP.ensaioKey=_rpEnsaioYmd(dataCiclo);_RP.ensaioDiaLbl=DIAS[dataCiclo.getDay()];_RP.ensaioHora=hora;',
-    '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\"><i class=ph-hourglass></i> Carregando...</p>");',
-    '  var pDoc=fetch("https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY).then(function(r){return r.ok?r.json():{};});',
-    '  var pCfg=fetch(_RP_CHECKLIST_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};});',
-    '  Promise.all([pDoc,pCfg]).then(function(res){',
-    '    _RP.estudioDoc=res[0];_RP.checklistItens=res[1].itens||[];',
-    '    var ensaios=res[0].fields&&res[0].fields.ensaios?_rpFsParse(res[0].fields.ensaios):{};',
-    '    _RP.estudioAtual=ensaios[_RP.ensaioKey]||{};',
-    '    _rpRenderEstudio();',
-    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar.</p>\');});',
-    '}',
-    'function _rpRenderEstudio(){',
-    '  var rd=_RP.estudioAtual||{};',
-    '  var check=rd.checklist||{};',
-    '  var ent=rd.entrada?new Date(rd.entrada).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):null;',
-    '  var sai=rd.saida?new Date(rd.saida).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):null;',
-    '  var h=_rpHdr("_rpMostrarHome");',
-    '  h+=\'<p class="rp-sub" style="margin-top:4px">Ensaio: \'+_RP.ensaioDiaLbl+\' \'+_RP.ensaioHora+\'</p>\';',
-    '  if(rd.semEnsaio){',
-    '    h+=\'<p class="rp-sub" style="color:#7a9aa8">Sem ensaio avisado para essa data.</p>\';',
-    '    h+=\'<button class="rp-btn-out" onclick="_rpMarcarSemEnsaio(false,0)">Desfazer aviso</button>\';',
-    '    _rpHtml(h);return;',
-    '  }',
-    '  h+=\'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">\'',
-    '    +\'<button class="rp-btn-out" onclick="_rpMarcarSemEnsaio(true,0)"><i class=ph-x-circle></i> Sem ensaio nesta data</button>\'',
-    '    +\'<button class="rp-btn-out" onclick="_rpMarcarSemEnsaio(true,1)"><i class=ph-calendar-plus></i> Avisar semana que vem</button>\'',
-    '    +\'</div>\';',
-    '  h+=\'<div class="rp-sec"><i class=ph-clock></i> Horário</div>\';',
-    '  h+=\'<div class="rp-horario-row">\'',
-    '    +\'<button class="rp-horario-btn\'+(ent?" batido":"")+\'" onclick="_rpBaterHorario(\\\'entrada\\\')">Entrada<span class="rp-horario-hora">\'+(ent||"—")+\'</span></button>\'',
-    '    +\'<button class="rp-horario-btn\'+(sai?" batido":"")+\'" onclick="_rpBaterHorario(\\\'saida\\\')">Saída<span class="rp-horario-hora">\'+(sai||"—")+\'</span></button>\'',
-    '    +\'</div>\';',
-    '  h+=\'<div class="rp-sec"><i class=ph-list-checks></i> Checklist do Estúdio</div>\';',
-    '  if(!_RP.checklistItens.length){h+=\'<p class="rp-sub">Nenhum item configurado ainda.</p>\';}',
-    '  else{',
-    '    h+=_RP.checklistItens.map(function(it){',
-    '      var marcado=!!check[it];',
-    '      return \'<label class="rp-check-row" style="cursor:pointer"><span class="rp-check-nome">\'+it+\'</span><input type="checkbox" style="width:20px;height:20px;accent-color:#2ab482" \'+(marcado?"checked":"")+\' onchange="_rpSetCheck(\\\'\'+encodeURIComponent(it)+\'\\\',this.checked)"></label>\';',
-    '    }).join("");',
-    '  }',
-    '  h+=\'<label class="rp-obs-lbl" style="margin-top:12px;display:block">Observações</label>\';',
-    '  h+=\'<textarea class="rp-obs" id="estudio-obs" rows="3">\'+(rd.obsChecklist||"")+\'</textarea>\';',
-    '  h+=\'<button class="rp-btn" style="margin-top:14px" onclick="_rpSalvarEstudio()"><i class=ph-floppy-disk></i> Salvar checklist</button>\';',
-    '  _rpHtml(h);',
-    '}',
-    'function _rpSetCheck(itemEnc,marcado){',
-    '  var item=decodeURIComponent(itemEnc);',
-    '  if(!_RP.estudioAtual)_RP.estudioAtual={};',
-    '  if(!_RP.estudioAtual.checklist)_RP.estudioAtual.checklist={};',
-    '  _RP.estudioAtual.checklist[item]=!!marcado;',
-    '}',
-    'function _rpEnsaiosDoc(){',
-    '  var doc=_RP.estudioDoc||{};',
-    '  return doc.fields&&doc.fields.ensaios?_rpFsParse(doc.fields.ensaios):{};',
-    '}',
-    'function _rpSalvarEnsaiosDoc(ensaios){',
-    '  var body={fields:{ensaios:_rpFsEnc(ensaios)}};',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY;',
-    '  return fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){',
-    '    if(r.ok){_RP.estudioDoc=Object.assign({},_RP.estudioDoc,{fields:{ensaios:_rpFsEnc(ensaios)}});return true;}',
-    '    return r.text().then(function(t){alert("Erro: "+t);return false;});',
-    '  }).catch(function(e){alert("Erro: "+e.message);return false;});',
-    '}',
-    'function _rpBaterHorario(tipo){',
-    '  var campo=tipo==="entrada"?"entrada":"saida";',
-    '  var ts=Date.now();',
-    '  var ensaios=_rpEnsaiosDoc();',
-    '  var rd=ensaios[_RP.ensaioKey]||{};',
-    '  rd[campo]=ts;',
-    '  ensaios[_RP.ensaioKey]=rd;',
-    '  _rpSalvarEnsaiosDoc(ensaios).then(function(ok){if(ok){_RP.estudioAtual=rd;_rpRenderEstudio();}});',
-    '}',
-    'function _rpMarcarSemEnsaio(valor,semanas){',
-    '  var alvo=new Date(_RP.ensaioDataCiclo);alvo.setDate(alvo.getDate()+(semanas||0)*7);',
-    '  var key=_rpEnsaioYmd(alvo);',
-    '  var ensaios=_rpEnsaiosDoc();',
-    '  var rd=ensaios[key]||{};',
-    '  rd.semEnsaio=!!valor;',
-    '  ensaios[key]=rd;',
-    '  _rpSalvarEnsaiosDoc(ensaios).then(function(ok){',
-    '    if(!ok)return;',
-    '    if(!semanas){_RP.estudioAtual=rd;_rpRenderEstudio();}',
-    '    else{alert(valor?"✅ Aviso registrado para semana que vem.":"Aviso desfeito.");}',
-    '  });',
-    '}',
-    'function _rpSalvarEstudio(){',
-    '  var obs=document.getElementById("estudio-obs").value;',
-    '  var ensaios=_rpEnsaiosDoc();',
-    '  var rd=ensaios[_RP.ensaioKey]||{};',
-    '  rd.checklist=(_RP.estudioAtual&&_RP.estudioAtual.checklist)||{};',
-    '  rd.obsChecklist=obs;',
-    '  ensaios[_RP.ensaioKey]=rd;',
-    '  _rpSalvarEnsaiosDoc(ensaios).then(function(ok){if(ok)alert("✅ Checklist salvo!");});',
     '}',
 
     'function _rpAbrirEditor(key,labelEnc){',
@@ -5046,17 +3974,15 @@ function exportarPagina(){
     +'<meta charset="UTF-8">\n'
     +'<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">\n'
     +'<meta name="theme-color" content="#111820">\n'
-    +'<title>Escala DML</title>\n'
-    +'<meta property="og:title" content="Escala DML">\n'
-    +'<meta property="og:description" content="Confira a escala de louvor da Igreja Evang\u00e9lica Congregacional Central.">\n'
+    +'<title>Escala DML \u2014 '+mesLabel+'</title>\n'
+    +'<meta property="og:title" content="Escala DML \u2014 '+mesLabel+'">\n'
+    +'<meta property="og:description" content="Confira a escala de louvor da Igreja Evang\u00e9lica Congregacional Central \u2014 '+mesLabel+'.">\n'
     +'<meta property="og:type" content="website">\n'
     +'<meta name="twitter:card" content="summary">\n'
-    +'<meta name="twitter:title" content="Escala DML">\n'
-    +'<meta name="twitter:description" content="Confira a escala de louvor.">\n'
+    +'<meta name="twitter:title" content="Escala DML \u2014 '+mesLabel+'">\n'
+    +'<meta name="twitter:description" content="Confira a escala de louvor \u2014 '+mesLabel+'.">\n'
     +'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">\n'
     +'<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer><\/script>\n'
-    +'<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"><\/script>\n'
-    +'<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"><\/script>\n'
     +'<style>\n'+CSS+'\n</style>\n'
     +'</head>\n<body>\n'
 
@@ -5065,28 +3991,19 @@ function exportarPagina(){
     +'<div class="logo-wrap">'+LOGO
     +'<div class="logo-txt"><div class="dept">Departamento de</div><div class="nome">M\u00FAsica e Louvor</div><div class="igreja">Igreja Evang\u00E9lica Congregacional Central</div></div>'
     +'</div>'
-    +'<button class="btn-rider-hdr" id="btn-app-home" onclick="mostrarAppHome()" title="In\u00EDcio" style="display:none"><i class=ph-house></i> In\u00EDcio</button>'
+    +'<button class="btn-rider-hdr" onclick="abrirRiderPanel()" title="Acesso L\u00EDderes">RT</button>'
     +'<div class="hdr-right">'
-    +'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()"><i class=ph-bell-slash></i></button>'
+    +(()=>{
+      const _AB={Janeiro:'JAN',Fevereiro:'FEV','Mar\u00E7o':'MAR',Marco:'MAR',Abril:'ABR',Maio:'MAI',Junho:'JUN',Julho:'JUL',Agosto:'AGO',Setembro:'SET',Outubro:'OUT',Novembro:'NOV',Dezembro:'DEZ'};
+      const _ab=l=>{if(!l)return l;const p=l.split(' ');return(_AB[p[0]]||p[0].slice(0,3).toUpperCase())+(p[1]?' | '+p[1].slice(2):'');};
+      return visProx
+        ?'<div class="mes-tabs"><button class="mes-tab ativa" data-qual="atual" onclick="trocarAba(\'atual\')">'+_ab(mesLabel)+'</button><button class="mes-tab" data-qual="prox" onclick="trocarAba(\'prox\')">'+_ab(mesProxLabel)+'</button></div>'
+        :'<div class="mes-badge">'+_ab(mesLabel)+'</div>';
+    })()
+    +(visProx?'':'<button class="btn-ico btn-notif" id="btn-notif" onclick="toggleNotif()">&#128565;</button>')
+    +'<button class="btn-ico" id="btn-theme" onclick="toggleTheme()">\uD83C\uDF19</button>'
     +'</div>'
     +'</header>\n'
-
-    // tela inicial — apenas os cards de acesso rápido
-    +'<div id="app-home">'
-    +'<div class="rp-home-grid" style="max-width:480px;margin:18px auto;padding:0 14px">'
-    +'<div class="rp-home-card" onclick="mostrarAppEscala()"><div class="rp-home-ico"><i class=ph-calendar-dots></i></div><div class="rp-home-lbl">Escala</div></div>'
-    +'<div class="rp-home-card" onclick="_appAbrirModal(\'solic\')"><div class="rp-home-ico"><i class=ph-package></i></div><div class="rp-home-lbl">Solicitações</div></div>'
-    +'<div class="rp-home-card" onclick="_appAbrirModal(\'comunicacao\')"><div class="rp-home-ico"><i class=ph-megaphone></i></div><div class="rp-home-lbl">Comunicações</div></div>'
-    +'<div class="rp-home-card" onclick="_appAbrirModal(\'rider\')"><div class="rp-home-ico"><i class=ph-sliders-horizontal></i></div><div class="rp-home-lbl">RT</div></div>'
-    +'<div class="rp-home-card" onclick="_appAbrirModal(\'estudio\')"><div class="rp-home-ico"><i class=ph-list-checks></i></div><div class="rp-home-lbl">Estúdio</div></div>'
-    +'</div>'
-    +'</div>\n'
-
-    // conteúdo da escala — oculto até clicar no card "Escala"
-    +'<div id="app-escala-wrap" style="display:none">'
-
-    // mês (badge ou abas atual/próximo) — preenchido ao carregar a escala ao vivo
-    +'<div style="display:flex;justify-content:center;padding:14px 14px 0" id="mes-wrap"></div>\n'
 
     // busca
     +'<div class="busca-barra"><div class="busca-inner">'
@@ -5112,23 +4029,22 @@ function exportarPagina(){
 
     // semana
     +'<div class="semana-sec" id="semana-sec">'
-    +'<div class="semana-hdr"><span><i class=ph-calendar-dots></i> Esta semana</span>'
+    +'<div class="semana-hdr"><span>\uD83D\uDCC5 Esta semana</span>'
     +'<button onclick="document.getElementById(\'semana-sec\').classList.remove(\'show\')" style="background:none;border:none;color:#7a9aa8;cursor:pointer;font-size:14px">\u2715</button>'
     +'</div><div id="semana-cont"></div></div>\n'
 
     // compartilhar mês
-    +'<button class="comp-mes" id="comp-mes" onclick="compartilharMes()"><i class=ph-share-network></i> Compartilhar escala do m\u00EAs no WhatsApp</button>\n'
+    +'<button class="comp-mes" id="comp-mes" onclick="compartilharMes()">\uD83D\uDCE4 Compartilhar escala do m\u00EAs no WhatsApp</button>\n'
 
     // btn mostrar todos
     +'<button class="btn-todos" id="btn-todos" onclick="filtrar(\'todos\')">\u2715 Mostrar todos</button>\n'
 
-    // cards — preenchidos ao carregar a escala ao vivo do Firestore
-    +'<main id="main-atual" class="aba-vis">\n<div class="aguardando-escala"><div class="aguardando-icone"><i class=ph-hourglass></i></div><div class="aguardando-titulo">Carregando escala...</div></div>\n</main>\n'
-    +'<main id="main-prox" style="display:none">\n</main>\n'
+    // cards
+    +'<main id="main-atual" class="aba-vis">\n'+gerarCards()+'\n</main>\n'
+    +(visProx?'<main id="main-prox" style="display:none">\n'+CARDS_PROX+'\n</main>\n':'')
     +'<div class="realizados-sec" id="realizados-sec"><button class="realizados-toggle" id="realizados-toggle" onclick="toggleRealizados()"><span><i class=ph-file-text></i> Cultos realizados (<span id="realizados-count">0</span>)</span><span class="arrow">▾</span></button><div class="realizados-body" id="realizados-body" style="display:none"></div></div>\n'
-    +'<div class="updated"></div>\n'
+    +'<div class="updated">Atualizado em '+DATA_ATU+'</div>\n'
     +'<footer><strong>Departamento de M\u00FAsica e Louvor</strong>Igreja Evang\u00E9lica Congregacional Central</footer>\n'
-    +'</div>\n'
     +'<div id="rp-overlay" class="rp-overlay" style="display:none" onclick="if(event.target===this)fecharRiderPanel()"><div class="rp-panel" id="rp-panel"><button class="rp-close" onclick="fecharRiderPanel()">\u2715</button><div id="rp-content"></div></div></div>\n'
     +'<script>\n'+JS+'\n<\/script>\n'
     +'</body>\n</html>';
@@ -5213,7 +4129,7 @@ function irPara(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,estudio:10,comunic:11,semana:12};
+  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,semana:9};
   document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
   if(p==='preview')renderPreview();
   if(p==='hist')renderHist();
@@ -5224,9 +4140,6 @@ function irPara(p){
   if(p==='semana')renderSemana(0);
   if(p==='colab')renderColaboradores();
   if(p==='riders')renderRiders();
-  if(p==='solic')renderSolic();
-  if(p==='estudio')renderEstudio();
-  if(p==='comunic')renderComunicacoesAdmin();
 }
 
 // ═══════════════════════════════════════════════
@@ -6030,7 +4943,6 @@ window.onFbAuthReady=async function(user){
     carregarDadosFirebase();
     carregarNotepadFirebase();
     mostrarCardUltima();
-    processarFilaSync();
   } else {
     loginScreen?.classList.remove('hidden');
     if(badge)badge.style.display='none';
@@ -6053,14 +4965,13 @@ function setSyncStatus(s){
 
 // ── Salvar sessão no Firestore
 async function salvarSessaoFirebase(id, dados){
-  if(!fbReady()||!window._fbUser)return false;
+  if(!fbReady()||!window._fbUser)return;
   setSyncStatus('saving');
   try{
     const {doc,setDoc}=window._fbFns;
     await setDoc(doc(window._fbDb,`usuarios/${getDonoUid()}/sessoes`,id), dados);
     setSyncStatus('ok');
-    return true;
-  }catch(e){setSyncStatus('err');console.error(e);return false;}
+  }catch(e){setSyncStatus('err');console.error(e);}
 }
 
 // ── Carregar índice de sessões
@@ -6152,9 +5063,7 @@ async function carregarDadosFirebase(){
 async function salvarSessao(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para salvar');return;}
   if(!sessaoId)sessaoId='s'+Date.now();
-  let _ocultaAnterior=false;
-  try{const _raw=localStorage.getItem(SK(sessaoId));if(_raw)_ocultaAnterior=!!JSON.parse(_raw).ocultaPublicacao;}catch(e){}
-  const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now(),ocultaPublicacao:_ocultaAnterior};
+  const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now()};
 
   // Salva versão antes de sobrescrever
   saveVersao(sessaoId,dados);
@@ -6166,18 +5075,9 @@ async function salvarSessao(){
 
   if(_online&&window._fbUser){
     // Online — salva no Firebase direto
-    const ok=await salvarSessaoFirebase(sessaoId,dados);
+    await salvarSessaoFirebase(sessaoId,dados);
     salvarConfigFirebase();
-    if(ok){
-      toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
-    }else{
-      // Falha real ao gravar em usuarios/{uid}/sessoes — não mentir que salvou.
-      // Guarda na fila e já tenta de novo uma vez, mesmo estando online.
-      _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
-      localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
-      toast('<i class=ph-warning></i> Falha ao salvar na nuvem — salvo só neste aparelho. Vamos tentar de novo automaticamente.');
-      setTimeout(processarFilaSync,3000);
-    }
+    toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
   } else if(window._fbUser){
     // Offline — adiciona à fila de sync
     _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
@@ -6191,7 +5091,6 @@ async function salvarSessao(){
 
   renderHist();
   mostrarCardUltima();
-  sincronizarEscalaPublica();
 }
 
 // ═══════════════════════════════════════════════
@@ -6392,12 +5291,10 @@ async function renderHist(busca=''){
   filtrados.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
   grid.innerHTML=filtrados.map(d=>{
     const id=d.id;
-    const oculta=!!d.ocultaPublicacao;
     const top3=[...new Set((d.cultos||[]).flatMap(c=>c.grupos||[]))].filter(g=>g!==SH_LABEL).slice(0,3);
     return`<div class="hist-card">
       <div class="hist-mes">${d.mesLabel||'Sem título'}</div>
       <div class="hist-meta">${(d.cultos||[]).filter(c=>!c.oculto).length} cultos</div>
-      ${oculta?'<div style="font-size:10px;font-weight:700;color:#d4a017;margin-top:2px"><i class=ph-eye-slash></i> Oculta da publicação</div>':''}
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">
         ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
       </div>
@@ -6405,24 +5302,10 @@ async function renderHist(busca=''){
         <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')"><i class=ph-pencil-simple></i> Abrir</button>
         <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')"><i class=ph-eye></i> Ver</button>
         <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')"><i class=ph-clipboard-text></i> Duplicar</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleOcultaPublicacao('${id}')" title="${oculta?'Permitir publicar esta escala':'Ocultar esta escala da publicação'}"><i class="${oculta?'ph-eye':'ph-eye-slash'}"></i></button>
         <button class="btn-danger" onclick="excluirSessao('${id}')"><i class=ph-trash></i></button>
       </div>
     </div>`;
   }).join('');
-}
-
-async function toggleOcultaPublicacao(id){
-  let dados=null;
-  if(window._fbUser)dados=await getSessaoFirebase(id);
-  if(!dados){const raw=localStorage.getItem(SK(id));if(raw)dados=JSON.parse(raw);}
-  if(!dados){toast('<i class=ph-warning></i> Escala não encontrada');return;}
-  dados.ocultaPublicacao=!dados.ocultaPublicacao;
-  localStorage.setItem(SK(id),JSON.stringify(dados));
-  if(window._fbUser)await salvarSessaoFirebase(id,dados);
-  toast(dados.ocultaPublicacao?'<i class=ph-eye-slash></i> Escala oculta da publicação':'<i class=ph-eye></i> Escala liberada para publicação');
-  renderHist();
-  sincronizarEscalaPublica();
 }
 
 // INIT
