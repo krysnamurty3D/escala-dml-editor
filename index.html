@@ -1445,7 +1445,8 @@ function sortGrupos(grupos){
 const IGNORAR=[/hora\s*nona/i,/reuni[aã]o\s*(de\s*)?(coordenadores?|oficial|administrativa|ejc|pastores?|di[aá]conos?)/i,/reuni[aã]o\s+com/i,/conselho/i,/vig[ií]lia/i];
 const DIAS_OK=/domingo|ter[cç]a|quinta|s[aá]b(ado)?/i;
 
-let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null,_filtroDia='todos';
+let cultos=[],sessaoId=null,mesLabel='',_uid=0,_dragCard=null;
+let _filtrosDia=new Set(['todos']);
 function uid(){
   let max=0;
   for(const c of cultos){
@@ -1543,21 +1544,28 @@ function abrirEditor(){
 }
 
 function filtrarDia(dia){
-  _filtroDia=dia;
+  if(dia==='todos'){
+    _filtrosDia=new Set(['todos']);
+  }else{
+    _filtrosDia.delete('todos');
+    if(_filtrosDia.has(dia))_filtrosDia.delete(dia);
+    else _filtrosDia.add(dia);
+    if(!_filtrosDia.size)_filtrosDia=new Set(['todos']);
+  }
   document.querySelectorAll('.dia-filtro-btn').forEach(b=>{
-    b.classList.toggle('ativo',b.dataset.dia===dia);
+    b.classList.toggle('ativo',_filtrosDia.has(b.dataset.dia));
   });
   renderCultos();
 }
 
 function matchFiltroDia(c){
-  if(_filtroDia==='todos')return true;
-  if(_filtroDia==='dom')return /domingo/i.test(c.dia);
-  if(_filtroDia==='ter')return /ter[cç]a/i.test(c.dia);
-  if(_filtroDia==='qui')return /quinta/i.test(c.dia);
-  if(_filtroDia==='sab')return /s[aá]b/i.test(c.dia);
-  if(_filtroDia==='esp')return !!c.especial;
-  return true;
+  if(_filtrosDia.has('todos'))return true;
+  if(_filtrosDia.has('dom')&&/domingo/i.test(c.dia))return true;
+  if(_filtrosDia.has('ter')&&/ter[cç]a/i.test(c.dia))return true;
+  if(_filtrosDia.has('qui')&&/quinta/i.test(c.dia))return true;
+  if(_filtrosDia.has('sab')&&/s[aá]b/i.test(c.dia))return true;
+  if(_filtrosDia.has('esp')&&c.especial)return true;
+  return false;
 }
 
 function renderCultos(){
@@ -1565,7 +1573,7 @@ function renderCultos(){
   grid.innerHTML='';
   const showOc=document.getElementById('chk-ocultos').checked;
   const filtrados=cultos.filter(c=>matchFiltroDia(c));
-  if(filtrados.length===0&&_filtroDia!=='todos'){
+  if(filtrados.length===0&&!_filtrosDia.has('todos')){
     grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-calendar></i></div><p>Nenhum culto encontrado para este filtro.</p></div>`;
     return;
   }
