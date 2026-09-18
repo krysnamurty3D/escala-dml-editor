@@ -331,6 +331,16 @@ tr.esp-row .td-dia{color:#c03030;}
 .lixeira-card:hover{opacity:1;}
 .lixeira-expira{font-size:10px;color:#e06060;margin-top:4px;}
 .hist-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;}
+.hist-dup-aviso{grid-column:1/-1;background:rgba(200,140,20,.1);border:1px solid rgba(212,160,23,.4);border-radius:9px;padding:14px 16px;margin-bottom:2px;}
+.hist-dup-hdr{color:#d4a017;font-weight:700;font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.hist-dup-grupo{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-top:8px;}
+.hist-dup-mes{font-weight:700;font-size:13px;color:var(--white);margin-bottom:6px;}
+.hist-dup-count{font-weight:400;color:var(--muted);font-size:11px;}
+.hist-dup-item{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--border);}
+.hist-dup-item:first-of-type{border-top:none;}
+.hist-dup-info{font-size:11px;color:var(--muted);}
+.hist-dup-mais-recente{background:var(--teal);color:#061208;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.5px;}
+.hist-dup-btns{display:flex;gap:6px;}
 .hist-card:hover{border-color:var(--teal-dim);}
 .hist-card h3{color:var(--teal);font-size:15px;margin-bottom:5px;}
 .hist-card .meta{font-size:11px;color:var(--muted);}
@@ -6363,8 +6373,7 @@ function mostrarTabHist(tab){
 // ═══════════════════════════════════════════════
 // OVERRIDE excluirSessao — move para lixeira
 // ═══════════════════════════════════════════════
-async function excluirSessao(id){
-  if(!confirm('Mover esta escala para a lixeira?'))return;
+async function _excluirSessaoSemConfirm(id){
   // Pega os dados antes de excluir
   let dados=null;
   if(window._fbUser)dados=await getSessaoFirebase(id);
@@ -6374,8 +6383,11 @@ async function excluirSessao(id){
   // Remove do histórico local
   const idx=getIdx().filter(x=>x!==id);saveIdx(idx);
   localStorage.removeItem(SK(id));
+}
+async function excluirSessao(id){
+  if(!confirm('Mover esta escala para a lixeira?'))return;
+  await _excluirSessaoSemConfirm(id);
   renderHist();renderLixeira();
-  renderLixeira();
   toast('<i class=ph-trash></i> Movido para a lixeira');
 }
 
@@ -6402,13 +6414,14 @@ async function renderHist(busca=''){
   }
 
   const filtrados=sessions.filter(d=>!busca||d.mesLabel?.toLowerCase().includes(busca.toLowerCase())||d.cultos?.some(c=>c.grupos?.some(g=>g.toLowerCase().includes(busca.toLowerCase()))));
+  const avisoDup=busca?'':renderAvisoDuplicatas(sessions);
 
   if(!filtrados.length){
-    grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-folder-open></i></div><p>${busca?'Nenhum resultado.':'Nenhuma escala salva ainda.'}</p></div>`;return;
+    grid.innerHTML=avisoDup+`<div class="empty-state"><div class="icon"><i class=ph-folder-open></i></div><p>${busca?'Nenhum resultado.':'Nenhuma escala salva ainda.'}</p></div>`;return;
   }
 
   filtrados.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
-  grid.innerHTML=filtrados.map(d=>{
+  grid.innerHTML=avisoDup+filtrados.map(d=>{
     const id=d.id;
     const oculta=!!d.ocultaPublicacao;
     const top3=[...new Set((d.cultos||[]).flatMap(c=>c.grupos||[]))].filter(g=>g!==SH_LABEL).slice(0,3);
@@ -6428,6 +6441,55 @@ async function renderHist(busca=''){
       </div>
     </div>`;
   }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// VARREDURA DE ESCALAS DUPLICADAS (mesmo mês, IDs diferentes)
+// ═══════════════════════════════════════════════
+window._duplicatasEncontradas={};
+function renderAvisoDuplicatas(sessions){
+  const grupos={};
+  sessions.forEach(d=>{
+    const slug=_slugMes(d.mesLabel);
+    (grupos[slug]=grupos[slug]||[]).push(d);
+  });
+  const duplicados=Object.values(grupos).filter(g=>g.length>1);
+  window._duplicatasEncontradas={};
+  if(!duplicados.length)return'';
+  duplicados.forEach(g=>{window._duplicatasEncontradas[g[0].mesLabel]=g.map(d=>d.id);});
+  return`<div class="hist-dup-aviso">
+    <div class="hist-dup-hdr"><i class=ph-warning></i> ${duplicados.length===1?'Encontrei 1 escala duplicada':`Encontrei ${duplicados.length} escalas duplicadas`} — provavelmente por terem sido importadas em aparelhos diferentes.</div>
+    ${duplicados.map(g=>{
+      const ordenado=[...g].sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
+      return`<div class="hist-dup-grupo">
+        <div class="hist-dup-mes">${ordenado[0].mesLabel||'Sem título'} <span class="hist-dup-count">(${ordenado.length} cópias)</span></div>
+        ${ordenado.map((d,i)=>{
+          const dt=d.savedAt?new Date(d.savedAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'sem data';
+          const total=(d.cultos||[]).filter(c=>!c.oculto).length;
+          const comGrupo=(d.cultos||[]).filter(c=>c.grupos?.length).length;
+          return`<div class="hist-dup-item">
+            <div class="hist-dup-info">${i===0?'<span class="hist-dup-mais-recente">Mais recente</span> ':''}${total} cultos · ${comGrupo} com grupo · Salvo ${dt}</div>
+            <div class="hist-dup-btns">
+              <button class="btn btn-ghost btn-sm" onclick="verHist('${d.id}')"><i class=ph-eye></i> Ver</button>
+              <button class="btn btn-primary btn-sm" onclick="manterEExcluirDuplicatas('${d.mesLabel.replace(/'/g,"\\'")}','${d.id}')"><i class=ph-check-circle></i> Manter esta</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function manterEExcluirDuplicatas(mesLabelOrig,idManter){
+  const ids=window._duplicatasEncontradas[mesLabelOrig]||[];
+  const outros=ids.filter(id=>id!==idManter);
+  if(!outros.length)return;
+  if(!confirm(`Manter apenas a versão selecionada de "${mesLabelOrig}" e mover ${outros.length} cópia(s) duplicada(s) para a lixeira?`))return;
+  for(const id of outros){
+    await _excluirSessaoSemConfirm(id);
+  }
+  toast('<i class=ph-check-circle></i> Duplicatas movidas para a lixeira — mantida apenas a versão escolhida');
+  renderHist();renderLixeira();
 }
 
 async function toggleOcultaPublicacao(id){
