@@ -2344,6 +2344,14 @@ async function processarFilaSync(){
   for(const item of fila){
     try{
       if(item.tipo==='sessao'){
+        // Proteção contra dado obsoleto: se alguém já salvou uma versão mais
+        // recente desta escala na nuvem enquanto este item ficava na fila
+        // (ex: editado em outro aparelho), NÃO sobrescreve com o retrato antigo.
+        const atual=await getSessaoFirebase(item.id);
+        if(atual&&(atual.savedAt||0)>(item.dados.savedAt||0)){
+          console.warn('Fila de sync: item obsoleto descartado para',item.id);
+          continue;
+        }
         const ok=await salvarSessaoFirebase(item.id,item.dados);
         if(!ok)_filaSyncPendente.push(item);
       }
