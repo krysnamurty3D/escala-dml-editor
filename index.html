@@ -1478,7 +1478,7 @@ async function processarArq(file){
     const res=await mammoth.convertToHtml({arrayBuffer:buf});
     const parsed=parsear(res.value);
     if(!parsed.length){toast('<i class=ph-warning></i> Nenhum culto encontrado.');mostrarLoad(false);return;}
-    cultos=parsed;sessaoId='sess_'+Date.now();mesLabel=extrairMes(file.name);
+    cultos=parsed;mesLabel=extrairMes(file.name);sessaoId=sessaoIdParaMes(mesLabel);
     abrirEditor();
   }catch(e){console.error(e);toast('<i class=ph-x-circle></i> Erro ao ler arquivo');}
   mostrarLoad(false);
@@ -1487,6 +1487,16 @@ async function processarArq(file){
 function extrairMes(fn){
   const m=fn.match(/([A-Za-záéíóúãõâêîôûçÁÉÍÓÚÃÕÂÊÎÔÛÇ]+)[_\s-]*(\d{4})/i);
   return m?`${m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase()} ${m[2]}`:'Escala do Mês';
+}
+
+// ID determinístico por mês: garante que a MESMA escala (ex: "Setembro 2026")
+// sempre resolva para o mesmo documento na nuvem, não importa o dispositivo ou
+// quantas vezes o .docx foi importado — evita cópias paralelas divergentes.
+function _slugMes(label){
+  return (label||'').toLowerCase().replace(/ç/g,'c').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'sem-mes';
+}
+function sessaoIdParaMes(label){
+  return 'sess-mes-'+_slugMes(label);
 }
 
 function parsear(html){
@@ -5200,8 +5210,8 @@ function confirmarCalendario(){
   }
 
   cultos=lista;
-  sessaoId='sess_'+Date.now();
   mesLabel=`${MESES_PT[mes]} ${ano}`;
+  sessaoId=sessaoIdParaMes(mesLabel);
   fecharModal('modal-cal');
   abrirEditor();
   toast(`<i class=ph-check-circle></i> ${lista.length} cultos gerados para ${mesLabel}`);
@@ -6159,7 +6169,7 @@ async function carregarDadosFirebase(){
 // ═══════════════════════════════════════════════
 async function salvarSessao(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para salvar');return;}
-  if(!sessaoId)sessaoId='s'+Date.now();
+  if(!sessaoId)sessaoId=sessaoIdParaMes(mesLabel);
   let _ocultaAnterior=false;
   try{const _raw=localStorage.getItem(SK(sessaoId));if(_raw)_ocultaAnterior=!!JSON.parse(_raw).ocultaPublicacao;}catch(e){}
   const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now(),ocultaPublicacao:_ocultaAnterior};
