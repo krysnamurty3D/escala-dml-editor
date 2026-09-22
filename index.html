@@ -6414,12 +6414,23 @@ async function carregarDadosFirebase(){
       if(cfg.qrUrl)localStorage.setItem('dml_qr_url',cfg.qrUrl);
     }
   }catch(e){console.warn('carregar config:',e);}
-  // Migra sessões locais para Firebase (best-effort)
+  // Migra sessões locais para Firebase (best-effort) — só grava se o
+  // documento ainda não existir na nuvem OU se a versão local for
+  // comprovadamente mais recente. Antes isso sobrescrevia a nuvem
+  // incondicionalmente a cada abertura do app, usando o cache local
+  // (às vezes antigo) daquele aparelho especificamente — causa real de
+  // "outro aparelho substituiu meus dados corretos" mesmo sem ninguém
+  // clicar em Salvar de propósito.
   try{
     const localIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
     for(const id of localIdx){
       const raw=localStorage.getItem(SK(id));
-      if(raw) await salvarSessaoFirebase(id,JSON.parse(raw));
+      if(!raw)continue;
+      const dadosLocais=JSON.parse(raw);
+      const dadosNuvem=await getSessaoFirebase(id);
+      if(!dadosNuvem||(dadosLocais.savedAt||0)>(dadosNuvem.savedAt||0)){
+        await salvarSessaoFirebase(id,dadosLocais);
+      }
     }
   }catch(e){console.warn('migrar sessoes:',e);}
   // Baixa sessões do Firestore para localStorage (best-effort)
