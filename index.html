@@ -3664,7 +3664,8 @@ async function renderSolic(){
       const historico=it.historico||[];
       return `<div class="solic-row">
         <div class="solic-info">
-          <div class="solic-grupo">${_solicEsc(it.grupoNome||it.grupo||'—')}</div>
+          <div class="solic-grupo">${_solicEsc(it.nome||it.grupoNome||it.grupo||'—')}</div>
+          ${it.whatsapp?`<div class="solic-meta"><i class=ph-whatsapp-logo></i> ${_solicEsc(it.whatsapp)}</div>`:''}
           <div class="solic-item">${nomesItens}</div>
           <div class="solic-meta">Para dia ${dt}${dtDev?' · devolução até '+dtDev:''}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
           ${it.motivo?`<div class="solic-motivo">${_solicEsc(it.motivo)}</div>`:''}
@@ -3709,7 +3710,33 @@ async function _solicResponder(id,status){
     await setDoc(ref,{status,justificativa,respondidoEm:Date.now(),historico},{merge:true});
     toast(status==='deferido'?'✅ Solicitação deferida':'❌ Solicitação indeferida');
     renderSolic();
+    _solicNotificarWhatsapp(atual,status,justificativa);
   }catch(e){toast('❌ Erro: '+e.message);}
+}
+
+// Número em formato wa.me: só dígitos, com DDI. Quem preenche o formulário
+// normalmente digita só DDD+número (padrão BR) — assume 55 quando faltar.
+function _waNumero(raw){
+  const d=(raw||'').replace(/\D/g,'');
+  if(!d)return'';
+  return d.length<=11?'55'+d:d;
+}
+
+// Abre o WhatsApp com a mensagem de aprovação/recusa já escrita, pro
+// coordenador só conferir e enviar (sem API paga de WhatsApp Business).
+function _solicNotificarWhatsapp(atual,status,justificativa){
+  const numero=_waNumero(atual.whatsapp);
+  if(!numero)return;
+  const nome=atual.nome||atual.grupoNome||'';
+  const itens=(atual.itens&&atual.itens.length?atual.itens:(atual.item?[atual.item]:[])).join(', ');
+  const msg=status==='deferido'
+    ?`Olá${nome?' '+nome:''}! Sua solicitação de equipamento (${itens}) foi *aprovada* ✅. Qualquer dúvida, fale com o Departamento de Música e Louvor.`
+    :`Olá${nome?' '+nome:''}, sua solicitação de equipamento (${itens}) não foi aprovada.${justificativa?' Motivo: '+justificativa:''}`;
+  const url='https://wa.me/'+numero+'?text='+encodeURIComponent(msg);
+  const win=window.open(url,'_blank');
+  if(!win&&confirm('Não consegui abrir o WhatsApp automaticamente (bloqueado pelo navegador). Abrir agora?')){
+    location.href=url;
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -4818,6 +4845,7 @@ function exportarPagina(){
     'function _appAbrirModal(flow){',
     '  document.getElementById("rp-overlay").style.display="flex";',
     '  if(flow==="comunicacao")_rpMostrarComunicacoes();',
+    '  else if(flow==="solic"){_RP.flow=flow;_rpMostrarSolicNova();}',
     '  else{_RP.flow=flow;_rpMostrarLogin();}',
     '}',
     'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
@@ -4851,14 +4879,15 @@ function exportarPagina(){
     '  var tag=_RP.state==="comunic"?"<i class=ph-megaphone></i> COMUNICAÇÕES":_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
     '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
     '  var sino=_RP.slug?\'<button style="background:none;border:none;color:#7a9aa8;font-size:19px;cursor:pointer;position:absolute;top:14px;right:16px" onclick="_rpAtivarNotificacoes()" title="Ativar notificações"><i class="\'+(_RP.pushAtivo?"ph-bell":"ph-bell-slash")+\'"></i></button>\':"";',
-    '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+(_RP.nome||"Acesso Líderes")+\'</div>\'+sub+\'</div></div></div>\';',
+    '  var titulo=_RP.nome||(_RP.flow==="solic"?"Nova Solicitação":"Acesso Líderes");',
+    '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+titulo+\'</div>\'+sub+\'</div></div></div>\';',
     '}',
     'function _rpMostrarHome(){',
     '  _RP.state="home";_RP.flow=null;',
     '  _rpHtml(\'<div class="rp-hdr-box"><div class="rp-hdr-grupo">Departamento de Música e Louvor</div><div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-device-mobile></i> ÁREA DO LÍDER</span></div></div>\'',
     '    +\'<div class="rp-home-grid">\'',
     '    +\'<div class="rp-home-card" onclick="fecharRiderPanel();mostrarAppEscala()"><div class="rp-home-ico"><i class=ph-calendar-dots></i></div><div class="rp-home-lbl">Escala</div></div>\'',
-    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'solic\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-package></i></div><div class="rp-home-lbl">Solicitar Equipamento</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'solic\\\';_rpMostrarSolicNova()"><div class="rp-home-ico"><i class=ph-package></i></div><div class="rp-home-lbl">Solicitar Equipamento</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_rpMostrarComunicacoes()"><div class="rp-home-ico"><i class=ph-megaphone></i></div><div class="rp-home-lbl">Comunicações</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'rider\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-sliders-horizontal></i></div><div class="rp-home-lbl">RT</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'estudio\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-list-checks></i></div><div class="rp-home-lbl">Estúdio</div></div>\'',
@@ -4904,7 +4933,7 @@ function exportarPagina(){
     '  var grp=grupos[slug];',
     '  if(!grp||String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  if(_RP.flow==="solic")_rpMostrarSolicMenu();else if(_RP.flow==="estudio")_rpMostrarEnsaio();else if(_RP.flow==="comunicacao")_rpMostrarAgendaExterna();else _rpMostrarCultos();',
+    '  if(_RP.flow==="estudio")_rpMostrarEnsaio();else if(_RP.flow==="comunicacao")_rpMostrarAgendaExterna();else _rpMostrarCultos();',
     '}',
     'function _rpMostrarAgendaExterna(){',
     '  _RP.state="agenda-externa";',
@@ -4935,40 +4964,10 @@ function exportarPagina(){
     '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
 
-    'function _rpMostrarSolicMenu(){',
-    '  _RP.state="solic-menu";',
-    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Solicitações de \'+_RP.nome+\'</p><button class="rp-btn" onclick="_rpMostrarSolicNova()"><i class=ph-plus></i> Nova solicitação</button><div id="rp-solic-lista"><p class="rp-sub"><i class=ph-hourglass></i> Carregando...</p></div>\');',
-    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents:runQuery?key="+_RP_KEY;',
-    '  var body={structuredQuery:{from:[{collectionId:"solicitacoes"}],where:{fieldFilter:{field:{fieldPath:"grupo"},op:"EQUAL",value:{stringValue:_RP.slug}}},limit:50}};',
-    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})',
-    '    .then(function(r){return r.ok?r.json():[];}).then(function(rows){',
-    '      var itens=(rows||[]).filter(function(r){return r.document;}).map(function(r){',
-    '        var f=r.document.fields||{};',
-    '        var arrItens=f.itens?_rpFsParse(f.itens):(f.item?[_rpFsParse(f.item)]:[]);',
-    '        return{id:r.document.name.split("/").pop(),grupoNome:_rpFsParse(f.grupoNome),itens:arrItens,motivo:_rpFsParse(f.motivo),data:_rpFsParse(f.data),dataDevolucao:_rpFsParse(f.dataDevolucao),status:_rpFsParse(f.status)||"pendente",justificativa:_rpFsParse(f.justificativa),criadoEm:_rpFsParse(f.criadoEm)||0};',
-    '      });',
-    '      itens.sort(function(a,b){return b.criadoEm-a.criadoEm;});',
-    '      var el=document.getElementById("rp-solic-lista");if(!el)return;',
-    '      if(!itens.length){el.innerHTML=\'<p class="rp-sub" style="margin-top:10px">Nenhuma solicitação enviada ainda.</p>\';return;}',
-    '      el.innerHTML=itens.map(function(it){',
-    '        var stCls=it.status==="deferido"?"deferido":it.status==="indeferido"?"indeferido":"pendente";',
-    '        var stLbl=it.status==="deferido"?"<i class=ph-check-circle></i> Deferido":it.status==="indeferido"?"<i class=ph-x-circle></i> Indeferido":"<i class=ph-clock-countdown></i> Pendente";',
-    '        var dt=it.data?new Date(it.data+"T00:00:00").toLocaleDateString("pt-BR"):"—";',
-    '        var dtDev=it.dataDevolucao?new Date(it.dataDevolucao+"T00:00:00").toLocaleDateString("pt-BR"):null;',
-    '        var nomes=(it.itens||[]).join(", ")||"—";',
-    '        return \'<div class="rp-culto-item" style="align-items:flex-start;flex-direction:column;cursor:default">\'',
-    '          +\'<div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">\'',
-    '          +\'<div class="rp-culto-nome">\'+nomes+\'</div><span class="rp-solic-badge \'+stCls+\'">\'+stLbl+\'</span></div>\'',
-    '          +\'<div class="rp-culto-sub">Para dia \'+dt+(dtDev?" · devolução até "+dtDev:"")+(it.motivo?" · "+it.motivo:"")+\'</div>\'',
-    '          +(it.justificativa?\'<div class="rp-culto-sub" style="margin-top:4px;font-style:italic"><i class=ph-chat-circle-text></i> \'+it.justificativa+\'</div>\':\'\')',
-    '          +\'</div>\';',
-    '      }).join("");',
-    '    }).catch(function(){var el=document.getElementById("rp-solic-lista");if(el)el.innerHTML=\'<p class="rp-sub">Erro ao carregar.</p>\';});',
-    '}',
     'function _rpMostrarSolicNova(){',
     '  _RP.state="solic-nova";_RP.solicItens=[];',
     '  var hoje=new Date().toISOString().slice(0,10);',
-    '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")+\'<p class="rp-sub" style="margin-top:4px"><i class=ph-hourglass></i> Carregando itens dispon&#237;veis...</p>\');',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px"><i class=ph-hourglass></i> Carregando itens dispon&#237;veis...</p>\');',
     '  _rpConfigFetch("instrumentos").then(function(cfg){cfg=cfg||{itens:[]};',
     '    _RP.instrumentosDisponiveis=cfg.itens||[];',
     '    _rpRenderSolicNova(hoje);',
@@ -4977,8 +4976,12 @@ function exportarPagina(){
     'function _rpRenderSolicNova(hoje){',
     '  var opts=(_RP.instrumentosDisponiveis||[]).map(function(x){return\'<option value="\'+x+\'">\'+x+\'</option>\';}).join("")+\'<option value="__outro__">Outro (digitar)...</option>\';',
     '  var chips=(_RP.solicItens||[]).map(function(it,i){return\'<span class="rp-chip">\'+it+\' <a onclick="_rpRemoverItemSolic(\'+i+\')">&times;</a></span>\';}).join("");',
-    '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")',
-    '    +\'<label class="rp-label" style="margin-top:2px">Data</label>\'',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")',
+    '    +\'<label class="rp-label" style="margin-top:2px">Seu nome</label>\'',
+    '    +\'<input class="rp-inp" type="text" id="solic-nome" placeholder="Nome completo">\'',
+    '    +\'<label class="rp-label">WhatsApp</label>\'',
+    '    +\'<input class="rp-inp" type="tel" id="solic-whatsapp" placeholder="(11) 91234-5678">\'',
+    '    +\'<label class="rp-label">Data</label>\'',
     '    +\'<input class="rp-inp" type="date" id="solic-data" min="\'+hoje+\'">\'',
     '    +\'<label class="rp-label">Equipamento / Instrumento</label>\'',
     '    +\'<div style="display:flex;gap:6px">\'',
@@ -4991,18 +4994,22 @@ function exportarPagina(){
     '    +\'<textarea class="rp-inp" id="solic-motivo" rows="3" style="resize:vertical" placeholder="Explique o motivo da solicitação"></textarea>\'',
     '    +\'<label class="rp-label">Dia para devolução</label>\'',
     '    +\'<input class="rp-inp" type="date" id="solic-data-devolucao" min="\'+hoje+\'">\'',
-    '    +\'<div class="rp-err" id="solic-err" style="display:none">Preencha data, ao menos um equipamento e motivo.</div>\'',
+    '    +\'<div class="rp-err" id="solic-err" style="display:none">Preencha nome, WhatsApp, data, ao menos um equipamento e motivo.</div>\'',
     '    +\'<button class="rp-btn" onclick="_rpEnviarSolic()">Enviar solicitação</button>\');',
     '  var sel=document.getElementById("solic-item-sel");',
     '  if(sel)sel.onchange=function(){var c=document.getElementById("solic-item-custom");if(c)c.style.display=sel.value==="__outro__"?"block":"none";};',
     '}',
     'function _rpSolicPreservarCampos(fn){',
+    '  var nome=document.getElementById("solic-nome")?document.getElementById("solic-nome").value:"";',
+    '  var whatsapp=document.getElementById("solic-whatsapp")?document.getElementById("solic-whatsapp").value:"";',
     '  var data=document.getElementById("solic-data")?document.getElementById("solic-data").value:"";',
     '  var dataDev=document.getElementById("solic-data-devolucao")?document.getElementById("solic-data-devolucao").value:"";',
     '  var motivo=document.getElementById("solic-motivo")?document.getElementById("solic-motivo").value:"";',
     '  var hoje=new Date().toISOString().slice(0,10);',
     '  fn();',
     '  _rpRenderSolicNova(hoje);',
+    '  if(document.getElementById("solic-nome"))document.getElementById("solic-nome").value=nome;',
+    '  if(document.getElementById("solic-whatsapp"))document.getElementById("solic-whatsapp").value=whatsapp;',
     '  if(document.getElementById("solic-data"))document.getElementById("solic-data").value=data;',
     '  if(document.getElementById("solic-data-devolucao"))document.getElementById("solic-data-devolucao").value=dataDev;',
     '  if(document.getElementById("solic-motivo"))document.getElementById("solic-motivo").value=motivo;',
@@ -5020,17 +5027,19 @@ function exportarPagina(){
     '  _rpSolicPreservarCampos(function(){_RP.solicItens.splice(i,1);});',
     '}',
     'function _rpEnviarSolic(){',
+    '  var nome=document.getElementById("solic-nome").value.trim();',
+    '  var whatsapp=document.getElementById("solic-whatsapp").value.trim();',
     '  var data=document.getElementById("solic-data").value;',
     '  var itens=_RP.solicItens||[];',
     '  var motivo=document.getElementById("solic-motivo").value.trim();',
     '  var dataDevolucao=document.getElementById("solic-data-devolucao").value;',
-    '  if(!data||!itens.length||!motivo){var e=document.getElementById("solic-err");if(e)e.style.display="block";return;}',
-    '  var payload={grupo:_RP.slug,grupoNome:_RP.nome,data:data,itens:itens,dataDevolucao:dataDevolucao||null,motivo:motivo,status:"pendente",criadoEm:Date.now()};',
+    '  if(!nome||!whatsapp||!data||!itens.length||!motivo){var e=document.getElementById("solic-err");if(e)e.style.display="block";return;}',
+    '  var payload={nome:nome,whatsapp:whatsapp,data:data,itens:itens,dataDevolucao:dataDevolucao||null,motivo:motivo,status:"pendente",criadoEm:Date.now()};',
     '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
     '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/solicitacoes?key="+_RP_KEY;',
     '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
     '    .then(function(r){',
-    '      if(r.ok){alert("✅ Solicitação enviada!");_rpMostrarSolicMenu();}',
+    '      if(r.ok){alert("✅ Solicitação enviada! Você será avisado(a) pelo WhatsApp assim que for avaliada.");_rpMostrarHome();}',
     '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
     '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
