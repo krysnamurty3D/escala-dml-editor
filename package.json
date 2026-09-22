@@ -1,0 +1,8 @@
+{
+  "name": "escala-dml-editor",
+  "private": true,
+  "description": "Editor de escala do Departamento de Música e Louvor",
+  "scripts": {
+    "test": "node --test tests/unit.test.js"
+  }
+}

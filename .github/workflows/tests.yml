@@ -1,0 +1,30 @@
+name: Testes automatizados
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Checa sintaxe do index.html
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+            const linhas = html.split('\n');
+            const inicio = linhas.findIndex(l => /^<script>$/.test(l.trim()));
+            let fim = -1;
+            for (let i = inicio; i < linhas.length; i++) { if (/^<\/script>$/.test(linhas[i].trim())) { fim = i; break; } }
+            fs.writeFileSync('/tmp/app.js', linhas.slice(inicio + 1, fim).join('\n'));
+          "
+          node --check /tmp/app.js
+      - name: Roda testes de unidade
+        run: node --test tests/unit.test.js

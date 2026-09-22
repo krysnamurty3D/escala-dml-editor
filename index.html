@@ -86,6 +86,12 @@ button i,a i,label i,span i{pointer-events:none;}
   color:var(--muted);border:none;background:transparent;font-family:var(--font);transition:all .15s;}
 .nav-pill.active{background:var(--teal);color:#061208;}
 .nav-pill:hover:not(.active){color:var(--white);}
+.nav-dropdown{position:relative;display:inline-block;}
+.nav-dropdown-menu{display:none;position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:500;}
+.nav-dropdown-menu.open{display:block;}
+.nav-dropdown-item{display:flex;align-items:center;gap:6px;width:100%;text-align:left;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:var(--font);white-space:nowrap;}
+.nav-dropdown-item:hover{background:rgba(255,255,255,.06);color:var(--white);}
+.nav-dropdown-item.active{background:var(--teal);color:#061208;}
 
 /* ── BUTTONS ── */
 .btn{padding:6px 14px;border-radius:var(--radius);border:none;cursor:pointer;
@@ -820,19 +826,24 @@ tr.esp-row .td-dia{color:#c03030;}
   </div>
   <div class="hdr-right">
     <div class="nav-pills">
-      <button class="nav-pill active" onclick="irPara('upload')"><i class=ph-house></i></button>
-      <button class="nav-pill" id="pill-edit" onclick="irPara('edit')" style="display:none"><i class=ph-pencil-simple></i> Editar</button>
-      <button class="nav-pill" id="pill-prev" onclick="irPara('preview')" style="display:none"><i class=ph-eye></i> PDF</button>
-      <button class="nav-pill" onclick="irPara('hist')"><i class=ph-folder-open></i> Histórico</button>
-      <button class="nav-pill" onclick="irPara('dash')"><i class=ph-chart-bar></i> Dashboard</button>
-      <button class="nav-pill" onclick="irPara('config')"><i class=ph-gear></i> Grupos</button>
-      <button class="nav-pill" onclick="irPara('tmpl')"><i class=ph-clipboard-text></i> Templates</button>
-      <button class="nav-pill" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
-      <button class="nav-pill" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
-      <button class="nav-pill" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
-      <button class="nav-pill" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio<span class="nav-badge" id="estudio-nav-badge" style="display:none"></span></button>
-      <button class="nav-pill" onclick="irPara('comunic')"><i class=ph-megaphone></i> Comunicações</button>
-      <button class="nav-pill" id="pill-semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
+      <button class="nav-pill active" data-page="upload" onclick="irPara('upload')"><i class=ph-house></i></button>
+      <button class="nav-pill" id="pill-edit" data-page="edit" onclick="irPara('edit')" style="display:none"><i class=ph-pencil-simple></i> Editar</button>
+      <button class="nav-pill" id="pill-prev" data-page="preview" onclick="irPara('preview')" style="display:none"><i class=ph-eye></i> PDF</button>
+      <button class="nav-pill" data-page="hist" onclick="irPara('hist')"><i class=ph-folder-open></i> Histórico</button>
+      <button class="nav-pill" data-page="dash" onclick="irPara('dash')"><i class=ph-chart-bar></i> Dashboard</button>
+      <button class="nav-pill" data-page="riders" onclick="irPara('riders')"><i class=ph-sliders-horizontal></i> Riders</button>
+      <button class="nav-pill" data-page="comunic" onclick="irPara('comunic')"><i class=ph-megaphone></i> Comunicações</button>
+      <button class="nav-pill" id="pill-semana" data-page="semana" onclick="irPara('semana')" style="display:none"><i class=ph-calendar-dots></i> Semana</button>
+      <div class="nav-dropdown" id="nav-dropdown-config">
+        <button class="nav-pill" onclick="toggleNavDropdown(event)"><i class=ph-gear></i> Mais <i class=ph-caret-down></i></button>
+        <div class="nav-dropdown-menu" id="nav-dropdown-menu">
+          <button class="nav-dropdown-item" data-page="config" onclick="irPara('config')"><i class=ph-gear></i> Grupos</button>
+          <button class="nav-dropdown-item" data-page="tmpl" onclick="irPara('tmpl')"><i class=ph-clipboard-text></i> Templates</button>
+          <button class="nav-dropdown-item" data-page="colab" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
+          <button class="nav-dropdown-item" data-page="solic" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
+          <button class="nav-dropdown-item" data-page="estudio" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio<span class="nav-badge" id="estudio-nav-badge" style="display:none"></span></button>
+        </div>
+      </div>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
     <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none"><i class=ph-globe></i> Publicar</button>
@@ -5457,12 +5468,35 @@ function limparEscala(){
   toast('<i class=ph-trash></i> Escala limpa');
 }
 
+const PAGINAS_NO_DROPDOWN=['config','tmpl','colab','solic','estudio'];
+
+function toggleNavDropdown(e){
+  e.stopPropagation();
+  const menu=document.getElementById('nav-dropdown-menu');
+  if(!menu)return;
+  const abrindo=!menu.classList.contains('open');
+  if(abrindo){
+    const r=e.currentTarget.getBoundingClientRect();
+    menu.style.top=(r.bottom+6)+'px';
+    menu.style.left=Math.max(4,Math.min(r.left,window.innerWidth-196))+'px';
+  }
+  menu.classList.toggle('open',abrindo);
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#nav-dropdown-config'))document.getElementById('nav-dropdown-menu')?.classList.remove('open');
+});
+
 function irPara(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.nav-pill').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-pill,.nav-dropdown-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-dropdown-menu')?.classList.remove('open');
   document.getElementById('page-'+p).classList.add('active');
-  const idx={upload:0,edit:1,preview:2,hist:3,dash:4,config:5,tmpl:6,qr:7,colab:7,riders:8,solic:9,estudio:10,comunic:11,semana:12};
-  document.querySelectorAll('.nav-pill')[idx[p]]?.classList.add('active');
+  if(PAGINAS_NO_DROPDOWN.includes(p)){
+    document.querySelector(`.nav-dropdown-item[data-page="${p}"]`)?.classList.add('active');
+    document.querySelector('#nav-dropdown-config > .nav-pill')?.classList.add('active');
+  }else{
+    document.querySelector(`.nav-pill[data-page="${p}"]`)?.classList.add('active');
+  }
   if(p==='preview')renderPreview();
   if(p==='hist')renderHist();
   if(p==='dash'){populateDashFilters();populateComparativoSelects();renderDash();renderAnual();}
@@ -6398,6 +6432,17 @@ async function salvarConfigFirebase(){
   }catch(e){console.error(e);}
 }
 
+// Decide se uma sessão em cache local deve ser enviada para a nuvem:
+// só quando o documento ainda não existe lá, ou quando a versão local
+// tem um savedAt estritamente mais recente. Função pura — sem I/O —
+// para poder ser testada isoladamente (ver tests/unit.test.js). O bug
+// corrigido aqui era gravar sempre, incondicionalmente, sobrescrevendo
+// dados mais novos de outro aparelho com um cache local desatualizado.
+function _deveMigrarSessaoLocal(dadosLocais,dadosNuvem){
+  if(!dadosNuvem)return true;
+  return(dadosLocais?.savedAt||0)>(dadosNuvem.savedAt||0);
+}
+
 // ── Carregar tudo do Firebase ao logar
 async function carregarDadosFirebase(){
   if(!fbReady()||!window._fbUser)return;
@@ -6414,13 +6459,13 @@ async function carregarDadosFirebase(){
       if(cfg.qrUrl)localStorage.setItem('dml_qr_url',cfg.qrUrl);
     }
   }catch(e){console.warn('carregar config:',e);}
-  // Migra sessões locais para Firebase (best-effort) — só grava se o
-  // documento ainda não existir na nuvem OU se a versão local for
-  // comprovadamente mais recente. Antes isso sobrescrevia a nuvem
-  // incondicionalmente a cada abertura do app, usando o cache local
-  // (às vezes antigo) daquele aparelho especificamente — causa real de
-  // "outro aparelho substituiu meus dados corretos" mesmo sem ninguém
-  // clicar em Salvar de propósito.
+  // Migra sessões locais para Firebase (best-effort) — só grava se
+  // _deveMigrarSessaoLocal disser que sim (doc não existe na nuvem ainda,
+  // ou a versão local é comprovadamente mais recente). Antes isso
+  // sobrescrevia a nuvem incondicionalmente a cada abertura do app,
+  // usando o cache local (às vezes antigo) daquele aparelho especificamente
+  // — causa real de "outro aparelho substituiu meus dados corretos" mesmo
+  // sem ninguém clicar em Salvar de propósito. Ver tests/unit.test.js.
   try{
     const localIdx=JSON.parse(localStorage.getItem('dml_sessions')||'[]');
     for(const id of localIdx){
@@ -6428,7 +6473,7 @@ async function carregarDadosFirebase(){
       if(!raw)continue;
       const dadosLocais=JSON.parse(raw);
       const dadosNuvem=await getSessaoFirebase(id);
-      if(!dadosNuvem||(dadosLocais.savedAt||0)>(dadosNuvem.savedAt||0)){
+      if(_deveMigrarSessaoLocal(dadosLocais,dadosNuvem)){
         await salvarSessaoFirebase(id,dadosLocais);
       }
     }
