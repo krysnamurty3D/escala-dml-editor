@@ -3096,6 +3096,41 @@ async function publicarArquivoRemoto(path,content,message){
   return res.data;
 }
 
+// ═══════════════════════════════════════════════
+// CONFIGURAÇÕES PÚBLICAS — Firestore (substitui rider-config.json,
+// comunicados.json, checklist-config.json e instrumentos-config.json,
+// que viviam como arquivos estáticos no GitHub lidos via
+// raw.githubusercontent.com — com alguns minutos de cache de CDN,
+// causa de "está desatualizado" mesmo após salvar). Leitura pública
+// (líderes sem login), escrita só autenticada — ver firestore.rules.
+// ═══════════════════════════════════════════════
+async function _fsGetPublic(docId,fallback,legacyFilename){
+  try{
+    const {doc,getDoc,setDoc}=window._fbFns;
+    const ref=doc(window._fbDb,'configPublica',docId);
+    const snap=await getDoc(ref);
+    if(snap.exists())return snap.data();
+    // Migração única: doc ainda não existe no Firestore — importa do
+    // arquivo antigo no GitHub (se existir) e já semeia o Firestore.
+    if(legacyFilename){
+      try{
+        const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${legacyFilename}?_=${Date.now()}`);
+        if(r.ok){
+          const dadosAntigos=await r.json();
+          await setDoc(ref,dadosAntigos);
+          return dadosAntigos;
+        }
+      }catch(e){}
+    }
+    return fallback;
+  }catch(e){return fallback;}
+}
+
+async function _fsSetPublic(docId,dados){
+  const {doc,setDoc}=window._fbFns;
+  await setDoc(doc(window._fbDb,'configPublica',docId),dados);
+}
+
 async function publicarNetlify(){
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para publicar');return;}
   mostrarLoad(true);
@@ -3226,12 +3261,8 @@ self.addEventListener('notificationclick', (event) => {
 let _comunicadosCache=[];
 
 async function _buscarComunicados(){
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/comunicados.json?_=${Date.now()}`);
-    if(!r.ok)return[];
-    const dados=await r.json();
-    return Array.isArray(dados.lista)?dados.lista:[];
-  }catch(e){return[];}
+  const dados=await _fsGetPublic('comunicados',{lista:[]},'comunicados.json');
+  return Array.isArray(dados.lista)?dados.lista:[];
 }
 
 function _renderComunicadosList(){
@@ -3263,7 +3294,7 @@ async function carregarComunicadosEnviados(){
 }
 
 async function _salvarComunicadosRemoto(){
-  await publicarArquivoRemoto('comunicados.json',JSON.stringify({lista:_comunicadosCache},null,2),'Comunicados atualizados');
+  await _fsSetPublic('comunicados',{lista:_comunicadosCache});
 }
 
 async function enviarComunicado(){
@@ -3340,11 +3371,7 @@ function _fsEncode(v){
 async function renderRiders(){
   const grid=document.getElementById('riders-grid');
   if(!grid)return;
-  _riderCfg={};
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/rider-config.json?_=${Date.now()}`);
-    if(r.ok)_riderCfg=await r.json();
-  }catch(e){}
+  _riderCfg=await _fsGetPublic('riderConfig',{},'rider-config.json');
   // Preenche contatos
   const cont=_riderCfg.contatos||{};
   if(document.getElementById('cont-tecnico'))document.getElementById('cont-tecnico').value=cont.tecnico||'';
@@ -3389,7 +3416,7 @@ async function renderRiders(){
 async function ocultarDoRT(nome){
   _riderCfg.ocultos=[...(_riderCfg.ocultos||[]),nome];
   try{
-    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Grupo ocultado do painel RT');
+    await _fsSetPublic('riderConfig',_riderCfg);
     renderRiders();
     toast('<i class=ph-eye-slash></i> Ocultado deste painel — continua normal na escala');
   }catch(e){
@@ -3402,7 +3429,7 @@ async function mostrarNoRT(nome){
   const anterior=_riderCfg.ocultos||[];
   _riderCfg.ocultos=anterior.filter(g=>g!==nome);
   try{
-    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Grupo restaurado no painel RT');
+    await _fsSetPublic('riderConfig',_riderCfg);
     renderRiders();
     toast('<i class=ph-eye></i> Grupo voltou a aparecer no painel');
   }catch(e){
@@ -3427,7 +3454,7 @@ async function salvarRiderConfig(){
   };
   _riderCfg=Object.assign({},_riderCfg,{grupos,contatos});
   try{
-    await publicarArquivoRemoto('rider-config.json',JSON.stringify(_riderCfg,null,2),'Rider config atualizado');
+    await _fsSetPublic('riderConfig',_riderCfg);
     toast('<i class=ph-check-circle></i> PINs salvos com sucesso!');
   }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar: '+(e.message||e));}
 }
@@ -3605,13 +3632,8 @@ async function excluirRiderEditor(){
 function _solicEsc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
 async function renderSolic(){
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/instrumentos-config.json?_=${Date.now()}`);
-    if(r.ok){
-      const cfg=await r.json();
-      if(document.getElementById('instrumentos-itens'))document.getElementById('instrumentos-itens').value=(cfg.itens||[]).join('\n');
-    }
-  }catch(e){}
+  const cfg=await _fsGetPublic('instrumentos',{},'instrumentos-config.json');
+  if(document.getElementById('instrumentos-itens'))document.getElementById('instrumentos-itens').value=(cfg.itens||[]).join('\n');
   const wrap=document.getElementById('solic-list');
   if(!wrap)return;
   wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div>';
@@ -3653,7 +3675,7 @@ async function salvarInstrumentosConfig(){
   const itens=(document.getElementById('instrumentos-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const st=document.getElementById('instrumentos-status');
   try{
-    await publicarArquivoRemoto('instrumentos-config.json',JSON.stringify({itens},null,2),'Instrumentos disponíveis atualizados');
+    await _fsSetPublic('instrumentos',{itens});
     if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
     toast('✅ Instrumentos salvos!');
   }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
@@ -3786,18 +3808,9 @@ function _estudioYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padSta
 
 async function renderEstudio(){
   atualizarStatusPushCoordenador();
-  let cfg={};
-  try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/rider-config.json?_=${Date.now()}`);
-    if(r.ok)cfg=await r.json();
-  }catch(e){}
-  try{
-    const r2=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/checklist-config.json?_=${Date.now()}`);
-    if(r2.ok){
-      const chkCfg=await r2.json();
-      if(document.getElementById('checklist-itens'))document.getElementById('checklist-itens').value=(chkCfg.itens||[]).join('\n');
-    }
-  }catch(e){}
+  const cfg=await _fsGetPublic('riderConfig',{},'rider-config.json');
+  const chkCfg=await _fsGetPublic('checklist',{},'checklist-config.json');
+  if(document.getElementById('checklist-itens'))document.getElementById('checklist-itens').value=(chkCfg.itens||[]).join('\n');
   if(document.getElementById('checklist-itens')&&!document.getElementById('checklist-itens').value.trim()){
     document.getElementById('checklist-itens').value='BATERIA\nBAIXO\nTECLADO\nMICROFONES\nMESA DE SOM\nAMPLIFICADOR\nDIRECT BOXES';
   }
@@ -3849,7 +3862,7 @@ async function salvarChecklistConfig(){
   const itens=(document.getElementById('checklist-itens').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const st=document.getElementById('checklist-status');
   try{
-    await publicarArquivoRemoto('checklist-config.json',JSON.stringify({itens},null,2),'Checklist do estúdio atualizado');
+    await _fsSetPublic('checklist',{itens});
     if(st)st.textContent='✅ Salvo em '+new Date().toLocaleTimeString('pt-BR');
     toast('✅ Itens do checklist salvos!');
   }catch(e){toast('❌ Erro ao salvar: '+(e.message||e));}
@@ -4742,7 +4755,12 @@ function exportarPagina(){
     '_carregarEscalaPublica();',
 
     // Aviso popup
-    'var COMUNICADOS_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/comunicados.json";',
+    'function _rpConfigFetch(docId){',
+    '  var url="https://firestore.googleapis.com/v1/projects/escala-dml/databases/(default)/documents/configPublica/"+docId+"?key=AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc&_="+Date.now();',
+    '  return fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(doc){',
+    '    return(doc&&doc.fields)?_rpFsParse({mapValue:{fields:doc.fields}}):null;',
+    '  }).catch(function(){return null;});',
+    '}',
     'function _mostrarAvisoOverlay(d){',
     '  var ov=document.createElement("div");ov.className="aviso-overlay";ov.id="aviso-ov";',
     '  ov.innerHTML=\'<div class="aviso-box">\'',
@@ -4758,7 +4776,7 @@ function exportarPagina(){
     '  var ov=document.getElementById("aviso-ov");if(ov)ov.remove();',
     '  try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
     '}',
-    'fetch(COMUNICADOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '_rpConfigFetch("comunicados").then(function(d){',
     '  var lista=(d&&Array.isArray(d.lista))?d.lista:[];',
     '  if(!lista.length)return;',
     '  var ultimo=lista[lista.length-1];',
@@ -4770,9 +4788,6 @@ function exportarPagina(){
 // Rider Panel
     'var _RP={state:"login",flow:null,slug:null,nome:null,cultoKey:null,cultoLabel:null,cfg:null,fsDoc:null};',
     'var _RP_PROJ="escala-dml",_RP_KEY="AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc";',
-    'var _RP_CFG_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/rider-config.json";',
-    'var _RP_CHECKLIST_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/checklist-config.json";',
-    'var _RP_INSTRUMENTOS_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/instrumentos-config.json";',
     'var _RP_INSTRS=["BATERIA","BAIXO","CAJON","GUITARRA","PIANO","TECLADO","VIOLÃO","VS"];',
     'function _rpSlug(n){return(n||"").toLowerCase().replace(/[àáâãä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ìíîï]/g,"i").replace(/[òóôõö]/g,"o").replace(/[ùúûü]/g,"u").replace(/ç/g,"c").replace(/[^a-z0-9]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"");}',
     'function _rpFsParse(v){if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.nullValue!==undefined)return null;if(v.arrayValue)return(v.arrayValue.values||[]).map(_rpFsParse);if(v.mapValue){var o={};Object.entries(v.mapValue.fields||{}).forEach(function(e){o[e[0]]=_rpFsParse(e[1]);});return o;}return null;}',
@@ -4842,7 +4857,7 @@ function exportarPagina(){
     'function _rpMostrarComunicacoes(){',
     '  _RP.state="comunic";',
     '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\" style=\\"margin-top:4px\\"><i class=ph-hourglass></i> Carregando avisos...</p>");',
-    '  fetch(COMUNICADOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '  _rpConfigFetch("comunicados").then(function(d){',
     '    var lista=(d&&Array.isArray(d.lista))?[...d.lista].reverse():[];',
     '    if(!lista.length){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum comunicado no momento.</p>\'+_rpBtnAgendaExterna());return;}',
     '    var itens=lista.map(function(c){',
@@ -4855,7 +4870,7 @@ function exportarPagina(){
 
     'function _rpMostrarLogin(){',
     '  _RP.state="login";_RP.nome=null;_RP.cultoKey=null;_RP.cultoLabel=null;',
-    '  fetch(_RP_CFG_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(cfg){',
+    '  _rpConfigFetch("riderConfig").then(function(cfg){',
     '    _RP.cfg=cfg;',
     '    var grupos=cfg&&cfg.grupos?Object.values(cfg.grupos).filter(function(g){return g.pin;}).sort(function(a,b){return a.nome.localeCompare(b.nome);}):[];',
     '    if(_RP.flow==="estudio")grupos=grupos.filter(function(g){return _RP_GRUPOS_LOUVOR.indexOf(g.nome)>=0;});',
@@ -4943,7 +4958,7 @@ function exportarPagina(){
     '  _RP.state="solic-nova";_RP.solicItens=[];',
     '  var hoje=new Date().toISOString().slice(0,10);',
     '  _rpHtml(_rpHdr("_rpMostrarSolicMenu")+\'<p class="rp-sub" style="margin-top:4px"><i class=ph-hourglass></i> Carregando itens dispon&#237;veis...</p>\');',
-    '  fetch(_RP_INSTRUMENTOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};}).then(function(cfg){',
+    '  _rpConfigFetch("instrumentos").then(function(cfg){cfg=cfg||{itens:[]};',
     '    _RP.instrumentosDisponiveis=cfg.itens||[];',
     '    _rpRenderSolicNova(hoje);',
     '  });',
@@ -5050,7 +5065,7 @@ function exportarPagina(){
     '  _RP.ensaioKey=_rpEnsaioYmd(dataCiclo);_RP.ensaioDiaLbl=DIAS[dataCiclo.getDay()];_RP.ensaioHora=hora;',
     '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\"><i class=ph-hourglass></i> Carregando...</p>");',
     '  var pDoc=fetch("https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/estudio/"+_RP.slug+"?key="+_RP_KEY).then(function(r){return r.ok?r.json():{};});',
-    '  var pCfg=fetch(_RP_CHECKLIST_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():{itens:[]};}).catch(function(){return{itens:[]};});',
+    '  var pCfg=_rpConfigFetch("checklist").then(function(cfg){return cfg||{itens:[]};});',
     '  Promise.all([pDoc,pCfg]).then(function(res){',
     '    _RP.estudioDoc=res[0];_RP.checklistItens=res[1].itens||[];',
     '    var ensaios=res[0].fields&&res[0].fields.ensaios?_rpFsParse(res[0].fields.ensaios):{};',
@@ -6276,12 +6291,55 @@ window.onFbAuthReady=async function(user){
 function fbUserPath(sub){ return `usuarios/${window._fbUser?.uid}/${sub}`; }
 
 // ── Indicador de sync
+let _ultimoSyncOk=null;
+
+function _fmtRelativo(ts){
+  if(!ts)return'';
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<10)return'agora mesmo';
+  if(s<60)return'há '+s+'s';
+  const m=Math.floor(s/60);
+  if(m<60)return'há '+m+'min';
+  const h=Math.floor(m/60);
+  if(h<24)return'há '+h+'h';
+  return'há '+Math.floor(h/24)+'d';
+}
+
 function setSyncStatus(s){
   const el=document.getElementById('sync-status');
   if(!el)return;
-  if(s==='ok'){el.innerHTML='<i class=ph-cloud></i> Salvo';el.className='sync-indicator sync-ok';}
-  else if(s==='saving'){el.innerHTML='<i class=ph-hourglass></i> Salvando...';el.className='sync-indicator sync-saving';}
-  else{el.innerHTML='<i class=ph-warning></i> Erro sync';el.className='sync-indicator sync-err';}
+  el.style.cursor='pointer';
+  el.onclick=forcarSincronizacao;
+  if(s==='ok'){
+    _ultimoSyncOk=Date.now();
+    el.innerHTML='<i class=ph-cloud></i> Salvo';el.className='sync-indicator sync-ok';
+    el.title='Sincronizado '+_fmtRelativo(_ultimoSyncOk)+' — toque para forçar sincronização agora';
+  }
+  else if(s==='saving'){el.innerHTML='<i class=ph-hourglass></i> Salvando...';el.className='sync-indicator sync-saving';el.title='Salvando na nuvem...';}
+  else if(s==='offline'){el.innerHTML='<i class=ph-wifi-slash></i> Offline';el.className='sync-indicator offline';el.title='Sem conexão — mudanças serão sincronizadas ao voltar. Toque para tentar agora.';}
+  else{el.innerHTML='<i class=ph-warning></i> Erro sync';el.className='sync-indicator sync-err';el.title='Falha ao sincronizar — toque para tentar de novo.';}
+}
+
+// Reprocessa a fila de sync pendente e atualiza a tela atual com os dados
+// mais recentes da nuvem — botão manual para quando o usuário desconfia
+// que algo não sincronizou (em vez de precisar recarregar a página).
+async function forcarSincronizacao(){
+  toast('<i class=ph-arrows-clockwise></i> Forçando sincronização...');
+  try{
+    await processarFilaSync();
+    const pagAtiva=document.querySelector('.page.active')?.id||'';
+    if(pagAtiva==='page-riders')await renderRiders();
+    else if(pagAtiva==='page-comunic'){await carregarComunicadosEnviados();await renderComunicacoesAdmin();}
+    else if(pagAtiva==='page-solic')await renderSolic();
+    else if(pagAtiva==='page-estudio')await renderEstudio();
+    else if(pagAtiva==='page-hist')await renderHist();
+    await mostrarCardUltima();
+    setSyncStatus('ok');
+    toast('<i class=ph-check-circle></i> Sincronizado!');
+  }catch(e){
+    setSyncStatus('err');
+    toast('<i class=ph-x-circle></i> Erro ao sincronizar: '+(e.message||e));
+  }
 }
 
 // ── Salvar sessão no Firestore
