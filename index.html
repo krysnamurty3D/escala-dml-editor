@@ -1256,6 +1256,7 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
     <button class="btn btn-outline btn-sm" onclick="renderComunicacoesAdmin()">↻ Atualizar</button>
   </div>
+  <input class="hist-search" type="text" id="comunic-busca" placeholder="Buscar por grupo, local ou data..." oninput="_filtrarComunicacoesAdmin(this.value)" style="width:100%;max-width:400px;margin-bottom:16px">
   <div id="comunicacoes-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div></div>
 </div>
 <!-- QR CODE -->
@@ -3675,38 +3676,94 @@ async function _solicResponder(id,status){
 // ═══════════════════════════════════════════════
 // COMUNICAÇÕES — AGENDA EXTERNA DOS GRUPOS (histórico, apenas editor)
 // ═══════════════════════════════════════════════
+let _comunicAgendaCache=[];
+
 async function renderComunicacoesAdmin(){
   const wrap=document.getElementById('comunicacoes-list');
   if(!wrap)return;
   wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div>';
+  const busca=document.getElementById('comunic-busca');
+  if(busca)busca.value='';
   try{
     const {collection,getDocs,query,orderBy}=window._fbFns;
     const snap=await getDocs(query(collection(window._fbDb,'agendaExterna'),orderBy('criadoEm','desc')));
     const itens=[];
     snap.forEach(d=>itens.push({id:d.id,...d.data()}));
-    if(!itens.length){wrap.innerHTML='<div class="empty-state"><div class="icon">📢</div><p>Nenhuma agenda externa enviada ainda.</p></div>';return;}
-    const porGrupo={};
-    itens.forEach(it=>{
-      const g=it.grupoNome||it.grupo||'—';
-      (porGrupo[g]=porGrupo[g]||[]).push(it);
+    _comunicAgendaCache=itens;
+    _renderComunicacoesAdminLista(itens);
+  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
+}
+
+function _filtrarComunicacoesAdmin(termo){
+  const t=(termo||'').toLowerCase().trim();
+  if(!t){_renderComunicacoesAdminLista(_comunicAgendaCache);return;}
+  const filtrado=_comunicAgendaCache.filter(it=>{
+    const g=(it.grupoNome||it.grupo||'').toLowerCase();
+    const local=(it.local||'').toLowerCase();
+    const dt=it.dia?new Date(it.dia+'T00:00:00').toLocaleDateString('pt-BR'):'';
+    return g.includes(t)||local.includes(t)||dt.includes(t);
+  });
+  _renderComunicacoesAdminLista(filtrado,true);
+}
+
+function _renderComunicacoesAdminLista(itens,semVazioGeral){
+  const wrap=document.getElementById('comunicacoes-list');
+  if(!wrap)return;
+  if(!itens.length){
+    wrap.innerHTML=`<div class="empty-state"><div class="icon">📢</div><p>${semVazioGeral?'Nenhum resultado para essa busca.':'Nenhuma agenda externa enviada ainda.'}</p></div>`;
+    return;
+  }
+  const porGrupo={};
+  itens.forEach(it=>{
+    const g=it.grupoNome||it.grupo||'—';
+    (porGrupo[g]=porGrupo[g]||[]).push(it);
+  });
+  const grupos=Object.keys(porGrupo).sort((a,b)=>a.localeCompare(b));
+  wrap.innerHTML=grupos.map(g=>{
+    const porMes={};
+    porGrupo[g].forEach(it=>{
+      const d=it.dia?new Date(it.dia+'T00:00:00'):(it.criadoEm?new Date(it.criadoEm):null);
+      const mesLbl=d?`${MESES_PT[d.getMonth()]} ${d.getFullYear()}`:'Sem data';
+      (porMes[mesLbl]=porMes[mesLbl]||[]).push(it);
     });
-    const grupos=Object.keys(porGrupo).sort((a,b)=>a.localeCompare(b));
-    wrap.innerHTML=grupos.map(g=>{
-      const linhas=porGrupo[g].map(it=>{
+    const mesesOrdenados=Object.keys(porMes).sort((a,b)=>{
+      const da=porMes[a][0].dia||porMes[a][0].criadoEm||0, db=porMes[b][0].dia||porMes[b][0].criadoEm||0;
+      return new Date(db)-new Date(da);
+    });
+    const blocosMes=mesesOrdenados.map(mesLbl=>{
+      const linhas=porMes[mesLbl].map(it=>{
         const dt=it.dia?new Date(it.dia+'T00:00:00').toLocaleDateString('pt-BR'):'—';
         return `<div class="solic-row">
           <div class="solic-info">
             <div class="solic-item">${_solicEsc(it.local||'—')}</div>
             <div class="solic-meta">Dia ${dt}${it.horario?' · '+_solicEsc(it.horario):''}${it.criadoEm?' · enviado '+new Date(it.criadoEm).toLocaleDateString('pt-BR'):''}</div>
           </div>
+          <button class="btn-icon" onclick="excluirAgendaExterna('${it.id}')" title="Excluir este aviso"><i class=ph-trash></i></button>
         </div>`;
       }).join('');
-      return `<div class="estudio-cfg" style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${_solicEsc(g)}</div>
+      return `<div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${mesLbl}</div>
         ${linhas}
       </div>`;
     }).join('');
-  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
+    return `<div class="estudio-cfg" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">${_solicEsc(g)} <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(${porGrupo[g].length} aviso${porGrupo[g].length>1?'s':''})</span></div>
+      ${blocosMes}
+    </div>`;
+  }).join('');
+}
+
+async function excluirAgendaExterna(id){
+  if(!confirm('Excluir este aviso de agenda externa? Esta ação não pode ser desfeita.'))return;
+  try{
+    const {doc,deleteDoc}=window._fbFns;
+    await deleteDoc(doc(window._fbDb,'agendaExterna',id));
+    _comunicAgendaCache=_comunicAgendaCache.filter(it=>it.id!==id);
+    const buscaAtual=document.getElementById('comunic-busca')?.value||'';
+    if(buscaAtual)_filtrarComunicacoesAdmin(buscaAtual);
+    else _renderComunicacoesAdminLista(_comunicAgendaCache);
+    toast('<i class=ph-trash></i> Aviso excluído');
+  }catch(e){toast('<i class=ph-x-circle></i> Erro ao excluir: '+(e.message||e));}
 }
 
 // ═══════════════════════════════════════════════
