@@ -12,37 +12,48 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Riders — público (líderes sem login)
+    // Riders — público (líderes sem login). Nada no app exclui um rider pelo
+    // cliente, então delete fica bloqueado — evita que alguém com a chave
+    // pública do Firebase apague documentos em massa.
     match /riders/{slug} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
     }
 
-    // Solicitações de Equipamento — público (líderes sem login)
+    // Solicitações de Equipamento — público (líderes sem login). Deferir/
+    // indeferir só atualiza o status (merge), nunca apaga — delete bloqueado.
     match /solicitacoes/{id} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
     }
 
     // Estúdio (checklist + horário de ensaio) — público (líderes sem login)
     match /estudio/{slug} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
     }
 
     // Comunicações — agenda externa dos grupos — público (líderes sem login)
     match /agendaExterna/{id} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
     }
 
     // Escala pública ao vivo — a página pública lê direto daqui (sem republicar
     // arquivo estático); o editor grava ao salvar/ocultar a escala
     match /escalaPublica/{doc} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
     }
 
     // Tokens de notificação push — público (líderes sem login se cadastram
     // pelo próprio token; o coordenador se cadastra autenticado, mas a
-    // coleção fica aberta pelo mesmo motivo das demais acima)
+    // coleção fica aberta pelo mesmo motivo das demais acima). A limpeza de
+    // tokens inválidos roda no Cloud Function com Admin SDK, que não passa
+    // por estas regras — então bloquear delete aqui não afeta essa limpeza.
     match /pushTokens/{token} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
     }
 
     // Configurações públicas (PINs de rider, comunicados aos líderes,
