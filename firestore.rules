@@ -20,11 +20,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Solicitações de Equipamento — público (líderes sem login). Deferir/
-    // indeferir só atualiza o status (merge), nunca apaga — delete bloqueado.
+    // Solicitações de Equipamento — envio é público (aberto a qualquer
+    // pessoa, sem PIN). Excluir só pelo editor autenticado, nunca por quem
+    // está enviando pela página pública.
     match /solicitacoes/{id} {
       allow read, create, update: if true;
-      allow delete: if false;
+      allow delete: if request.auth != null;
     }
 
     // Estúdio (checklist + horário de ensaio) — público (líderes sem login)

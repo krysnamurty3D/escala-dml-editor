@@ -3677,6 +3677,7 @@ async function renderSolic(){
         <div class="solic-actions">
           <button class="btn btn-outline btn-sm" onclick="_solicResponder('${it.id}','deferido')">✅ Deferir</button>
           <button class="btn-danger" onclick="_solicResponder('${it.id}','indeferido')">❌ Indeferir</button>
+          <button class="btn-danger" onclick="_solicExcluir('${it.id}')" title="Excluir solicitação"><i class=ph-trash></i></button>
         </div>
       </div>`;
     }).join('');
@@ -3712,6 +3713,16 @@ async function _solicResponder(id,status){
     renderSolic();
     _solicNotificarWhatsapp(atual,status,justificativa);
   }catch(e){toast('❌ Erro: '+e.message);}
+}
+
+async function _solicExcluir(id){
+  if(!confirm('Excluir esta solicitação? Essa ação não pode ser desfeita.'))return;
+  try{
+    const {doc,deleteDoc}=window._fbFns;
+    await deleteDoc(doc(window._fbDb,'solicitacoes',id));
+    toast('<i class=ph-trash></i> Solicitação excluída');
+    renderSolic();
+  }catch(e){toast('❌ Erro ao excluir: '+e.message);}
 }
 
 // Número em formato wa.me: só dígitos, com DDI. Quem preenche o formulário
