@@ -1,0 +1,17 @@
+{
+  "name": "Escala DML — Música e Louvor",
+  "short_name": "Escala DML",
+  "description": "Escala de louvor, riders técnicos e comunicações do Departamento de Música e Louvor.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#111820",
+  "theme_color": "#111820",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

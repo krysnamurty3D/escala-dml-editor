@@ -49,7 +49,7 @@ function gerarHTML() {
   return out;
 }
 
-async function publicar(htmlFinal) {
+async function publicarArquivo(caminhoRemoto, conteudoB64, mensagem) {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error('GITHUB_TOKEN não definido no ambiente');
 
@@ -59,7 +59,7 @@ async function publicar(htmlFinal) {
     'Content-Type': 'application/json',
     'User-Agent': 'escala-dml-shell-publisher'
   };
-  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/index.html`;
+  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${caminhoRemoto}`;
 
   let sha = null;
   const getRes = await fetch(url, { headers });
@@ -70,26 +70,49 @@ async function publicar(htmlFinal) {
     throw new Error(`GET ${url} -> ${getRes.status}: ${await getRes.text()}`);
   }
 
-  const contentB64 = Buffer.from(htmlFinal, 'utf8').toString('base64');
   const putRes = await fetch(url, {
     method: 'PUT',
     headers,
     body: JSON.stringify({
-      message: 'Atualiza shell da página pública (código/layout)',
-      content: contentB64,
+      message: mensagem,
+      content: conteudoB64,
       ...(sha ? { sha } : {})
     })
   });
   if (!putRes.ok) {
     throw new Error(`PUT ${url} -> ${putRes.status}: ${await putRes.text()}`);
   }
-  console.log('Shell publicado com sucesso em', `${GITHUB_USER}/${GITHUB_REPO}/index.html`);
+  console.log('Publicado com sucesso em', `${GITHUB_USER}/${GITHUB_REPO}/${caminhoRemoto}`);
+}
+
+async function publicarShellHTML(htmlFinal) {
+  const contentB64 = Buffer.from(htmlFinal, 'utf8').toString('base64');
+  await publicarArquivo('index.html', contentB64, 'Atualiza shell da página pública (código/layout)');
+}
+
+// Publica manifest.json e os ícones do PWA (necessários para instalar como
+// app na tela inicial e, no iOS, pré-requisito para notificações push).
+async function publicarAssetsPWA() {
+  const raiz = path.join(__dirname, '..');
+  const arquivos = [
+    { local: 'manifest.json', remoto: 'manifest.json' },
+    { local: 'icons/icon-192.png', remoto: 'icons/icon-192.png' },
+    { local: 'icons/icon-512.png', remoto: 'icons/icon-512.png' },
+    { local: 'icons/apple-touch-icon.png', remoto: 'icons/apple-touch-icon.png' }
+  ];
+  for (const { local, remoto } of arquivos) {
+    const caminho = path.join(raiz, local);
+    if (!fs.existsSync(caminho)) { console.warn('Asset PWA não encontrado, pulando:', local); continue; }
+    const conteudoB64 = fs.readFileSync(caminho).toString('base64');
+    await publicarArquivo(remoto, conteudoB64, `Atualiza asset PWA: ${remoto}`);
+  }
 }
 
 (async () => {
   try {
     const htmlFinal = gerarHTML();
-    await publicar(htmlFinal);
+    await publicarShellHTML(htmlFinal);
+    await publicarAssetsPWA();
   } catch (e) {
     console.error('Falha ao publicar shell:', e.message);
     process.exit(1);

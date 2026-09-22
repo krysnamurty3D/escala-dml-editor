@@ -6,6 +6,8 @@ on:
     paths:
       - "index.html"
       - "scripts/publicar-shell.js"
+      - "manifest.json"
+      - "icons/**"
   workflow_dispatch: {}
 
 jobs:
