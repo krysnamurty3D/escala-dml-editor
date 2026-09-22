@@ -353,8 +353,10 @@ tr.esp-row .td-dia{color:#c03030;}
 .riders-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
 .riders-desc{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;max-width:560px;}
 .riders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px;}
-.rider-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
-.rider-card-nome{font-size:13px;font-weight:800;color:var(--teal);margin-bottom:10px;}
+.rider-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;}
+.rider-card-nome{font-size:13px;font-weight:800;color:var(--teal);margin-bottom:10px;padding-right:22px;}
+.rider-card-del{position:absolute;top:10px;right:10px;color:#902020;opacity:.55;background:none;border:none;cursor:pointer;padding:2px;font-size:13px;}
+.rider-card-del:hover{opacity:1;}
 .rider-pin-row{display:flex;align-items:center;gap:8px;}
 .rider-pin-inp{background:var(--navy);border:1px solid var(--border);border-radius:7px;color:var(--white);font-size:20px;padding:6px 10px;width:88px;letter-spacing:5px;font-family:monospace;text-align:center;}
 .rider-pin-inp:focus{outline:none;border-color:var(--teal);}
@@ -1144,6 +1146,17 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
     <button class="btn btn-primary btn-sm" onclick="salvarRiderConfig()"> <i class=ph-floppy-disk></i> Salvar PINs</button>
   </div>
+  <div class="add-grupo-form" style="margin-bottom:16px">
+    <input type="text" id="rt-novo-grupo-nome" placeholder="Nome do grupo / cantor / coral">
+    <select id="rt-novo-grupo-cat">
+      <option value="Grupos Musicais">Grupos Musicais</option>
+      <option value="Corais">Corais</option>
+      <option value="Grupos Vocais">Grupos Vocais</option>
+      <option value="Grupos de Coreografia">Grupos de Coreografia</option>
+      <option value="Cantores">Cantores</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="adicionarGrupoRT()"><i class=ph-plus></i> Adicionar</button>
+  </div>
   <div class="riders-grid" id="riders-grid"><div class="empty-state"><div class="icon"><i class=ph-hourglass></i></div><p>Carregando grupos...</p></div></div>
   <!-- Contatos para compartilhamento do Set List -->
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px">
@@ -1207,34 +1220,31 @@ tr.esp-row .td-dia{color:#c03030;}
 </div>
 <!-- COMUNICAÇÕES: AGENDA EXTERNA POR GRUPO -->
 <div id="page-comunicacoes" class="page">
-  <!-- Painel de Aviso para a página pública -->
-  <div id="aviso-panel-wrap" style="width:100%;max-width:700px;margin-bottom:24px">
+  <!-- ENVIAR: Comunicados para os líderes -->
+  <div style="width:100%;max-width:700px;margin-bottom:24px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:18px"><i class=ph-megaphone></i></span>
-          <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Aviso na Página Pública</span>
-        </div>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--muted)">
-          <input type="checkbox" id="aviso-ativo" onchange="atualizarPainelAviso()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer">
-          Ativar aviso
-        </label>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <span style="font-size:18px"><i class=ph-megaphone></i></span>
+        <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Enviar Comunicado aos Líderes</span>
       </div>
-      <div id="aviso-campos" style="display:none">
-        <input id="aviso-titulo" type="text" placeholder="Título do aviso (ex: Atenção!)" maxlength="80"
-          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;margin-bottom:10px;font-family:inherit;box-sizing:border-box">
-        <textarea id="aviso-texto" rows="3" placeholder="Mensagem do aviso..." maxlength="400"
-          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Cada comunicado enviado aparece como aviso na página pública e fica registrado no histórico abaixo.</p>
+      <input id="aviso-titulo" type="text" placeholder="Título do comunicado (ex: Atenção!)" maxlength="80"
+        style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;margin-bottom:10px;font-family:inherit;box-sizing:border-box">
+      <textarea id="aviso-texto" rows="3" placeholder="Mensagem do comunicado..." maxlength="400"
+        style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:8px 12px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="enviarComunicado()"><i class=ph-share-network></i> Enviar comunicado</button>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
-        <span id="aviso-status" style="font-size:11px;color:var(--muted)"></span>
-        <button class="btn btn-outline btn-sm" onclick="salvarAviso()"> <i class=ph-floppy-disk></i> Salvar aviso</button>
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Histórico de comunicados enviados</div>
+        <div id="comunicados-enviados-list"><p style="font-size:12px;color:var(--muted)"><i class=ph-hourglass></i> Carregando...</p></div>
       </div>
     </div>
   </div>
+  <!-- RECEBER: Agenda Externa dos Grupos -->
   <div class="riders-header">
     <div>
-      <h2 style="color:var(--teal);font-size:17px">📢 Comunicações — Agenda Externa dos Grupos</h2>
+      <h2 style="color:var(--teal);font-size:17px"><i class=ph-tray></i> Receber dos Líderes — Agenda Externa dos Grupos</h2>
       <p class="riders-desc">Compromissos fora da igreja (dia, horário e local) avisados pelos próprios grupos, corais e cantores na página pública. Histórico por grupo, visível apenas aqui.</p>
     </div>
     <button class="btn btn-outline btn-sm" onclick="renderComunicacoesAdmin()">↻ Atualizar</button>
@@ -2706,18 +2716,35 @@ function renderConfig(){
   }
 }
 
-function adicionarGrupo(){
-  const nome=document.getElementById('novo-grupo-nome').value.trim().toUpperCase();
-  const cat=document.getElementById('novo-grupo-cat').value;
-  if(!nome){toast('<i class=ph-warning></i> Digite o nome');return;}
+function _refreshGruposViews(){
+  if(document.getElementById('config-body'))renderConfig();
+  if(document.getElementById('riders-grid'))renderRiders();
+}
+
+function _addGrupo(nome,cat){
+  nome=(nome||'').trim().toUpperCase();
+  if(!nome){toast('<i class=ph-warning></i> Digite o nome');return false;}
   if(!GRUPOS[cat])GRUPOS[cat]=[];
-  if(GRUPOS[cat].includes(nome)){toast('<i class=ph-warning></i> Já existe');return;}
+  if(GRUPOS[cat].includes(nome)){toast('<i class=ph-warning></i> Já existe');return false;}
   GRUPOS[cat].push(nome);
   saveGrupos(GRUPOS);
   salvarConfigFirebase();
   sincronizarEscalaPublica();
-  document.getElementById('novo-grupo-nome').value='';
-  renderConfig();toast('<i class=ph-check-circle></i> Grupo adicionado!');
+  _refreshGruposViews();
+  toast('<i class=ph-check-circle></i> Grupo adicionado!');
+  return true;
+}
+
+function adicionarGrupo(){
+  const nome=document.getElementById('novo-grupo-nome').value;
+  const cat=document.getElementById('novo-grupo-cat').value;
+  if(_addGrupo(nome,cat))document.getElementById('novo-grupo-nome').value='';
+}
+
+function adicionarGrupoRT(){
+  const nome=document.getElementById('rt-novo-grupo-nome').value;
+  const cat=document.getElementById('rt-novo-grupo-cat').value;
+  if(_addGrupo(nome,cat))document.getElementById('rt-novo-grupo-nome').value='';
 }
 
 function removerGrupo(cat,nome){
@@ -2727,7 +2754,8 @@ function removerGrupo(cat,nome){
   saveGrupos(GRUPOS);
   salvarConfigFirebase();
   sincronizarEscalaPublica();
-  renderConfig();toast('<i class=ph-trash></i> Removido');
+  _refreshGruposViews();
+  toast('<i class=ph-trash></i> Removido');
 }
 
 // ═══════════════════════════════════════════════
@@ -3178,42 +3206,85 @@ self.addEventListener('notificationclick', (event) => {
 // ═══════════════════════════════════════════════
 // AVISO NA PÁGINA PÚBLICA
 // ═══════════════════════════════════════════════
-function atualizarPainelAviso(){
-  const ativo=document.getElementById('aviso-ativo').checked;
-  document.getElementById('aviso-campos').style.display=ativo?'block':'none';
-}
+// ═══════════════════════════════════════════════
+// COMUNICADOS AOS LÍDERES (histórico, não mais um único aviso)
+// ═══════════════════════════════════════════════
+let _comunicadosCache=[];
 
-async function carregarAvisoAtual(){
-  const st=document.getElementById('aviso-status');
-  if(st)st.textContent='Carregando...';
+async function _buscarComunicados(){
   try{
-    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/aviso.json?_=${Date.now()}`);
-    if(!r.ok){if(st)st.textContent='';return;}
+    const r=await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/comunicados.json?_=${Date.now()}`);
+    if(!r.ok)return[];
     const dados=await r.json();
-    document.getElementById('aviso-ativo').checked=!!dados.ativo;
-    document.getElementById('aviso-titulo').value=dados.titulo||'';
-    document.getElementById('aviso-texto').value=dados.mensagem||'';
-    if(st)st.innerHTML=dados.ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
-    atualizarPainelAviso();
-  }catch(e){if(st)st.textContent='';}
+    return Array.isArray(dados.lista)?dados.lista:[];
+  }catch(e){return[];}
 }
 
-async function salvarAviso(){
-  const ativo=document.getElementById('aviso-ativo').checked;
+function _renderComunicadosList(){
+  const wrap=document.getElementById('comunicados-enviados-list');
+  if(!wrap)return;
+  if(!_comunicadosCache.length){
+    wrap.innerHTML='<p style="font-size:12px;color:var(--muted);font-style:italic">Nenhum comunicado enviado ainda.</p>';
+    return;
+  }
+  const ordenado=[..._comunicadosCache].reverse();
+  wrap.innerHTML=ordenado.map(c=>{
+    const dt=c.criadoEm?new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    return`<div style="background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="min-width:0">
+        ${c.titulo?`<div style="font-size:12px;font-weight:700;color:var(--white)">${c.titulo}</div>`:''}
+        <div style="font-size:12px;color:var(--muted);white-space:pre-wrap">${c.mensagem}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${dt}</div>
+      </div>
+      <button class="btn-icon" onclick="excluirComunicado('${c.id}')" title="Excluir do histórico"><i class=ph-trash></i></button>
+    </div>`;
+  }).join('');
+}
+
+async function carregarComunicadosEnviados(){
+  const wrap=document.getElementById('comunicados-enviados-list');
+  if(wrap)wrap.innerHTML='<p style="font-size:12px;color:var(--muted)"><i class=ph-hourglass></i> Carregando...</p>';
+  _comunicadosCache=await _buscarComunicados();
+  _renderComunicadosList();
+}
+
+async function _salvarComunicadosRemoto(){
+  await publicarArquivoRemoto('comunicados.json',JSON.stringify({lista:_comunicadosCache},null,2),'Comunicados atualizados');
+}
+
+async function enviarComunicado(){
   const titulo=(document.getElementById('aviso-titulo').value||'').trim();
   const mensagem=(document.getElementById('aviso-texto').value||'').trim();
-  if(ativo&&!mensagem){toast('<i class=ph-warning></i> Digite a mensagem do aviso');return;}
-  const dados={ativo,titulo,mensagem,id:'aviso-'+Date.now()};
+  if(!mensagem){toast('<i class=ph-warning></i> Digite a mensagem do comunicado');return;}
+  const novo={id:'com-'+Date.now(),titulo,mensagem,criadoEm:Date.now()};
+  _comunicadosCache.push(novo);
   try{
-    await publicarArquivoRemoto('aviso.json',JSON.stringify(dados,null,2),'Aviso atualizado');
-    const statusTxt=ativo?'<i class=ph-circle></i> Aviso ativo na página pública':'<i class=ph-circle></i> Aviso desativado';
-    document.getElementById('aviso-status').innerHTML=statusTxt;
-    toast(ativo?'<i class=ph-check-circle></i> Aviso ativado':'<i class=ph-check-circle></i> Aviso desativado');
-  }catch(e){toast('<i class=ph-x-circle></i> Erro ao salvar aviso: '+(e.message||e));}
+    await _salvarComunicadosRemoto();
+    document.getElementById('aviso-titulo').value='';
+    document.getElementById('aviso-texto').value='';
+    _renderComunicadosList();
+    toast('<i class=ph-check-circle></i> Comunicado enviado aos líderes!');
+  }catch(e){
+    _comunicadosCache.pop();
+    toast('<i class=ph-x-circle></i> Erro ao enviar: '+(e.message||e));
+  }
 }
 
-// Carrega aviso ao entrar na página inicial
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(carregarAvisoAtual,1500);});
+async function excluirComunicado(id){
+  if(!confirm('Remover este comunicado do histórico?'))return;
+  const anterior=[..._comunicadosCache];
+  _comunicadosCache=_comunicadosCache.filter(c=>c.id!==id);
+  try{
+    await _salvarComunicadosRemoto();
+    _renderComunicadosList();
+    toast('<i class=ph-trash></i> Comunicado removido');
+  }catch(e){
+    _comunicadosCache=anterior;
+    toast('<i class=ph-x-circle></i> Erro ao remover: '+(e.message||e));
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(carregarComunicadosEnviados,1500);});
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{if(typeof renderEstudio==='function')renderEstudio();},2500);});
 
 // ═══════════════════════════════════════════════
@@ -3265,22 +3336,26 @@ async function renderRiders(){
   if(document.getElementById('cont-tecnico'))document.getElementById('cont-tecnico').value=cont.tecnico||'';
   if(document.getElementById('cont-midia'))document.getElementById('cont-midia').value=cont.midia||'';
   if(document.getElementById('cont-surdos'))document.getElementById('cont-surdos').value=cont.surdos||'';
-  const todos=todosGrupos().filter(g=>g!==SH_LABEL);
-  if(!todos.length){
-    grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-gear></i></div><p>Nenhum grupo cadastrado em <i class=ph-gear></i> Grupos.</p></div>`;
-    return;
+  const entradas=[];
+  Object.entries(GRUPOS).forEach(([cat,lista])=>{
+    lista.filter(g=>g!==SH_LABEL).forEach(g=>entradas.push([cat,g]));
+  });
+  if(!entradas.length){
+    grid.innerHTML=`<div class="empty-state"><div class="icon"><i class=ph-gear></i></div><p>Nenhum grupo cadastrado ainda. Adicione abaixo.</p></div>`;
+  }else{
+    grid.innerHTML=entradas.map(([cat,g])=>{
+      const slug=grupoSlug(g);
+      const pin=_riderCfg.grupos?.[slug]?.pin||'';
+      return`<div class="rider-card">
+        <button class="btn-icon rider-card-del" onclick="removerGrupo('${cat}','${g.replace(/'/g,"\\'")}')" title="Remover grupo/cantor"><i class=ph-trash></i></button>
+        <div class="rider-card-nome">${g}</div>
+        <div class="rider-pin-row">
+          <label style="font-size:11px;color:var(--muted);flex-shrink:0">PIN:</label>
+          <input class="rider-pin-inp" type="text" maxlength="6" value="${pin}" id="pin-${slug}" placeholder="——" oninput="this.value=this.value.replace(/[^0-9a-zA-Z]/g,'')">
+        </div>
+      </div>`;
+    }).join('');
   }
-  grid.innerHTML=todos.map(g=>{
-    const slug=grupoSlug(g);
-    const pin=_riderCfg.grupos?.[slug]?.pin||'';
-    return`<div class="rider-card">
-      <div class="rider-card-nome">${g}</div>
-      <div class="rider-pin-row">
-        <label style="font-size:11px;color:var(--muted);flex-shrink:0">PIN:</label>
-        <input class="rider-pin-inp" type="text" maxlength="6" value="${pin}" id="pin-${slug}" placeholder="——" oninput="this.value=this.value.replace(/[^0-9a-zA-Z]/g,'')">
-      </div>
-    </div>`;
-  }).join('');
   renderRiderSubmissions();
 }
 
@@ -4212,6 +4287,8 @@ function exportarPagina(){
     ".rp-close:hover{color:#fff;background:rgba(255,255,255,.1);}",
     ".rp-title{font-size:15px;font-weight:800;color:#2ab482;margin-bottom:2px;}",
     ".rp-sub{font-size:11px;color:#7a9aa8;margin-bottom:18px;}",
+    ".rp-com-item{border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:14px;margin-bottom:14px;}",
+    ".rp-com-item:last-child{border-bottom:none;}",
     ".rp-label{display:block;font-size:11px;font-weight:700;color:#7a9aa8;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}",
     ".rp-inp{width:100%;background:#162030;border:1px solid #2a3a4a;border-radius:8px;color:#edf4f4;font-size:14px;padding:10px 12px;font-family:inherit;outline:none;margin-bottom:14px;}",
     ".rp-inp:focus{border-color:#2ab482;}",
@@ -4556,7 +4633,7 @@ function exportarPagina(){
     '_carregarEscalaPublica();',
 
     // Aviso popup
-    'var AVISO_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/aviso.json";',
+    'var COMUNICADOS_URL="https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/comunicados.json";',
     'function _mostrarAvisoOverlay(d){',
     '  var ov=document.createElement("div");ov.className="aviso-overlay";ov.id="aviso-ov";',
     '  ov.innerHTML=\'<div class="aviso-box">\'',
@@ -4572,11 +4649,13 @@ function exportarPagina(){
     '  var ov=document.getElementById("aviso-ov");if(ov)ov.remove();',
     '  try{if(window._avisoId)localStorage.setItem("dml-aviso-id",window._avisoId);}catch(e){}',
     '}',
-    'fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
-    '  if(!d||!d.ativo||!d.mensagem)return;',
+    'fetch(COMUNICADOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '  var lista=(d&&Array.isArray(d.lista))?d.lista:[];',
+    '  if(!lista.length)return;',
+    '  var ultimo=lista[lista.length-1];',
     '  var visto=localStorage.getItem("dml-aviso-id");',
-    '  if(visto===d.id)return;',
-    '  _mostrarAvisoOverlay(d);',
+    '  if(visto===ultimo.id)return;',
+    '  _mostrarAvisoOverlay(ultimo);',
     '}).catch(function(){});',
 
 // Rider Panel
@@ -4654,10 +4733,15 @@ function exportarPagina(){
     'function _rpMostrarComunicacoes(){',
     '  _RP.state="comunic";',
     '  _rpHtml(_rpHdr("_rpMostrarHome")+"<p class=\\"rp-sub\\" style=\\"margin-top:4px\\"><i class=ph-hourglass></i> Carregando avisos...</p>");',
-    '  fetch(AVISO_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
-    '    if(!d||!d.ativo||!d.mensagem){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum aviso no momento.</p>\'+_rpBtnAgendaExterna());return;}',
-    '    _rpHtml(_rpHdr("_rpMostrarHome")+(d.titulo?\'<div class="rp-title">\'+d.titulo+\'</div>\':\'\')+\'<div class="rp-sub" style="color:#c8d8e8;white-space:pre-wrap;margin-top:8px">\'+d.mensagem+\'</div>\'+_rpBtnAgendaExterna());',
-    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar aviso.</p>\'+_rpBtnAgendaExterna());});',
+    '  fetch(COMUNICADOS_URL+"?_="+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(d){',
+    '    var lista=(d&&Array.isArray(d.lista))?[...d.lista].reverse():[];',
+    '    if(!lista.length){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum comunicado no momento.</p>\'+_rpBtnAgendaExterna());return;}',
+    '    var itens=lista.map(function(c){',
+    '      var dt=c.criadoEm?new Date(c.criadoEm).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"";',
+    '      return \'<div class="rp-com-item">\'+(c.titulo?\'<div class="rp-title" style="font-size:14px">\'+c.titulo+\'</div>\':"")+\'<div class="rp-sub" style="color:#c8d8e8;white-space:pre-wrap;margin-top:4px">\'+c.mensagem+\'</div><div class="rp-sub" style="font-size:10px;margin-top:4px">\'+dt+\'</div></div>\';',
+    '    }).join("");',
+    '    _rpHtml(_rpHdr("_rpMostrarHome")+\'<div style="margin-top:8px">\'+itens+\'</div>\'+_rpBtnAgendaExterna());',
+    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar comunicados.</p>\'+_rpBtnAgendaExterna());});',
     '}',
 
     'function _rpMostrarLogin(){',
@@ -4991,8 +5075,7 @@ function exportarPagina(){
     '  var shareBtns=',
     '    \'<div class="rp-share-row">\'',
     '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'tecnico\\\')"><span><i class=ph-sliders></i></span>Técnico</button>\'',
-    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'midia\\\')"><span><i class=ph-television-simple></i></span>Mídia</button>\'',
-    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'surdos\\\')"><span><i class=ph-ear></i></span>Surdos</button>\'',
+    '    +\'<button class="rp-share-btn" onclick="_rpShare(\\\'midiasurdos\\\')"><span><i class=ph-television-simple></i></span>Mídia/Surdos</button>\'',
     '    +\'</div>\';',
     '  _rpHtml(_rpHdr("_rpMostrarCultos")',
     '    +\'<div class="rp-sec" style="margin-top:4px"><i class=ph-microphone></i> Vozes</div>\'',
@@ -5063,14 +5146,14 @@ function exportarPagina(){
     'function _rpShare(dest){',
     '  var d=_rpColeta();',
     '  var cont=(_RP.cfg&&_RP.cfg.contatos)||{};',
-    '  var phone=dest==="tecnico"?cont.tecnico:dest==="midia"?cont.midia:cont.surdos;',
     '  var hdr="*Rider — "+_RP.nome+"*\\n"+_RP.cultoLabel+"\\n\\n";',
     '  var setTxt=d.setList.length?"*SET LIST*\\n"+d.setList.map(function(r,i){return(i+1)+". "+r.musica+(r.solo?" — Solo: "+r.solo:"");}).join("\\n"):"";',
     '  var inpTxt=(dest==="tecnico")?"*INPUT LIST*\\n"+_rpFmtInp(d.inputList,d.voz)+"\\n\\n":"";',
     '  var obsTxt=(dest==="tecnico"&&d.obs)?"\\n*Observações*\\n"+d.obs+"\\n":"";',
     '  var txt=hdr+inpTxt+setTxt+obsTxt;',
-    '  var url=phone?"https://wa.me/"+phone.replace(/\\D/g,"")+"?text="+encodeURIComponent(txt):"https://wa.me/?text="+encodeURIComponent(txt);',
-    '  window.open(url,"_blank");',
+    '  function abrirWa(phone){var url=phone?"https://wa.me/"+phone.replace(/\\D/g,"")+"?text="+encodeURIComponent(txt):"https://wa.me/?text="+encodeURIComponent(txt);window.open(url,"_blank");}',
+    '  if(dest==="midiasurdos"){abrirWa(cont.midia);abrirWa(cont.surdos);}',
+    '  else{abrirWa(dest==="tecnico"?cont.tecnico:cont.surdos);}',
     '}',
     'function _phPatch(root){(root||document).querySelectorAll(\'i[class]\').forEach(function(el){if(/(?:^| )ph-/.test(el.className))el.classList.add("ph");});}',
     'document.addEventListener("DOMContentLoaded",function(){_phPatch();});',
