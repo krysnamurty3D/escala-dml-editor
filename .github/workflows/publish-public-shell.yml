@@ -8,6 +8,7 @@ on:
       - "scripts/publicar-shell.js"
       - "manifest.json"
       - "icons/**"
+      - "sw-cache.js"
   workflow_dispatch: {}
 
 jobs:
