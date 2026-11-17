@@ -90,15 +90,17 @@ async function publicarShellHTML(htmlFinal) {
   await publicarArquivo('index.html', contentB64, 'Atualiza shell da página pública (código/layout)');
 }
 
-// Publica manifest.json e os ícones do PWA (necessários para instalar como
-// app na tela inicial e, no iOS, pré-requisito para notificações push).
+// Publica manifest.json, os ícones do PWA (necessários para instalar como
+// app na tela inicial e, no iOS, pré-requisito para notificações push) e o
+// service worker de cache offline.
 async function publicarAssetsPWA() {
   const raiz = path.join(__dirname, '..');
   const arquivos = [
     { local: 'manifest.json', remoto: 'manifest.json' },
     { local: 'icons/icon-192.png', remoto: 'icons/icon-192.png' },
     { local: 'icons/icon-512.png', remoto: 'icons/icon-512.png' },
-    { local: 'icons/apple-touch-icon.png', remoto: 'icons/apple-touch-icon.png' }
+    { local: 'icons/apple-touch-icon.png', remoto: 'icons/apple-touch-icon.png' },
+    { local: 'sw-cache.js', remoto: 'sw-cache.js' }
   ];
   for (const { local, remoto } of arquivos) {
     const caminho = path.join(raiz, local);
