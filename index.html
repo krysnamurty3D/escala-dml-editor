@@ -2274,9 +2274,6 @@ async function salvarConviteGlobal(email){
   });
 }
 
-// Override convidarColaborador para salvar globalmente
-const _origConvidar=convidarColaborador;
-
 // ═══════════════════════════════════════════════
 // BUSCA RÁPIDA NO EDITOR
 // ═══════════════════════════════════════════════
@@ -5061,7 +5058,9 @@ function exportarPagina(){
     '    var grupos=cfg&&cfg.grupos?Object.values(cfg.grupos).filter(function(g){return exigePin?g.pin:true;}).sort(function(a,b){return a.nome.localeCompare(b.nome);}):[];',
     '    if(_RP.flow==="estudio")grupos=grupos.filter(function(g){return _RP_GRUPOS_LOUVOR.indexOf(g.nome)>=0;});',
     '    var salvo=null;try{salvo=JSON.parse(localStorage.getItem("dml_rp_login")||"null");}catch(e){}',
-    '    if(salvo&&salvo.slug&&cfg&&cfg.grupos&&cfg.grupos[salvo.slug]&&grupos.some(function(g){return _rpSlug(g.nome)===salvo.slug;})){',
+    '    var salvoValido=salvo&&salvo.slug&&cfg&&cfg.grupos&&cfg.grupos[salvo.slug]&&grupos.some(function(g){return _rpSlug(g.nome)===salvo.slug;});',
+    '    if(salvoValido&&exigePin){var grpSalvo=cfg.grupos[salvo.slug];salvoValido=String(salvo.pin||"")===String(grpSalvo.pin||"");}',
+    '    if(salvoValido){',
     '      _RP.slug=salvo.slug;_RP.nome=cfg.grupos[salvo.slug].nome;',
     '      if(_RP.flow==="estudio")_rpMostrarEnsaio();else if(_RP.flow==="comunicacao")_rpMostrarAgendaExterna();else _rpMostrarCultos();',
     '      return;',
@@ -5092,7 +5091,7 @@ function exportarPagina(){
     '    if(String(grp.pin)!==String(pin)){var e=document.getElementById("rp-err");if(e)e.style.display="block";return;}',
     '  }',
     '  _RP.slug=slug;_RP.nome=grp.nome;',
-    '  try{localStorage.setItem("dml_rp_login",JSON.stringify({slug:slug,nome:grp.nome,em:Date.now()}));}catch(e){}',
+    '  try{localStorage.setItem("dml_rp_login",JSON.stringify({slug:slug,nome:grp.nome,pin:exigePin?pin:"",em:Date.now()}));}catch(e){}',
     '  if(_RP.flow==="estudio")_rpMostrarEnsaio();else if(_RP.flow==="comunicacao")_rpMostrarAgendaExterna();else _rpMostrarCultos();',
     '}',
     'function _rpTrocarGrupo(){',
@@ -5594,7 +5593,7 @@ function abrirModalCalendario(){
   document.getElementById('modal-cal').classList.add('open');
 }
 
-function confirmarCalendario(){
+function _gerarCalendarioBase(){
   const mes=parseInt(document.getElementById('cal-mes').value);
   const ano=parseInt(document.getElementById('cal-ano').value);
   const nomeDomM=document.getElementById('cal-dom-m').value.trim().toUpperCase()||'EBD';
@@ -5874,14 +5873,19 @@ function duplicarMes(id){
 
 let _duplicarFonte=null;
 
-// Override confirmarCalendario para suportar duplicação
-const _origConfirmarCalendario=confirmarCalendario;
+// Decide se "Gerar Escala" cria do zero ou duplica os grupos de um mês fonte.
+// (Antes isso tentava "guardar a função original antes de redeclará-la" —
+// mas duas function-declarations com o mesmo nome no mesmo escopo são
+// hoisted juntas e a segunda sempre vence, então a referência "guardada"
+// já apontava pra si mesma: toda chamada normal (sem duplicar) entrava
+// em recursão infinita e estourava a pilha. _gerarCalendarioBase agora
+// tem nome próprio, sem esse risco.)
 function confirmarCalendario(){
   if(_duplicarFonte){
     _confirmarCalendarioDuplicar();
     _duplicarFonte=null;
   } else {
-    _origConfirmarCalendario();
+    _gerarCalendarioBase();
   }
 }
 
@@ -5895,7 +5899,7 @@ function _confirmarCalendarioDuplicar(){
     if(c.grupos.length) mapaGrupos[c.culto]=c.grupos;
   });
   // Gera nova escala pelo calendário
-  _origConfirmarCalendario();
+  _gerarCalendarioBase();
   // Aplica grupos do mapa
   cultos.forEach(c=>{
     if(mapaGrupos[c.culto]) c.grupos=sortGrupos([...mapaGrupos[c.culto]]);
