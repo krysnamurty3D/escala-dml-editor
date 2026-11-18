@@ -850,6 +850,7 @@ tr.esp-row .td-dia{color:#c03030;}
           <button class="nav-dropdown-item" data-page="colab" onclick="irPara('colab')"><i class=ph-users></i> Colaboradores</button>
           <button class="nav-dropdown-item" data-page="solic" onclick="irPara('solic')"><i class=ph-package></i> Solicitações</button>
           <button class="nav-dropdown-item" data-page="estudio" onclick="irPara('estudio')"><i class=ph-list-checks></i> Estúdio<span class="nav-badge" id="estudio-nav-badge" style="display:none"></span></button>
+          <button class="nav-dropdown-item" data-page="eventos" onclick="irPara('eventos')"><i class=ph-hand-waving></i> Eventos</button>
         </div>
       </div>
     </div>
@@ -1224,6 +1225,28 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
   </div>
   <div id="solic-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando solicitações...</p></div></div>
+</div>
+<!-- EVENTOS (fora da escala) -->
+<div id="page-eventos" class="page">
+  <div class="riders-header">
+    <div>
+      <h2 style="color:var(--teal);font-size:17px"><i class=ph-hand-waving></i> Eventos</h2>
+      <p class="riders-desc">Eventos fora da escala normal (avanços, retiros, confraternizações...). Fica aberto a qualquer membro se voluntariar pela página pública, sem PIN — você organiza o grupo a partir de quem se inscrever.</p>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="renderEventos()">↻ Atualizar</button>
+  </div>
+  <div class="estudio-cfg">
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Novo evento</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Título</label><input id="evento-novo-titulo" type="text" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px" placeholder="Ex: Avanço Missionário"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Data</label><input id="evento-novo-data" type="date" class="rider-pin-inp" style="width:100%;letter-spacing:0;font-size:13px"></div>
+    </div>
+    <div style="margin-bottom:10px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Descrição (opcional)</label><textarea id="evento-novo-descricao" placeholder="O que é o evento, o que se espera de quem participar..."></textarea></div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-primary btn-sm" onclick="criarEvento()"><i class=ph-plus></i> Criar evento</button>
+    </div>
+  </div>
+  <div id="eventos-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando eventos...</p></div></div>
 </div>
 <!-- ESTÚDIO: CHECKLIST + HORÁRIO -->
 <div id="page-estudio" class="page">
@@ -3738,6 +3761,101 @@ async function _solicExcluir(id){
   }catch(e){toast('❌ Erro ao excluir: '+e.message);}
 }
 
+// ═══════════════════════════════════════════════
+// EVENTOS (fora da escala) — aberto a todos, voluntariado sem aprovação
+// ═══════════════════════════════════════════════
+async function criarEvento(){
+  const titulo=(document.getElementById('evento-novo-titulo').value||'').trim();
+  const data=document.getElementById('evento-novo-data').value;
+  const descricao=(document.getElementById('evento-novo-descricao').value||'').trim();
+  if(!titulo||!data){toast('<i class=ph-warning></i> Preencha título e data');return;}
+  try{
+    const {doc,setDoc}=window._fbFns;
+    const id='ev_'+Date.now();
+    await setDoc(doc(window._fbDb,'eventos',id),{titulo,data,descricao,ativo:true,criadoEm:Date.now()});
+    document.getElementById('evento-novo-titulo').value='';
+    document.getElementById('evento-novo-data').value='';
+    document.getElementById('evento-novo-descricao').value='';
+    toast('<i class=ph-check-circle></i> Evento criado!');
+    renderEventos();
+  }catch(e){toast('<i class=ph-warning></i> Erro ao criar: '+e.message);}
+}
+
+async function renderEventos(){
+  const wrap=document.getElementById('eventos-list');
+  if(!wrap)return;
+  wrap.innerHTML='<div class="empty-state"><div class="icon">⏳</div><p>Carregando eventos...</p></div>';
+  try{
+    const {collection,getDocs}=window._fbFns;
+    const [eventosSnap,voluntariosSnap]=await Promise.all([
+      getDocs(collection(window._fbDb,'eventos')),
+      getDocs(collection(window._fbDb,'eventosVoluntarios'))
+    ]);
+    const eventos=[];eventosSnap.forEach(d=>eventos.push({id:d.id,...d.data()}));
+    const voluntarios=[];voluntariosSnap.forEach(d=>voluntarios.push({id:d.id,...d.data()}));
+    if(!eventos.length){wrap.innerHTML='<div class="empty-state"><div class="icon"><i class=ph-hand-waving></i></div><p>Nenhum evento criado ainda.</p></div>';return;}
+    eventos.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    wrap.innerHTML=eventos.map(ev=>{
+      const vols=voluntarios.filter(v=>v.eventoId===ev.id).sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
+      const dt=ev.data?new Date(ev.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}):'—';
+      return `<div class="solic-row" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;width:100%">
+          <div class="solic-info">
+            <div class="solic-item">${_solicEsc(ev.titulo||'Evento')}${ev.ativo===false?' <span class="solic-status indeferido" style="margin-left:6px">Encerrado</span>':''}</div>
+            <div class="solic-meta">${dt}</div>
+            ${ev.descricao?`<div class="solic-motivo">${_solicEsc(ev.descricao)}</div>`:''}
+          </div>
+          <div class="solic-actions">
+            <button class="btn btn-outline btn-sm" onclick="_eventoToggleAtivo('${ev.id}',${ev.ativo===false})">${ev.ativo===false?'<i class=ph-eye></i> Reabrir':'<i class=ph-eye-slash></i> Encerrar'}</button>
+            <button class="btn-danger" onclick="_eventoExcluir('${ev.id}')"><i class=ph-trash></i></button>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+            <i class=ph-users-three></i> ${vols.length} voluntário${vols.length===1?'':'s'}
+          </div>
+          ${vols.length?vols.map(v=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px">
+            <div><span style="color:var(--white);font-weight:600">${_solicEsc(v.nome)}</span> <span style="color:var(--muted)">· ${_solicEsc(v.whatsapp)}</span>${v.mensagem?`<div style="color:var(--muted);font-size:11px;margin-top:2px">${_solicEsc(v.mensagem)}</div>`:''}</div>
+            <button class="btn-danger" onclick="_eventoVoluntarioExcluir('${v.id}')"><i class=ph-x></i></button>
+          </div>`).join(''):'<p style="font-size:12px;color:var(--muted)">Ninguém se inscreveu ainda.</p>'}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
+}
+
+async function _eventoToggleAtivo(id,tornarAtivo){
+  try{
+    const {doc,setDoc}=window._fbFns;
+    await setDoc(doc(window._fbDb,'eventos',id),{ativo:tornarAtivo},{merge:true});
+    renderEventos();
+  }catch(e){toast('<i class=ph-warning></i> Erro: '+e.message);}
+}
+
+async function _eventoExcluir(id){
+  if(!confirm('Excluir este evento e todas as inscrições de voluntários? Essa ação não pode ser desfeita.'))return;
+  try{
+    const {doc,deleteDoc,collection,getDocs}=window._fbFns;
+    await deleteDoc(doc(window._fbDb,'eventos',id));
+    const snap=await getDocs(collection(window._fbDb,'eventosVoluntarios'));
+    const aExcluir=[];
+    snap.forEach(d=>{if(d.data().eventoId===id)aExcluir.push(d.id);});
+    await Promise.all(aExcluir.map(vid=>deleteDoc(doc(window._fbDb,'eventosVoluntarios',vid))));
+    toast('<i class=ph-trash></i> Evento excluído');
+    renderEventos();
+  }catch(e){toast('<i class=ph-warning></i> Erro ao excluir: '+e.message);}
+}
+
+async function _eventoVoluntarioExcluir(id){
+  if(!confirm('Remover este voluntário da lista?'))return;
+  try{
+    const {doc,deleteDoc}=window._fbFns;
+    await deleteDoc(doc(window._fbDb,'eventosVoluntarios',id));
+    toast('<i class=ph-trash></i> Removido');
+    renderEventos();
+  }catch(e){toast('<i class=ph-warning></i> Erro: '+e.message);}
+}
+
 // Número em formato wa.me: só dígitos, com DDI. Quem preenche o formulário
 // normalmente digita só DDD+número (padrão BR) — assume 55 quando faltar.
 function _waNumero(raw){
@@ -4987,6 +5105,7 @@ function exportarPagina(){
     '  document.getElementById("rp-overlay").style.display="flex";',
     '  if(flow==="comunicacao")_rpMostrarComunicacoes();',
     '  else if(flow==="solic"){_RP.flow=flow;_rpMostrarSolicNova();}',
+    '  else if(flow==="eventos"){_RP.flow=flow;_rpMostrarEventos();}',
     '  else{_RP.flow=flow;_rpMostrarLogin();}',
     '}',
     'function _rpHtml(h){document.getElementById("rp-content").innerHTML=h;}',
@@ -5017,10 +5136,10 @@ function exportarPagina(){
     '}',
     'function _rpHdr(backFn){',
     '  var b=backFn?\'<button style="background:none;border:none;color:#2ab482;font-size:22px;cursor:pointer;padding:0;line-height:1;margin-right:10px" onclick="\'+backFn+\'()"><i class=ph-arrow-left></i></button>\':"";',
-    '  var tag=_RP.state==="comunic"?"<i class=ph-megaphone></i> COMUNICAÇÕES":_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
+    '  var tag=_RP.state==="comunic"?"<i class=ph-megaphone></i> COMUNICAÇÕES":_RP.flow==="solic"?"<i class=ph-package></i> SOLICITAÇÃO DE EQUIPAMENTO":_RP.flow==="eventos"?"<i class=ph-hand-waving></i> EVENTOS":_RP.flow==="estudio"?"<i class=ph-list-checks></i> ESTÚDIO":_RP.flow==="comunicacao"?"<i class=ph-megaphone></i> AGENDA EXTERNA":"<i class=ph-sliders-horizontal></i> RIDER TÉCNICO";',
     '  var sub=_RP.cultoLabel?\'<div class="rp-hdr-culto"><span class="rp-hdr-tag"><i class=ph-music-note></i></span> \'+_RP.cultoLabel+\'</div>\':\'<div class="rp-hdr-culto"><span class="rp-hdr-tag">\'+tag+\'</span></div>\';',
     '  var sino=_RP.slug?\'<button style="background:none;border:none;color:#7a9aa8;font-size:19px;cursor:pointer;position:absolute;top:14px;right:16px" onclick="_rpAtivarNotificacoes()" title="Ativar notificações"><i class="\'+(_RP.pushAtivo?"ph-bell":"ph-bell-slash")+\'"></i></button>\':"";',
-    '  var titulo=_RP.nome||(_RP.flow==="solic"?"Nova Solicitação":"Acesso Líderes");',
+    '  var titulo=_RP.nome||(_RP.flow==="solic"?"Nova Solicitação":_RP.flow==="eventos"?"Eventos":"Acesso Líderes");',
     '  var trocar=_RP.slug?\' <a href="javascript:void(0)" onclick="_rpTrocarGrupo()" style="font-size:10px;color:#7a9aa8;text-decoration:underline;font-weight:400">trocar</a>\':"";',
     '  return\'<div class="rp-hdr-box" style="position:relative">\'+sino+\'<div style="display:flex;align-items:flex-start">\'+b+\'<div><div class="rp-hdr-grupo">\'+titulo+trocar+\'</div>\'+sub+\'</div></div></div>\';',
     '}',
@@ -5033,6 +5152,7 @@ function exportarPagina(){
     '    +\'<div class="rp-home-card" onclick="_rpMostrarComunicacoes()"><div class="rp-home-ico"><i class=ph-megaphone></i></div><div class="rp-home-lbl">Comunicações</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'rider\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-sliders-horizontal></i></div><div class="rp-home-lbl">RT</div></div>\'',
     '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'estudio\\\';_rpMostrarLogin()"><div class="rp-home-ico"><i class=ph-list-checks></i></div><div class="rp-home-lbl">Estúdio</div></div>\'',
+    '    +\'<div class="rp-home-card" onclick="_RP.flow=\\\'eventos\\\';_rpMostrarEventos()"><div class="rp-home-ico"><i class=ph-hand-waving></i></div><div class="rp-home-lbl">Eventos</div></div>\'',
     '    +\'</div>\');',
     '}',
     'function _rpBtnAgendaExterna(){return\'<button class="rp-btn-out" style="width:100%;margin-top:16px" onclick="_RP.flow=\\\'comunicacao\\\';_rpMostrarLogin()"><i class=ph-calendar-plus></i> Avisar agenda externa do meu grupo</button>\';}',
@@ -5204,6 +5324,55 @@ function exportarPagina(){
     '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
     '    .then(function(r){',
     '      if(r.ok){alert("✅ Solicitação enviada! Você será avisado(a) pelo WhatsApp assim que for avaliada.");_rpMostrarHome();}',
+    '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
+    '    }).catch(function(e){alert("Erro: "+e.message);});',
+    '}',
+
+    '// ── EVENTOS (fora da escala) — aberto a todos, sem PIN ──',
+    'function _rpMostrarEventos(){',
+    '  _RP.state="eventos";',
+    '  _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px"><i class=ph-hourglass></i> Carregando eventos...</p>\');',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/eventos?key="+_RP_KEY;',
+    '  fetch(url).then(function(r){return r.ok?r.json():{};}).then(function(data){',
+    '    var itens=(data.documents||[]).map(function(d){',
+    '      var f=_rpFsParse({mapValue:{fields:d.fields}});',
+    '      f.id=d.name.split("/").pop();',
+    '      return f;',
+    '    }).filter(function(it){return it.ativo!==false;});',
+    '    itens.sort(function(a,b){return (a.data||"").localeCompare(b.data||"");});',
+    '    if(!itens.length){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Nenhum evento aberto no momento.</p>\');return;}',
+    '    var html=itens.map(function(it){',
+    '      var dt=it.data?new Date(it.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"}):"";',
+    '      return \'<div class="rp-culto-item" onclick="_rpMostrarEventoForm(\\\'\'+it.id+\'\\\')">\'',
+    '        +\'<div><div class="rp-culto-nome">\'+(it.titulo||"Evento")+\'</div><div class="rp-culto-sub">\'+dt+(it.descricao?" · "+it.descricao:"")+\'</div></div>\'',
+    '        +\'<span style="font-size:11px;color:#7a9aa8;white-space:nowrap"><i class=ph-hand-waving></i> Participar</span></div>\';',
+    '    }).join("");',
+    '    _rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub" style="margin-top:4px">Eventos extras — toque num evento pra se voluntariar e ajudar a montar o grupo</p>\'+html);',
+    '  }).catch(function(){_rpHtml(_rpHdr("_rpMostrarHome")+\'<p class="rp-sub">Erro ao carregar eventos.</p>\');});',
+    '}',
+    'function _rpMostrarEventoForm(eventoId){',
+    '  _RP.state="eventos-form";_RP.eventoId=eventoId;',
+    '  _rpHtml(_rpHdr("_rpMostrarEventos")',
+    '    +\'<label class="rp-label" style="margin-top:2px">Seu nome</label>\'',
+    '    +\'<input class="rp-inp" type="text" id="evento-nome" placeholder="Nome completo">\'',
+    '    +\'<label class="rp-label">WhatsApp</label>\'',
+    '    +\'<input class="rp-inp" type="tel" id="evento-whatsapp" placeholder="(11) 91234-5678">\'',
+    '    +\'<label class="rp-label">Mensagem (opcional)</label>\'',
+    '    +\'<textarea class="rp-inp" id="evento-mensagem" rows="3" style="resize:vertical" placeholder="Algo que queira avisar (disponibilidade, instrumento, etc.)"></textarea>\'',
+    '    +\'<div class="rp-err" id="evento-err" style="display:none">Preencha nome e WhatsApp.</div>\'',
+    '    +\'<button class="rp-btn" onclick="_rpEnviarVoluntario()">Quero participar!</button>\');',
+    '}',
+    'function _rpEnviarVoluntario(){',
+    '  var nome=document.getElementById("evento-nome").value.trim();',
+    '  var whatsapp=document.getElementById("evento-whatsapp").value.trim();',
+    '  var mensagem=document.getElementById("evento-mensagem").value.trim();',
+    '  if(!nome||!whatsapp){var e=document.getElementById("evento-err");if(e)e.style.display="block";return;}',
+    '  var payload={eventoId:_RP.eventoId,nome:nome,whatsapp:whatsapp,mensagem:mensagem,criadoEm:Date.now()};',
+    '  var fields={};Object.keys(payload).forEach(function(k){fields[k]=_rpFsEnc(payload[k]);});',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/eventosVoluntarios?key="+_RP_KEY;',
+    '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
+    '    .then(function(r){',
+    '      if(r.ok){alert("✅ Inscrição enviada! Obrigado por se voluntariar.");_rpMostrarHome();}',
     '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
     '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
@@ -5511,6 +5680,7 @@ function exportarPagina(){
     +'<div class="rp-home-card" onclick="_appAbrirModal(\'comunicacao\')"><div class="rp-home-ico"><i class=ph-megaphone></i></div><div class="rp-home-lbl">Comunicações</div></div>'
     +'<div class="rp-home-card" onclick="_appAbrirModal(\'rider\')"><div class="rp-home-ico"><i class=ph-sliders-horizontal></i></div><div class="rp-home-lbl">RT</div></div>'
     +'<div class="rp-home-card" onclick="_appAbrirModal(\'estudio\')"><div class="rp-home-ico"><i class=ph-list-checks></i></div><div class="rp-home-lbl">Estúdio</div></div>'
+    +'<div class="rp-home-card" onclick="_appAbrirModal(\'eventos\')"><div class="rp-home-ico"><i class=ph-hand-waving></i></div><div class="rp-home-lbl">Eventos</div></div>'
     +'</div>'
     +'</div>\n'
 
@@ -5641,7 +5811,7 @@ function limparEscala(){
   toast('<i class=ph-trash></i> Escala limpa');
 }
 
-const PAGINAS_NO_DROPDOWN=['config','tmpl','colab','solic','estudio'];
+const PAGINAS_NO_DROPDOWN=['config','tmpl','colab','solic','estudio','eventos'];
 
 function toggleNavDropdown(e){
   e.stopPropagation();
@@ -5682,6 +5852,7 @@ function irPara(p){
   if(p==='solic')renderSolic();
   if(p==='estudio')renderEstudio();
   if(p==='comunic')renderComunicacoesAdmin();
+  if(p==='eventos')renderEventos();
 }
 
 // ═══════════════════════════════════════════════
