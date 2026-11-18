@@ -418,6 +418,14 @@ tr.esp-row .td-dia{color:#c03030;}
 .solic-just{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid var(--border);padding-left:8px;}
 .solic-actions{display:flex;gap:6px;}
 
+/* ── CENTRAL (Comunicações) ── */
+.central-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+.central-card{background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .15s;}
+.central-card.tem-pendencia{border-color:var(--teal-dim);}
+.central-card[onclick]:hover{border-color:var(--teal);}
+.central-card-count{font-size:15px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.06);border-radius:20px;padding:1px 10px;min-width:24px;text-align:center;}
+.central-card-count.ativo{color:#061208;background:var(--teal);}
+
 /* ── ESTÚDIO (checklist + horário) ── */
 .estudio-cfg{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px;}
 .estudio-cfg textarea{width:100%;min-height:140px;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:10px 12px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px;}
@@ -1248,6 +1256,8 @@ tr.esp-row .td-dia{color:#c03030;}
 </div>
 <!-- COMUNICAÇÕES: AGENDA EXTERNA POR GRUPO -->
 <div id="page-comunic" class="page">
+  <!-- CENTRAL: resumo de pendências de Solicitações, Riders, Estúdio e Agenda -->
+  <div id="central-pendencias-wrap" style="width:100%;max-width:700px;margin-bottom:24px"></div>
   <!-- ENVIAR: Comunicados para os líderes -->
   <div style="width:100%;max-width:700px;margin-bottom:24px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
@@ -3775,6 +3785,122 @@ async function renderComunicacoesAdmin(){
     _comunicAgendaCache=itens;
     _renderComunicacoesAdminLista(itens);
   }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
+  renderCentralPendencias();
+}
+
+// ═══════════════════════════════════════════════
+// CENTRAL — resumo de pendências (Solicitações, Riders, Estúdio, Agenda)
+// ═══════════════════════════════════════════════
+async function _centralSolicPendentes(){
+  try{
+    const {collection,getDocs}=window._fbFns;
+    const snap=await getDocs(collection(window._fbDb,'solicitacoes'));
+    const itens=[];
+    snap.forEach(d=>{const x=d.data();if(!x.status||x.status==='pendente')itens.push({id:d.id,...x});});
+    itens.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
+    return itens;
+  }catch(e){return [];}
+}
+
+async function _centralRidersRecentes(dias){
+  const corte=Date.now()-dias*86400000;
+  const achados=[];
+  const lista=Object.values(GRUPOS).flat().filter(g=>g!==SH_LABEL);
+  for(const g of lista){
+    const slug=grupoSlug(g);
+    try{
+      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/riders/${slug}?key=${_RIDER_KEY}`;
+      const res=await fetch(url);
+      if(!res.ok)continue;
+      const fdoc=await res.json();
+      if(!fdoc.fields?.cultos)continue;
+      const cultos=_fsParse(fdoc.fields.cultos);
+      Object.entries(cultos||{}).forEach(([k,rd])=>{
+        if(rd&&rd.updatedAt&&rd.updatedAt>=corte)achados.push({grupo:g,slug,chave:k,atualizadoEm:rd.updatedAt});
+      });
+    }catch(e){}
+  }
+  achados.sort((a,b)=>b.atualizadoEm-a.atualizadoEm);
+  return achados;
+}
+
+async function _centralEstudioAtrasados(){
+  const todos=gruposLouvor();
+  const cfg=await _fsGetPublic('riderConfig',{},'rider-config.json');
+  const grupos=cfg.grupos||{};
+  const atrasados=[];
+  const agora=new Date();
+  for(const g of todos){
+    const slug=grupoSlug(g);
+    const gc=grupos[slug]||{};
+    if(gc.ensaioDia===undefined||gc.ensaioDia===null||gc.ensaioDia==='')continue;
+    const diaSemana=parseInt(gc.ensaioDia);
+    const dataCiclo=_estudioDataCiclo(diaSemana);
+    const key=_estudioYmd(dataCiclo);
+    const hora=gc.ensaioHora||'19:30';
+    const [hh,mm]=hora.split(':').map(Number);
+    const agendado=new Date(dataCiclo);agendado.setHours(hh||0,mm||0,0,0);
+    const prazo=new Date(agendado.getTime()+2*60*60*1000);
+    if(agora<prazo)continue;
+    let rd=null;
+    try{
+      const url=`https://firestore.googleapis.com/v1/projects/${_RIDER_PROJ}/databases/(default)/documents/estudio/${slug}?key=${_RIDER_KEY}`;
+      const res=await fetch(url);
+      if(res.ok){const fdoc=await res.json();const ensaios=fdoc.fields?.ensaios?_fsParse(fdoc.fields.ensaios):{};rd=ensaios[key]||null;}
+    }catch(e){}
+    if(rd&&(rd.semEnsaio||rd.entrada||Object.keys(rd.checklist||{}).length))continue;
+    atrasados.push({grupo:g,dataCiclo,hora});
+  }
+  return atrasados;
+}
+
+function _centralCard(icone,titulo,n,itensTexto,onclickIr){
+  const destaque=n>0;
+  return `<div class="central-card${destaque?' tem-pendencia':''}"${onclickIr?` onclick="${onclickIr}" style="cursor:pointer"`:''}>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span style="font-size:12px;font-weight:700;color:${destaque?'var(--white)':'var(--muted)'}"><i class=${icone}></i> ${titulo}</span>
+      <span class="central-card-count${destaque?' ativo':''}">${n}</span>
+    </div>
+    ${itensTexto.length?`<div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6">${itensTexto.map(t=>`<div>${t}</div>`).join('')}</div>`:''}
+  </div>`;
+}
+
+async function renderCentralPendencias(){
+  const wrap=document.getElementById('central-pendencias-wrap');
+  if(!wrap)return;
+  wrap.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:18px"><i class=ph-squares-four></i></span>
+      <span style="font-size:13px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Central — O que precisa de atenção</span>
+    </div>
+    <div id="central-pendencias-body"><p style="font-size:12px;color:var(--muted)"><i class=ph-hourglass></i> Carregando...</p></div>
+  </div>`;
+  const body=document.getElementById('central-pendencias-body');
+  try{
+    const [solicPend,ridersRec,estAtrasados]=await Promise.all([
+      _centralSolicPendentes(),
+      _centralRidersRecentes(3),
+      _centralEstudioAtrasados()
+    ]);
+    const agendaRec=(_comunicAgendaCache||[]).filter(it=>it.criadoEm&&it.criadoEm>=Date.now()-7*86400000);
+    const cards=[
+      _centralCard('ph-package','Solicitações pendentes',solicPend.length,
+        solicPend.slice(0,3).map(it=>_solicEsc(`${it.nome||it.grupoNome||it.grupo||'—'} — ${(it.itens&&it.itens.length?it.itens:(it.item?[it.item]:[])).join(', ')||'—'}`)),
+        "irPara('solic')"),
+      _centralCard('ph-sliders-horizontal','Riders enviados (últimos 3 dias)',ridersRec.length,
+        ridersRec.slice(0,3).map(it=>_solicEsc(`${it.grupo} — ${_riderFmtChave(it.chave)}`)),
+        "irPara('riders')"),
+      _centralCard('ph-list-checks','Estúdio — checklists atrasados',estAtrasados.length,
+        estAtrasados.slice(0,3).map(it=>_solicEsc(`${it.grupo} — ${DIAS_SEMANA[it.dataCiclo.getDay()]} ${it.dataCiclo.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`)),
+        "irPara('estudio')"),
+      _centralCard('ph-calendar-plus','Agenda externa (últimos 7 dias)',agendaRec.length,
+        agendaRec.slice(0,3).map(it=>_solicEsc(`${it.grupoNome||it.grupo||'—'} — ${it.local||''}`)),
+        null)
+    ];
+    body.innerHTML=`<div class="central-grid">${cards.join('')}</div>`;
+  }catch(e){
+    body.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar central: ${e.message}</p>`;
+  }
 }
 
 function _filtrarComunicacoesAdmin(termo){
