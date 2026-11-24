@@ -426,6 +426,24 @@ tr.esp-row .td-dia{color:#c03030;}
 .central-card-count{font-size:15px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.06);border-radius:20px;padding:1px 10px;min-width:24px;text-align:center;}
 .central-card-count.ativo{color:#061208;background:var(--teal);}
 
+/* ── CALENDÁRIO MENSAL (Agenda Externa) ── */
+.mcal-wrap{background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.mcal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mcal-hdr-label{font-size:13px;font-weight:700;color:var(--teal);text-transform:capitalize;}
+.mcal-nav{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;}
+.mcal-nav:hover{border-color:var(--teal);color:var(--teal);}
+.mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.mcal-dow{font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding-bottom:4px;}
+.mcal-day{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12px;color:var(--white);background:rgba(255,255,255,.03);}
+.mcal-day.outside{opacity:.25;}
+.mcal-day.hoje{box-shadow:inset 0 0 0 1px var(--teal-dim);}
+.mcal-day.marcado{background:rgba(42,180,130,.14);cursor:pointer;font-weight:700;}
+.mcal-day.marcado:hover{background:rgba(42,180,130,.26);}
+.mcal-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);margin-top:1px;}
+.mcal-detail{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;}
+.mcal-detail-item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06);}
+.mcal-detail-item:last-child{border-bottom:none;}
+
 /* ── ESTÚDIO (checklist + horário) ── */
 .estudio-cfg{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px;}
 .estudio-cfg textarea{width:100%;min-height:140px;background:var(--navy);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;padding:10px 12px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px;}
@@ -1310,6 +1328,7 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
     <button class="btn btn-outline btn-sm" onclick="renderComunicacoesAdmin()">↻ Atualizar</button>
   </div>
+  <div id="agenda-calendario-wrap" style="max-width:420px"></div>
   <input class="hist-search" type="text" id="comunic-busca" placeholder="Buscar por grupo, local ou data..." oninput="_filtrarComunicacoesAdmin(this.value)" style="width:100%;max-width:400px;margin-bottom:16px">
   <div id="comunicacoes-list"><div class="empty-state"><div class="icon">⏳</div><p>Carregando agendas...</p></div></div>
 </div>
@@ -3885,6 +3904,8 @@ function _solicNotificarWhatsapp(atual,status,justificativa){
 // COMUNICAÇÕES — AGENDA EXTERNA DOS GRUPOS (histórico, apenas editor)
 // ═══════════════════════════════════════════════
 let _comunicAgendaCache=[];
+let _agendaCalRef=new Date();_agendaCalRef.setDate(1);
+let _agendaCalSelecionado=null;
 
 async function renderComunicacoesAdmin(){
   const wrap=document.getElementById('comunicacoes-list');
@@ -3899,8 +3920,50 @@ async function renderComunicacoesAdmin(){
     snap.forEach(d=>itens.push({id:d.id,...d.data()}));
     _comunicAgendaCache=itens;
     _renderComunicacoesAdminLista(itens);
+    renderAgendaCalendario(itens);
   }catch(e){wrap.innerHTML=`<p style="font-size:12px;color:var(--muted)">Erro ao carregar: ${e.message}</p>`;}
   renderCentralPendencias();
+}
+
+function _agendaCalMudarMes(delta){
+  _agendaCalRef.setMonth(_agendaCalRef.getMonth()+delta);
+  _agendaCalSelecionado=null;
+  renderAgendaCalendario(_comunicAgendaCache);
+}
+
+function _agendaCalSelecionar(ymd){
+  _agendaCalSelecionado=(_agendaCalSelecionado===ymd)?null:ymd;
+  renderAgendaCalendario(_comunicAgendaCache);
+}
+
+function renderAgendaCalendario(itens){
+  const wrap=document.getElementById('agenda-calendario-wrap');
+  if(!wrap)return;
+  const porDia={};
+  itens.forEach(it=>{if(!it.dia)return;(porDia[it.dia]=porDia[it.dia]||[]).push(it);});
+  const ano=_agendaCalRef.getFullYear(),mes=_agendaCalRef.getMonth();
+  const primeiro=new Date(ano,mes,1);
+  const totalDias=new Date(ano,mes+1,0).getDate();
+  const offset=primeiro.getDay();
+  const hoje=new Date();const hojeYmd=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
+  let cells='';
+  for(let i=0;i<offset;i++)cells+='<div class="mcal-day outside"></div>';
+  for(let d=1;d<=totalDias;d++){
+    const ymd=ano+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const marcados=porDia[ymd]||[];
+    const cls='mcal-day'+(ymd===hojeYmd?' hoje':'')+(marcados.length?' marcado':'');
+    cells+=`<div class="${cls}"${marcados.length?` onclick="_agendaCalSelecionar('${ymd}')"`:''}>${d}${marcados.length?'<span class="mcal-dot"></span>':''}</div>`;
+  }
+  const dow=['D','S','T','Q','Q','S','S'].map(x=>`<div class="mcal-dow">${x}</div>`).join('');
+  const label=primeiro.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  let detalhe='';
+  if(_agendaCalSelecionado&&porDia[_agendaCalSelecionado]){
+    const dt=new Date(_agendaCalSelecionado+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long'});
+    detalhe=`<div class="mcal-detail"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Agendados em ${dt}</div>`
+      +porDia[_agendaCalSelecionado].map(it=>`<div class="mcal-detail-item"><span>${_solicEsc(it.grupoNome||it.grupo||'—')}</span><span style="color:var(--muted)">${_solicEsc(it.horario||'')} · ${_solicEsc(it.local||'')}</span></div>`).join('')
+      +'</div>';
+  }
+  wrap.innerHTML=`<div class="mcal-wrap"><div class="mcal-hdr"><button class="mcal-nav" onclick="_agendaCalMudarMes(-1)">‹</button><span class="mcal-hdr-label">${label}</span><button class="mcal-nav" onclick="_agendaCalMudarMes(1)">›</button></div><div class="mcal-grid">${dow}${cells}</div>${detalhe}</div>`;
 }
 
 // ═══════════════════════════════════════════════
@@ -4086,6 +4149,7 @@ async function excluirAgendaExterna(id){
     const buscaAtual=document.getElementById('comunic-busca')?.value||'';
     if(buscaAtual)_filtrarComunicacoesAdmin(buscaAtual);
     else _renderComunicacoesAdminLista(_comunicAgendaCache);
+    renderAgendaCalendario(_comunicAgendaCache);
     toast('<i class=ph-trash></i> Aviso excluído');
   }catch(e){toast('<i class=ph-x-circle></i> Erro ao excluir: '+(e.message||e));}
 }
@@ -4755,6 +4819,25 @@ function exportarPagina(){
     "body.light .rp-inp,.body.light .rp-sel{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
     "body.light .rp-cell{background:#e8f0f8;border-color:#b0c8d8;color:#1a2535;}",
     "body.light .rp-culto-item{background:#e8f0f8;border-color:#b0c8d8;}",
+    ".mcal-wrap{background:#162030;border:1px solid #2a3a4a;border-radius:10px;padding:14px 16px;margin-bottom:16px;}",
+    ".mcal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}",
+    ".mcal-hdr-label{font-size:13px;font-weight:700;color:#2ab482;text-transform:capitalize;}",
+    ".mcal-nav{background:none;border:1px solid #2a3a4a;color:#7a9aa8;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;}",
+    ".mcal-nav:hover{border-color:#2ab482;color:#2ab482;}",
+    ".mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}",
+    ".mcal-dow{font-size:10px;font-weight:700;color:#7a9aa8;text-align:center;padding-bottom:4px;}",
+    ".mcal-day{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12px;color:#edf4f4;background:rgba(255,255,255,.03);}",
+    ".mcal-day.outside{opacity:.25;}",
+    ".mcal-day.hoje{box-shadow:inset 0 0 0 1px rgba(42,180,130,.5);}",
+    ".mcal-day.marcado{background:rgba(42,180,130,.14);cursor:pointer;font-weight:700;}",
+    ".mcal-day.marcado:hover{background:rgba(42,180,130,.26);}",
+    ".mcal-dot{width:5px;height:5px;border-radius:50%;background:#2ab482;margin-top:1px;}",
+    ".mcal-detail{margin-top:12px;border-top:1px solid #2a3a4a;padding-top:10px;}",
+    ".mcal-detail-item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06);}",
+    ".mcal-detail-item:last-child{border-bottom:none;}",
+    "body.light .mcal-wrap{background:#e8f0f8;border-color:#b0c8d8;}",
+    "body.light .mcal-day{background:rgba(0,0,0,.03);color:#1a2535;}",
+    "body.light .mcal-nav{border-color:#b0c8d8;color:#5a7585;}",
     ".rp-home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}",
     ".rp-home-card{background:#162030;border:1px solid #2a3a4a;border-radius:12px;padding:22px 10px;text-align:center;cursor:pointer;transition:all .15s;}",
     ".rp-home-card:hover{border-color:#2ab482;background:rgba(42,180,130,.08);}",
@@ -5219,13 +5302,66 @@ function exportarPagina(){
     '  _RP.slug=null;_RP.nome=null;',
     '  _rpMostrarLogin();',
     '}',
+    'var _RP_AGENDA_ITENS=null,_RP_AGENDA_CAL={y:0,m:0},_RP_AGENDA_SEL=null;',
     'function _rpMostrarAgendaExterna(){',
     '  _RP.state="agenda-externa";',
-    '  var hoje=new Date().toISOString().slice(0,10);',
+    '  _RP_AGENDA_SEL=null;',
+    '  _rpHtml(_rpHdr("_rpMostrarComunicacoes")+\'<p class="rp-sub" style="margin-top:4px"><i class=ph-hourglass></i> Carregando agenda...</p>\');',
+    '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/agendaExterna?key="+_RP_KEY;',
+    '  fetch(url).then(function(r){return r.ok?r.json():{};}).then(function(data){',
+    '    var todos=(data.documents||[]).map(function(d){',
+    '      var f=_rpFsParse({mapValue:{fields:d.fields}});',
+    '      f.id=d.name.split("/").pop();',
+    '      return f;',
+    '    });',
+    '    _RP_AGENDA_ITENS=todos.filter(function(it){return it.grupo===_RP.slug;});',
+    '    var hoje=new Date();_RP_AGENDA_CAL={y:hoje.getFullYear(),m:hoje.getMonth()};',
+    '    _rpAgendaRender();',
+    '  }).catch(function(){_RP_AGENDA_ITENS=[];_rpAgendaRender();});',
+    '}',
+    'function _rpAgendaCalMudarMes(delta){',
+    '  var d=new Date(_RP_AGENDA_CAL.y,_RP_AGENDA_CAL.m+delta,1);',
+    '  _RP_AGENDA_CAL={y:d.getFullYear(),m:d.getMonth()};',
+    '  _RP_AGENDA_SEL=null;',
+    '  _rpAgendaRender();',
+    '}',
+    'function _rpAgendaSelecionar(ymd){',
+    '  _RP_AGENDA_SEL=(_RP_AGENDA_SEL===ymd)?null:ymd;',
+    '  _rpAgendaRender();',
+    '}',
+    'function _rpAgendaRender(){',
+    '  var itens=_RP_AGENDA_ITENS||[];',
+    '  var porDia={};',
+    '  itens.forEach(function(it){if(!it.dia)return;(porDia[it.dia]=porDia[it.dia]||[]).push(it);});',
+    '  var y=_RP_AGENDA_CAL.y,m=_RP_AGENDA_CAL.m;',
+    '  var primeiro=new Date(y,m,1);',
+    '  var totalDias=new Date(y,m+1,0).getDate();',
+    '  var offset=primeiro.getDay();',
+    '  var hoje=new Date();var hojeYmd=hoje.getFullYear()+"-"+String(hoje.getMonth()+1).padStart(2,"0")+"-"+String(hoje.getDate()).padStart(2,"0");',
+    '  var cells="";',
+    '  for(var i=0;i<offset;i++)cells+=\'<div class="mcal-day outside"></div>\';',
+    '  for(var d=1;d<=totalDias;d++){',
+    '    var ymd=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");',
+    '    var marcados=porDia[ymd]||[];',
+    '    var cls="mcal-day"+(ymd===hojeYmd?" hoje":"")+(marcados.length?" marcado":"");',
+    '    cells+=\'<div class="\'+cls+\'"\'+(marcados.length?\' onclick="_rpAgendaSelecionar(\\\'\'+ymd+\'\\\')"\':"")+\'>\'+d+(marcados.length?\'<span class="mcal-dot"></span>\':"")+\'</div>\';',
+    '  }',
+    '  var dow=["D","S","T","Q","Q","S","S"].map(function(x){return \'<div class="mcal-dow">\'+x+\'</div>\';}).join("");',
+    '  var label=primeiro.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});',
+    '  var detalhe="";',
+    '  if(_RP_AGENDA_SEL&&porDia[_RP_AGENDA_SEL]){',
+    '    var dt=new Date(_RP_AGENDA_SEL+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"long"});',
+    '    detalhe=\'<div class="mcal-detail"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Agendado em \'+dt+\'</div>\'',
+    '      +porDia[_RP_AGENDA_SEL].map(function(it){return \'<div class="mcal-detail-item"><span>\'+(it.local||"—")+\'</span><span style="color:var(--muted)">\'+(it.horario||"")+\'</span></div>\';}).join("")',
+    '      +"</div>";',
+    '  }',
+    '  var calHtml=\'<div class="mcal-wrap"><div class="mcal-hdr"><button class="mcal-nav" onclick="_rpAgendaCalMudarMes(-1)">\\u2039</button><span class="mcal-hdr-label">\'+label+\'</span><button class="mcal-nav" onclick="_rpAgendaCalMudarMes(1)">\\u203A</button></div><div class="mcal-grid">\'+dow+cells+\'</div>\'+detalhe+\'</div>\';',
+    '  var hojeIso=new Date().toISOString().slice(0,10);',
     '  _rpHtml(_rpHdr("_rpMostrarComunicacoes")',
-    '    +\'<p class="rp-sub" style="margin-top:4px">Avise um compromisso extra igreja de \'+_RP.nome+\'</p>\'',
-    '    +\'<label class="rp-label" style="margin-top:2px">Dia</label>\'',
-    '    +\'<input class="rp-inp" type="date" id="agenda-dia" min="\'+hoje+\'">\'',
+    '    +\'<p class="rp-sub" style="margin-top:4px">Compromissos já agendados de \'+_RP.nome+\'</p>\'',
+    '    +calHtml',
+    '    +\'<label class="rp-label" style="margin-top:14px">Dia</label>\'',
+    '    +\'<input class="rp-inp" type="date" id="agenda-dia" min="\'+hojeIso+\'">\'',
     '    +\'<label class="rp-label">Horário</label>\'',
     '    +\'<input class="rp-inp" type="time" id="agenda-horario">\'',
     '    +\'<label class="rp-label">Local / Nome da Denominação</label>\'',
@@ -5243,7 +5379,7 @@ function exportarPagina(){
     '  var url="https://firestore.googleapis.com/v1/projects/"+_RP_PROJ+"/databases/(default)/documents/agendaExterna?key="+_RP_KEY;',
     '  fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:fields})})',
     '    .then(function(r){',
-    '      if(r.ok){alert("✅ Agenda enviada! Obrigado por avisar.");_rpMostrarComunicacoes();}',
+    '      if(r.ok){alert("✅ Agenda enviada! Obrigado por avisar.");_rpMostrarAgendaExterna();}',
     '      else{return r.text().then(function(t){alert("Erro ao enviar: "+t);});}',
     '    }).catch(function(e){alert("Erro: "+e.message);});',
     '}',
