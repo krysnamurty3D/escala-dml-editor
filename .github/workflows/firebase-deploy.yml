@@ -26,5 +26,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Deploy to Firebase
-        run: npx firebase-tools deploy --only firestore:rules,functions --project escala-dml --force
+      # Regras primeiro e em passo próprio: uma falha nas Functions (ex: runtime
+      # descontinuado) não pode impedir que as regras do Firestore sejam publicadas.
+      - name: Deploy das regras do Firestore
+        run: npx firebase-tools deploy --only firestore:rules --project escala-dml --force
+
+      - name: Deploy das Functions
+        run: npx firebase-tools deploy --only functions --project escala-dml --force
