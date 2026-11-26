@@ -202,3 +202,31 @@ test('_deveMigrarSessaoLocal', async (t) => {
     assert.equal(ctx._deveMigrarSessaoLocal({ savedAt: 100 }, {}), true);
   });
 });
+
+// ─────────────────────────────────────────────────────────────
+// normalizarMesLabel — bug real: importar um .docx sem "mês + ano" no nome
+// gerava o rótulo "Escala do Mês", que nunca casa com o mês atual/próximo
+// usado pela página pública (a escala simplesmente não aparecia lá).
+// ─────────────────────────────────────────────────────────────
+test('normalizarMesLabel', async (t) => {
+  const codigo = [
+    extrairConst(SOURCE, '_MESES_NOMES'),
+    extrairFuncao(SOURCE, 'normalizarMesLabel'),
+  ].join('\n');
+  const ctx = rodarEmSandbox(codigo);
+
+  await t.test('mês + ano completos', () => {
+    assert.equal(ctx.normalizarMesLabel('Dezembro 2026'), 'Dezembro 2026');
+    assert.equal(ctx.normalizarMesLabel('escala_dezembro_2026'), 'Dezembro 2026');
+  });
+  await t.test('ano com 2 dígitos', () => {
+    assert.equal(ctx.normalizarMesLabel('Escala Dezembro-26'), 'Dezembro 2026');
+  });
+  await t.test('aceita março sem acento', () => {
+    assert.equal(ctx.normalizarMesLabel('marco 2027'), 'Março 2027');
+  });
+  await t.test('texto sem mês devolve null (nunca um rótulo genérico)', () => {
+    assert.equal(ctx.normalizarMesLabel('Escala do Mês'), null);
+    assert.equal(ctx.normalizarMesLabel(''), null);
+  });
+});

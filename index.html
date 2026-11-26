@@ -1579,15 +1579,38 @@ async function processarArq(file){
     const res=await mammoth.convertToHtml({arrayBuffer:buf});
     const parsed=parsear(res.value);
     if(!parsed.length){toast('<i class=ph-warning></i> Nenhum culto encontrado.');mostrarLoad(false);return;}
-    cultos=parsed;mesLabel=extrairMes(file.name);sessaoId=sessaoIdParaMes(mesLabel);
+    let mes=extrairMes(file.name);
+    if(!mes){
+      mostrarLoad(false);
+      mes=normalizarMesLabel(prompt('Não consegui identificar o mês pelo nome do arquivo.\nDigite o mês e o ano da escala (ex: Dezembro 2026):')||'');
+      if(!mes){toast('<i class=ph-warning></i> Mês não identificado — importação cancelada.');return;}
+      mostrarLoad(true);
+    }
+    cultos=parsed;mesLabel=mes;sessaoId=sessaoIdParaMes(mesLabel);
     abrirEditor();
   }catch(e){console.error(e);toast('<i class=ph-x-circle></i> Erro ao ler arquivo');}
   mostrarLoad(false);
 }
 
+const _MESES_NOMES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+// Aceita "Dezembro 2026", "escala_dezembro-26.docx", "dezembro" etc. Devolve
+// "Dezembro 2026" ou null. A página pública casa a escala pelo nome do mês,
+// então um rótulo genérico (ex: "Escala do Mês") nunca aparece nela.
+function normalizarMesLabel(txt){
+  const sem=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const s=sem(txt);
+  const idx=_MESES_NOMES.findIndex(m=>s.includes(sem(m)));
+  if(idx<0)return null;
+  let ano;
+  const y4=s.match(/(20\d{2})/);
+  const y2=s.match(/[_\s-](\d{2})(?!\d)/);
+  if(y4)ano=parseInt(y4[1]);
+  else if(y2)ano=2000+parseInt(y2[1]);
+  else{const h=new Date();ano=idx<h.getMonth()-1?h.getFullYear()+1:h.getFullYear();}
+  return `${_MESES_NOMES[idx]} ${ano}`;
+}
 function extrairMes(fn){
-  const m=fn.match(/([A-Za-záéíóúãõâêîôûçÁÉÍÓÚÃÕÂÊÎÔÛÇ]+)[_\s-]*(\d{4})/i);
-  return m?`${m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase()} ${m[2]}`:'Escala do Mês';
+  return normalizarMesLabel((fn||'').replace(/\.docx$/i,''));
 }
 
 // ID determinístico por mês: garante que a MESMA escala (ex: "Setembro 2026")
@@ -7256,6 +7279,7 @@ async function renderHist(busca=''){
         <button class="btn btn-outline btn-sm" onclick="carregarSessao('${id}')"><i class=ph-pencil-simple></i> Abrir</button>
         <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')"><i class=ph-eye></i> Ver</button>
         <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')"><i class=ph-clipboard-text></i> Duplicar</button>
+        <button class="btn btn-ghost btn-sm" onclick="renomearEscala('${id}')" title="Corrigir o mês desta escala"><i class=ph-pencil-simple-line></i></button>
         <button class="btn btn-ghost btn-sm" onclick="toggleOcultaPublicacao('${id}')" title="${oculta?'Permitir publicar esta escala':'Ocultar esta escala da publicação'}"><i class="${oculta?'ph-eye':'ph-eye-slash'}"></i></button>
         <button class="btn-danger" onclick="excluirSessao('${id}')"><i class=ph-trash></i></button>
       </div>
@@ -7310,6 +7334,42 @@ async function manterEExcluirDuplicatas(mesLabelOrig,idManter){
   }
   toast('<i class=ph-check-circle></i> Duplicatas movidas para a lixeira — mantida apenas a versão escolhida');
   renderHist();renderLixeira();
+}
+
+// Corrige o mês de uma escala já salva (ex: "Escala do Mês" -> "Dezembro 2026").
+// O ID da sessão é derivado do mês, então move o documento para o novo ID.
+async function renomearEscala(id){
+  let dados=null;
+  if(window._fbUser)dados=await getSessaoFirebase(id);
+  if(!dados){const raw=localStorage.getItem(SK(id));if(raw)dados=JSON.parse(raw);}
+  if(!dados){toast('<i class=ph-warning></i> Escala não encontrada');return;}
+  const entrada=prompt('Mês e ano desta escala (ex: Dezembro 2026):',dados.mesLabel||'');
+  if(entrada===null)return;
+  const novo=normalizarMesLabel(entrada);
+  if(!novo){toast('<i class=ph-warning></i> Não entendi o mês — use o formato "Dezembro 2026"');return;}
+  const novoId=sessaoIdParaMes(novo);
+  if(novoId!==id){
+    let existente=window._fbUser?await getSessaoFirebase(novoId):null;
+    if(!existente){const r=localStorage.getItem(SK(novoId));if(r)existente=JSON.parse(r);}
+    if(existente&&!confirm(`Já existe uma escala de "${novo}". Substituir por esta?`))return;
+  }
+  const novosDados={...dados,id:novoId,mesLabel:novo,savedAt:Date.now()};
+  localStorage.setItem(SK(novoId),JSON.stringify(novosDados));
+  const idx=getIdx().filter(x=>x!==id);
+  if(!idx.includes(novoId))idx.push(novoId);
+  saveIdx(idx);
+  if(window._fbUser){
+    await salvarSessaoFirebase(novoId,novosDados);
+    if(novoId!==id)await excluirSessaoFirebase(id);
+  }
+  if(novoId!==id)localStorage.removeItem(SK(id));
+  if(sessaoId===id){
+    sessaoId=novoId;mesLabel=novo;
+    const b=document.getElementById('hdr-badge');if(b)b.textContent=novo;
+  }
+  toast(`<i class=ph-check-circle></i> Escala renomeada para ${novo}`);
+  renderHist();
+  sincronizarEscalaPublica();
 }
 
 async function toggleOcultaPublicacao(id){
