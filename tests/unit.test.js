@@ -325,3 +325,43 @@ test('autoSalvar', async (t) => {
     assert.equal(chamadas.salvar.length, 0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────
+// _resumoVisualizacoes — mostrador de visualizações da página pública no
+// cabeçalho do editor: hoje / 7 dias / mês / total.
+// ─────────────────────────────────────────────────────────────
+test('_resumoVisualizacoes', async (t) => {
+  const ctx = rodarEmSandbox(extrairFuncao(SOURCE, '_resumoVisualizacoes'));
+  const lista = [
+    { dia: '2026-11-26', total: 10, unicos: 6 },  // hoje
+    { dia: '2026-11-25', total: 4, unicos: 3 },
+    { dia: '2026-11-20', total: 5, unicos: 2 },   // 6 dias atrás: ainda entra nos 7 dias
+    { dia: '2026-11-19', total: 7, unicos: 4 },   // 7 dias atrás: fora dos 7 dias, mas no mês
+    { dia: '2026-10-31', total: 20, unicos: 9 },  // mês anterior: só no total
+  ];
+  const r = ctx._resumoVisualizacoes(lista, '2026-11-26');
+
+  await t.test('hoje', () => {
+    assert.equal(r.hoje.total, 10);
+    assert.equal(r.hoje.unicos, 6);
+  });
+  await t.test('últimos 7 dias incluem hoje e os 6 anteriores', () => {
+    assert.equal(r.sete.total, 10 + 4 + 5);
+    assert.equal(r.sete.unicos, 6 + 3 + 2);
+  });
+  await t.test('mês corrente', () => {
+    assert.equal(r.mes.total, 10 + 4 + 5 + 7);
+  });
+  await t.test('total geral', () => {
+    assert.equal(r.total.total, 46);
+  });
+  await t.test('atravessa a virada de mês nos 7 dias', () => {
+    const rr = ctx._resumoVisualizacoes([{ dia: '2026-10-31', total: 3 }, { dia: '2026-11-01', total: 2 }], '2026-11-03');
+    assert.equal(rr.sete.total, 5);
+    assert.equal(rr.mes.total, 2);
+  });
+  await t.test('lista vazia ou itens inválidos não quebram', () => {
+    assert.equal(ctx._resumoVisualizacoes([], '2026-11-26').total.total, 0);
+    assert.equal(ctx._resumoVisualizacoes([null, {}, { dia: '2026-11-26' }], '2026-11-26').hoje.total, 0);
+  });
+});

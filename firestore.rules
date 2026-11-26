@@ -85,5 +85,18 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if request.auth != null;
     }
+
+    // Visualizações da página pública — um documento por dia (AAAA-MM-DD) com
+    // {dia, total, unicos}. Qualquer visitante pode somar +1 (a regra só aceita
+    // incremento de no máximo 1 por escrita); só o editor autenticado lê.
+    match /visualizacoes/{dia} {
+      allow read: if request.auth != null;
+      allow create: if request.resource.data.keys().hasOnly(['dia','total','unicos'])
+                    && request.resource.data.total == 1
+                    && request.resource.data.unicos in [0,1];
+      allow update: if request.resource.data.keys().hasOnly(['dia','total','unicos'])
+                    && request.resource.data.total == resource.data.total + 1
+                    && request.resource.data.unicos in [resource.data.unicos, resource.data.unicos + 1];
+    }
   }
 }

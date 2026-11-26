@@ -368,6 +368,7 @@ tr.esp-row .td-dia{color:#c03030;}
 .pub-badge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:.6px;white-space:nowrap;}
 .pub-badge.oculta{background:#d4a017;color:#2a1c00;}
 .pub-badge.visivel{background:#2ab482;color:#061208;}
+.views-badge{font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;background:rgba(42,180,130,.12);color:var(--teal);border:1px solid var(--teal-dim);white-space:nowrap;cursor:default;}
 
 /* ── RIDERS ── */
 .riders-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
@@ -882,6 +883,7 @@ tr.esp-row .td-dia{color:#c03030;}
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
     <span id="badge-publicacao" class="pub-badge" style="display:none"></span>
+    <span id="badge-views" class="views-badge" style="display:none"></span>
     <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none"><i class=ph-globe></i> Publicar</button>
     <button class="btn btn-ghost btn-sm" id="btn-versoes" onclick="abrirVersoes()" style="display:none" title="Histórico de versões"><i class=ph-clock-counter-clockwise></i> Versões</button>
     <button class="btn btn-outline btn-sm" id="btn-pdf" onclick="exportarPDF()" style="display:none">↓ PDF</button>
@@ -5170,6 +5172,20 @@ function exportarPagina(){
     '  });',
     '}',
     '_carregarEscalaPublica();',
+    '(function(){',
+    '  try{',
+    '    if(location.search.indexOf("sc=1")>=0)localStorage.setItem("dml-sem-contagem","1");',
+    '    if(localStorage.getItem("dml-sem-contagem"))return;',
+    '    if(sessionStorage.getItem("dml-visita-contada"))return;',
+    '    sessionStorage.setItem("dml-visita-contada","1");',
+    '    var d=new Date();',
+    '    var dia=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);',
+    '    var unico=localStorage.getItem("dml-visitante-dia")!==dia;',
+    '    localStorage.setItem("dml-visitante-dia",dia);',
+    '    var doc="projects/escala-dml/databases/(default)/documents/visualizacoes/"+dia;',
+    '    fetch("https://firestore.googleapis.com/v1/projects/escala-dml/databases/(default)/documents:commit?key=AIzaSyCAm-k7_6djFPDgO-RMMtiknGT-LCnnTBc",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({writes:[{update:{name:doc,fields:{dia:{stringValue:dia}}},updateMask:{fieldPaths:["dia"]},updateTransforms:[{fieldPath:"total",increment:{integerValue:"1"}},{fieldPath:"unicos",increment:{integerValue:unico?"1":"0"}}]}]})}).catch(function(){});',
+    '  }catch(e){}',
+    '})();',
     'if("serviceWorker" in navigator){navigator.serviceWorker.register("sw-cache.js").catch(function(e){console.warn("Cache offline indisponível:",e);});}',
 
     // Aviso popup
@@ -6848,6 +6864,8 @@ window.onFbAuthReady=async function(user){
     carregarNotepadFirebase();
     mostrarCardUltima();
     processarFilaSync();
+    carregarVisualizacoes();
+    if(!window._viewsTimer)window._viewsTimer=setInterval(carregarVisualizacoes,600000);
   } else {
     loginScreen?.classList.remove('hidden');
     if(badge)badge.style.display='none';
@@ -6860,6 +6878,50 @@ window.onFbAuthReady=async function(user){
 function fbUserPath(sub){ return `usuarios/${window._fbUser?.uid}/${sub}`; }
 
 // ── Indicador de sync
+// ── Visualizações da página pública: a página grava um contador por dia em
+// visualizacoes/{AAAA-MM-DD} ({total, unicos}); o editor soma e mostra no topo.
+function _resumoVisualizacoes(lista,hojeStr){
+  const [a,m,d]=hojeStr.split('-').map(Number);
+  const sete=new Set();
+  for(let i=0;i<7;i++){
+    const x=new Date(a,m-1,d-i);
+    sete.add(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'));
+  }
+  const r={hoje:{total:0,unicos:0},sete:{total:0,unicos:0},mes:{total:0,unicos:0},total:{total:0,unicos:0}};
+  const soma=(alvo,it)=>{alvo.total+=it.total||0;alvo.unicos+=it.unicos||0;};
+  (lista||[]).forEach(it=>{
+    if(!it||!it.dia)return;
+    soma(r.total,it);
+    if(it.dia===hojeStr)soma(r.hoje,it);
+    if(sete.has(it.dia))soma(r.sete,it);
+    if(it.dia.slice(0,7)===hojeStr.slice(0,7))soma(r.mes,it);
+  });
+  return r;
+}
+function _hojeStr(){
+  const n=new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+}
+async function carregarVisualizacoes(){
+  const el=document.getElementById('badge-views');
+  if(!el||!window._fbUser||!window._fbFns)return;
+  try{
+    const {collection,getDocs}=window._fbFns;
+    const snap=await getDocs(collection(window._fbDb,'visualizacoes'));
+    const lista=[];
+    snap.forEach(d=>lista.push({dia:d.id,...d.data()}));
+    const r=_resumoVisualizacoes(lista,_hojeStr());
+    el.style.display='inline-block';
+    el.innerHTML='<i class=ph-chart-line-up></i> '+r.hoje.total+' hoje · '+r.sete.total+' em 7 dias';
+    el.title='Visualizações da página pública\n'
+      +'Hoje: '+r.hoje.total+' ('+r.hoje.unicos+' visitantes)\n'
+      +'7 dias: '+r.sete.total+' ('+r.sete.unicos+' visitantes)\n'
+      +'Este mês: '+r.mes.total+' ('+r.mes.unicos+' visitantes)\n'
+      +'Total: '+r.total.total+' ('+r.total.unicos+' visitantes)\n\n'
+      +'Para não contar suas próprias visitas, abra a página pública uma vez com ?sc=1 no endereço.';
+  }catch(e){console.warn('visualizações:',e);}
+}
+
 let _ultimoSyncOk=null;
 
 function _fmtRelativo(ts){
