@@ -65,7 +65,11 @@ function extrairFuncao(source, nome) {
       if (depth === 0) { i++; break; }
     }
   }
-  return source.slice(m.index, i);
+  // inclui o prefixo "async " quando a função é assíncrona
+  const inicio = /async\s+$/.test(source.slice(Math.max(0, m.index - 8), m.index))
+    ? source.lastIndexOf('async', m.index)
+    : m.index;
+  return source.slice(inicio, i);
 }
 
 // Extrai uma variável top-level simples (`const nome = ...;` ou

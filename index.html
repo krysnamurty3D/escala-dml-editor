@@ -360,6 +360,14 @@ tr.esp-row .td-dia{color:#c03030;}
 .hist-tag{background:var(--accent);border:1px solid var(--teal-dim);color:var(--teal-light);
   border-radius:12px;padding:2px 8px;font-size:10px;}
 .hist-actions{display:flex;gap:5px;margin-top:12px;flex-wrap:wrap;}
+.btn-pub{font-weight:700;border:none;cursor:pointer;}
+.btn-pub-on{background:#2ab482;color:#061208;}
+.btn-pub-on:hover{background:#34c995;}
+.btn-pub-off{background:#d4a017;color:#2a1c00;}
+.btn-pub-off:hover{background:#e6b22a;}
+.pub-badge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:.6px;white-space:nowrap;}
+.pub-badge.oculta{background:#d4a017;color:#2a1c00;}
+.pub-badge.visivel{background:#2ab482;color:#061208;}
 
 /* ── RIDERS ── */
 .riders-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
@@ -873,6 +881,7 @@ tr.esp-row .td-dia{color:#c03030;}
       </div>
     </div>
     <span id="hdr-badge" style="display:none" class="month-badge"></span>
+    <span id="badge-publicacao" class="pub-badge" style="display:none"></span>
     <button class="btn btn-outline btn-sm" id="btn-pagina" onclick="publicarNetlify()" style="display:none"><i class=ph-globe></i> Publicar</button>
     <button class="btn btn-ghost btn-sm" id="btn-versoes" onclick="abrirVersoes()" style="display:none" title="Histórico de versões"><i class=ph-clock-counter-clockwise></i> Versões</button>
     <button class="btn btn-outline btn-sm" id="btn-pdf" onclick="exportarPDF()" style="display:none">↓ PDF</button>
@@ -972,7 +981,7 @@ tr.esp-row .td-dia{color:#c03030;}
   <div class="edit-toolbar">
     <label class="toggle-label"><input type="checkbox" id="chk-ocultos" checked onchange="renderCultos()"> Mostrar ocultos</label>
     <div class="busca-editor-wrap" id="busca-editor-wrap">
-      <input class="busca-editor-input" id="busca-editor-input" placeholder="<i class=ph-magnifying-glass></i> Buscar culto..." oninput="buscarNaEscala(this.value)">
+      <input class="busca-editor-input" id="busca-editor-input" placeholder="Buscar culto..." oninput="buscarNaEscala(this.value)">
       <button class="busca-editor-clear" onclick="limparBuscaEscala()">✕</button>
     </div>
     <div class="dia-filtros">
@@ -1047,7 +1056,7 @@ tr.esp-row .td-dia{color:#c03030;}
 <div id="page-hist" class="page">
   <div class="hist-top">
     <h2 style="color:var(--teal);font-size:17px">Histórico de Escalas</h2>
-    <input class="hist-search" type="text" placeholder="<i class=ph-magnifying-glass></i> Buscar por grupo ou mês..." oninput="renderHist(this.value)">
+    <input class="hist-search" type="text" placeholder="Buscar por grupo ou mês..." oninput="renderHist(this.value)">
   </div>
   <div style="display:flex;gap:8px;margin-bottom:14px;">
     <button class="btn btn-outline btn-sm hist-tab active" id="tab-hist" onclick="mostrarTabHist('hist')"><i class=ph-folder-open></i> Escalas</button>
@@ -1586,7 +1595,7 @@ async function processarArq(file){
       if(!mes){toast('<i class=ph-warning></i> Mês não identificado — importação cancelada.');return;}
       mostrarLoad(true);
     }
-    cultos=parsed;mesLabel=mes;sessaoId=sessaoIdParaMes(mesLabel);
+    cultos=parsed;mesLabel=mes;sessaoId=sessaoIdParaMes(mesLabel);_novaSessaoAberta();
     abrirEditor();
   }catch(e){console.error(e);toast('<i class=ph-x-circle></i> Erro ao ler arquivo');}
   mostrarLoad(false);
@@ -1675,6 +1684,7 @@ function abrirEditor(){
   ['btn-pdf','btn-save','btn-pagina','btn-versoes'].forEach(id=>document.getElementById(id).style.display='inline-block');
   document.getElementById('btn-limpar').style.display='inline-block';
   irPara('edit');renderCultos();renderSidebar();
+  atualizarBadgePublicacao();
 }
 
 function filtrarDia(dia){
@@ -1780,6 +1790,7 @@ function renderCultos(){
   });
   renderSidebar();
   renderPreviewRT();
+  agendarAutoSave();
 }
 
 function abrevDia(d){
@@ -5970,7 +5981,7 @@ function _gerarCalendarioBase(){
 
   cultos=lista;
   mesLabel=`${MESES_PT[mes]} ${ano}`;
-  sessaoId=sessaoIdParaMes(mesLabel);
+  sessaoId=sessaoIdParaMes(mesLabel);_novaSessaoAberta();
   fecharModal('modal-cal');
   abrirEditor();
   toast(`<i class=ph-check-circle></i> ${lista.length} cultos gerados para ${mesLabel}`);
@@ -7020,15 +7031,72 @@ async function carregarDadosFirebase(){
 // ═══════════════════════════════════════════════
 // OVERRIDE: salvarSessao usa Firebase
 // ═══════════════════════════════════════════════
-async function salvarSessao(){
+// Escala nova (sem documento salvo) nasce OCULTA da página pública; quem
+// decide publicar é o usuário. Escalas já existentes mantêm o que tinham.
+function _ocultaPadrao(docExistente){
+  return docExistente?!!docExistente.ocultaPublicacao:true;
+}
+// A nuvem tem uma versão mais nova que a base que este aparelho carregou?
+function _nuvemMaisNova(docNuvem,baseSavedAt){
+  return !!docNuvem&&(docNuvem.savedAt||0)>(baseSavedAt||0);
+}
+async function _lerDocSessao(id){
+  let d=null;
+  if(window._fbUser)d=await getSessaoFirebase(id);
+  if(!d){try{const raw=localStorage.getItem(SK(id));if(raw)d=JSON.parse(raw);}catch(e){}}
+  return d;
+}
+async function atualizarBadgePublicacao(){
+  const el=document.getElementById('badge-publicacao');
+  if(!el)return;
+  if(!mesLabel){el.style.display='none';return;}
+  const oculta=_ocultaPadrao(await _lerDocSessao(sessaoId||sessaoIdParaMes(mesLabel)));
+  el.style.display='inline-block';
+  el.className='pub-badge '+(oculta?'oculta':'visivel');
+  el.innerHTML=oculta?'<i class=ph-eye-slash></i> ESCALA OCULTA':'<i class=ph-eye></i> ESCALA VISÍVEL';
+  el.title=oculta?'Não aparece na página pública. Para publicar, use o botão Pública/Oculta no Histórico.':'Esta escala está aparecendo na página pública.';
+}
+
+// ── Salvamento automático: depois de cada edição (debounce de 2,5s) grava a
+// escala aberta, em silêncio. Nunca sobrescreve uma versão mais nova da nuvem
+// (ex: editada em outro aparelho) — nesse caso pausa e avisa.
+let _snapshotSalvo=null,_baseSavedAt=0,_autoSaveTimer=null,_autoSaveBloqueado=false,_autoSaveEmAndamento=false;
+function _novaSessaoAberta(){_snapshotSalvo=null;_baseSavedAt=0;_autoSaveBloqueado=false;}
+function agendarAutoSave(){
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer=setTimeout(autoSalvar,2500);
+}
+async function autoSalvar(){
+  if(_autoSaveEmAndamento||_autoSaveBloqueado)return;
+  if(!cultos.length||!normalizarMesLabel(mesLabel))return;
+  if(JSON.stringify(cultos)===_snapshotSalvo)return;
+  _autoSaveEmAndamento=true;
+  try{
+    if(window._fbUser&&_online){
+      const nuvem=await getSessaoFirebase(sessaoId||sessaoIdParaMes(mesLabel));
+      if(_nuvemMaisNova(nuvem,_baseSavedAt)){
+        _autoSaveBloqueado=true;
+        setSyncStatus('err');
+        toast('<i class=ph-warning></i> Salvamento automático pausado: há uma versão mais nova desta escala na nuvem (outro aparelho). Reabra pelo Histórico antes de continuar editando.');
+        return;
+      }
+    }
+    await salvarSessao(true);
+  }catch(e){console.error('autoSalvar:',e);}
+  finally{_autoSaveEmAndamento=false;}
+}
+
+async function salvarSessao(auto){
+  auto=auto===true;
   if(!cultos.length){toast('<i class=ph-warning></i> Nenhum culto para salvar');return;}
   if(!sessaoId)sessaoId=sessaoIdParaMes(mesLabel);
-  let _ocultaAnterior=false;
-  try{const _raw=localStorage.getItem(SK(sessaoId));if(_raw)_ocultaAnterior=!!JSON.parse(_raw).ocultaPublicacao;}catch(e){}
+  const _ocultaAnterior=_ocultaPadrao(await _lerDocSessao(sessaoId));
   const dados={id:sessaoId,mesLabel,cultos,savedAt:Date.now(),ocultaPublicacao:_ocultaAnterior};
 
-  // Salva versão antes de sobrescrever
-  saveVersao(sessaoId,dados);
+  // Salva versão antes de sobrescrever (no auto-save, no máx. 1 a cada 10 min,
+  // para não encher o histórico de versões com cada pequena edição)
+  const _vs=getVersoes(sessaoId);
+  if(!auto||!_vs.length||Date.now()-_vs[0].ts>600000)saveVersao(sessaoId,dados);
 
   // Salva localmente sempre (funciona offline)
   const localIdx=getIdx();
@@ -7040,7 +7108,7 @@ async function salvarSessao(){
     const ok=await salvarSessaoFirebase(sessaoId,dados);
     salvarConfigFirebase();
     if(ok){
-      toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
+      if(!auto)toast('<i class=ph-check-circle></i> Escala salva na nuvem!');
     }else{
       // Falha real ao gravar em usuarios/{uid}/sessoes — não mentir que salvou.
       // Guarda na fila e já tenta de novo uma vez, mesmo estando online.
@@ -7054,15 +7122,18 @@ async function salvarSessao(){
     _filaSyncPendente.push({tipo:'sessao',id:sessaoId,dados});
     localStorage.setItem('dml_fila_sync',JSON.stringify(_filaSyncPendente));
     setSyncStatus('offline');
-    toast('<i class=ph-floppy-disk></i> Salvo localmente — sincronizará quando voltar a conexão');
+    if(!auto)toast('<i class=ph-floppy-disk></i> Salvo localmente — sincronizará quando voltar a conexão');
   } else {
     setSyncStatus('err');
-    toast('<i class=ph-floppy-disk></i> Salvo localmente');
+    if(!auto)toast('<i class=ph-floppy-disk></i> Salvo localmente');
   }
 
-  renderHist();
-  mostrarCardUltima();
-  sincronizarEscalaPublica();
+  _snapshotSalvo=JSON.stringify(cultos);
+  _baseSavedAt=dados.savedAt;
+  _autoSaveBloqueado=false;
+  atualizarBadgePublicacao();
+  if(!auto){renderHist();mostrarCardUltima();}
+  if(!auto||!dados.ocultaPublicacao)sincronizarEscalaPublica();
 }
 
 // ═══════════════════════════════════════════════
@@ -7092,6 +7163,7 @@ async function carregarSessao(id){
   sessaoId=dados.id||id;
   mesLabel=dados.mesLabel||'';
   cultos=(dados.cultos||[]).map(c=>({...c,id:c.id||uid()}));
+  _snapshotSalvo=JSON.stringify(cultos);_baseSavedAt=dados.savedAt||0;_autoSaveBloqueado=false;
   abrirEditor();
   toast(`<i class=ph-check-circle></i> ${mesLabel} carregada`);
 }
@@ -7271,7 +7343,6 @@ async function renderHist(busca=''){
     return`<div class="hist-card">
       <div class="hist-mes">${d.mesLabel||'Sem título'}</div>
       <div class="hist-meta">${(d.cultos||[]).filter(c=>!c.oculto).length} cultos</div>
-      ${oculta?'<div style="font-size:10px;font-weight:700;color:#d4a017;margin-top:2px"><i class=ph-eye-slash></i> Oculta da publicação</div>':''}
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0">
         ${top3.map(g=>`<span class="gbadge ${badgeClass(g)}" style="font-size:9px;padding:1px 6px">${g.replace(/^CORAL\s+/,'C. ')}</span>`).join('')}
       </div>
@@ -7280,7 +7351,7 @@ async function renderHist(busca=''){
         <button class="btn btn-ghost btn-sm" onclick="verHist('${id}')"><i class=ph-eye></i> Ver</button>
         <button class="btn btn-ghost btn-sm" onclick="duplicarMes('${id}')"><i class=ph-clipboard-text></i> Duplicar</button>
         <button class="btn btn-ghost btn-sm" onclick="renomearEscala('${id}')" title="Corrigir o mês desta escala"><i class=ph-pencil-simple-line></i></button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleOcultaPublicacao('${id}')" title="${oculta?'Permitir publicar esta escala':'Ocultar esta escala da publicação'}"><i class="${oculta?'ph-eye':'ph-eye-slash'}"></i></button>
+        <button class="btn btn-sm btn-pub ${oculta?'btn-pub-off':'btn-pub-on'}" onclick="toggleOcultaPublicacao('${id}')" title="${oculta?'Oculta da página pública — clique para tornar pública':'Pública — clique para ocultar da página pública'}"><i class="${oculta?'ph-eye-slash':'ph-eye'}"></i> ${oculta?'Oculta':'Pública'}</button>
         <button class="btn-danger" onclick="excluirSessao('${id}')"><i class=ph-trash></i></button>
       </div>
     </div>`;
@@ -7364,11 +7435,12 @@ async function renomearEscala(id){
   }
   if(novoId!==id)localStorage.removeItem(SK(id));
   if(sessaoId===id){
-    sessaoId=novoId;mesLabel=novo;
+    sessaoId=novoId;mesLabel=novo;_baseSavedAt=novosDados.savedAt;_autoSaveBloqueado=false;
     const b=document.getElementById('hdr-badge');if(b)b.textContent=novo;
   }
   toast(`<i class=ph-check-circle></i> Escala renomeada para ${novo}`);
   renderHist();
+  atualizarBadgePublicacao();
   sincronizarEscalaPublica();
 }
 
@@ -7377,11 +7449,13 @@ async function toggleOcultaPublicacao(id){
   if(window._fbUser)dados=await getSessaoFirebase(id);
   if(!dados){const raw=localStorage.getItem(SK(id));if(raw)dados=JSON.parse(raw);}
   if(!dados){toast('<i class=ph-warning></i> Escala não encontrada');return;}
+  if(dados.ocultaPublicacao&&!confirm(`Tornar a escala de "${dados.mesLabel}" VISÍVEL na página pública?\n\nTodos os líderes poderão vê-la.`))return;
   dados.ocultaPublicacao=!dados.ocultaPublicacao;
   localStorage.setItem(SK(id),JSON.stringify(dados));
   if(window._fbUser)await salvarSessaoFirebase(id,dados);
   toast(dados.ocultaPublicacao?'<i class=ph-eye-slash></i> Escala oculta da publicação':'<i class=ph-eye></i> Escala liberada para publicação');
   renderHist();
+  atualizarBadgePublicacao();
   sincronizarEscalaPublica();
 }
 

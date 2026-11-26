@@ -230,3 +230,98 @@ test('normalizarMesLabel', async (t) => {
     assert.equal(ctx.normalizarMesLabel(''), null);
   });
 });
+
+// ─────────────────────────────────────────────────────────────
+// Escala nova nasce OCULTA da página pública; escalas existentes mantêm
+// o estado. E o auto-save nunca pode sobrescrever uma versão mais nova da
+// nuvem (bug real: um aparelho com cache antigo apagava edições de outro).
+// ─────────────────────────────────────────────────────────────
+test('_ocultaPadrao e _nuvemMaisNova', async (t) => {
+  const ctx = rodarEmSandbox([extrairFuncao(SOURCE, '_ocultaPadrao'), extrairFuncao(SOURCE, '_nuvemMaisNova')].join('\n'));
+  await t.test('escala nova (sem doc salvo) começa oculta', () => { assert.equal(ctx._ocultaPadrao(null), true); });
+  await t.test('escala existente sem flag continua visível (não muda o que já está publicado)', () => { assert.equal(ctx._ocultaPadrao({ cultos: [] }), false); });
+  await t.test('escala existente respeita o flag salvo', () => {
+    assert.equal(ctx._ocultaPadrao({ ocultaPublicacao: true }), true);
+    assert.equal(ctx._ocultaPadrao({ ocultaPublicacao: false }), false);
+  });
+  await t.test('nuvem mais nova que a base bloqueia o auto-save', () => {
+    assert.equal(ctx._nuvemMaisNova({ savedAt: 2000 }, 1000), true);
+    assert.equal(ctx._nuvemMaisNova({ savedAt: 1000 }, 1000), false);
+    assert.equal(ctx._nuvemMaisNova({ savedAt: 500 }, 1000), false);
+  });
+  await t.test('sem documento na nuvem não bloqueia', () => { assert.equal(ctx._nuvemMaisNova(null, 0), false); });
+});
+
+// ─────────────────────────────────────────────────────────────
+// autoSalvar — salvamento automático depois de cada edição.
+// Regras: só salva se algo mudou desde o último estado salvo; nunca salva
+// escala sem mês válido ("Escala do Mês"); e NUNCA sobrescreve uma versão
+// mais nova da nuvem (outro aparelho) — pausa e avisa.
+// ─────────────────────────────────────────────────────────────
+test('autoSalvar', async (t) => {
+  const codigo = [
+    extrairFuncao(SOURCE, '_nuvemMaisNova'),
+    extrairFuncao(SOURCE, 'autoSalvar'),
+  ].join('\n');
+
+  function montar(estado) {
+    const chamadas = { salvar: [], toasts: [], status: [] };
+    const ctx = rodarEmSandbox(codigo, {
+      cultos: [{ id: 'c1' }],
+      mesLabel: 'Dezembro 2026',
+      sessaoId: 'sess-mes-dezembro-2026',
+      _snapshotSalvo: null,
+      _baseSavedAt: 1000,
+      _autoSaveBloqueado: false,
+      _autoSaveEmAndamento: false,
+      _online: true,
+      window: { _fbUser: { uid: 'u' } },
+      normalizarMesLabel: (s) => (/(janeiro|dezembro)/i.test(s) ? s : null),
+      sessaoIdParaMes: (s) => 'sess-' + s,
+      getSessaoFirebase: async () => estado.nuvem ?? null,
+      salvarSessao: async (auto) => { chamadas.salvar.push(auto); },
+      toast: (m) => chamadas.toasts.push(m),
+      setSyncStatus: (s) => chamadas.status.push(s),
+      ...estado.ctx,
+    });
+    return { ctx, chamadas };
+  }
+
+  await t.test('salva (em modo automático) quando houve edição', async () => {
+    const { ctx, chamadas } = montar({ nuvem: { savedAt: 1000 } });
+    await ctx.autoSalvar();
+    assert.deepEqual(Array.from(chamadas.salvar), [true]);
+  });
+
+  await t.test('não salva se nada mudou desde o último estado salvo', async () => {
+    const { ctx, chamadas } = montar({ ctx: { _snapshotSalvo: JSON.stringify([{ id: 'c1' }]) } });
+    await ctx.autoSalvar();
+    assert.equal(chamadas.salvar.length, 0);
+  });
+
+  await t.test('não salva escala sem mês válido (ex: "Escala do Mês")', async () => {
+    const { ctx, chamadas } = montar({ ctx: { mesLabel: 'Escala do Mês' } });
+    await ctx.autoSalvar();
+    assert.equal(chamadas.salvar.length, 0);
+  });
+
+  await t.test('NÃO sobrescreve versão mais nova da nuvem: pausa e avisa', async () => {
+    const { ctx, chamadas } = montar({ nuvem: { savedAt: 5000 } });
+    await ctx.autoSalvar();
+    assert.equal(chamadas.salvar.length, 0, 'não pode gravar por cima da nuvem mais nova');
+    assert.equal(chamadas.toasts.length, 1);
+    assert.equal(ctx._autoSaveBloqueado, true);
+  });
+
+  await t.test('depois de bloqueado, não tenta de novo até reabrir/salvar manualmente', async () => {
+    const { ctx, chamadas } = montar({ nuvem: { savedAt: 1000 }, ctx: { _autoSaveBloqueado: true } });
+    await ctx.autoSalvar();
+    assert.equal(chamadas.salvar.length, 0);
+  });
+
+  await t.test('não salva lista de cultos vazia', async () => {
+    const { ctx, chamadas } = montar({ ctx: { cultos: [] } });
+    await ctx.autoSalvar();
+    assert.equal(chamadas.salvar.length, 0);
+  });
+});
